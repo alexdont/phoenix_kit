@@ -51,6 +51,7 @@ defmodule PhoenixKitWeb.Components.Core.ModuleCard do
   attr(:icon, :string, required: true, doc: "Emoji icon for the module")
   attr(:enabled, :boolean, required: true, doc: "Whether the module is enabled")
   attr(:toggle_event, :string, required: true, doc: "Phoenix event name for the toggle switch")
+  attr :show_toggle, :boolean, default: true, doc: "Whether to show the toggle switch"
 
   slot(:status_badges, required: true, doc: "Status badges to display (left side of actions row)")
 
