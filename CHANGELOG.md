@@ -1,6 +1,233 @@
-## 1.4.5 - 2025-10-24
+## 1.5.0 - 2025-11-04
+
+### Added
+- **Comprehensive email lifecycle tracking** - Complete email status monitoring from queue to delivery
+  - Migration V19: Added timestamp fields for `queued_at`, `rejected_at`, `failed_at`, `delayed_at`
+  - New email lifecycle: QUEUED → SENT → DELIVERED with full event tracking
+  - 12 total email statuses now supported (was 7)
+- **Enhanced email status management** - New helper functions in Log schema
+  - `mark_as_queued/1` - Track when email enters send queue
+  - `mark_as_sent/1` - Track when email sent to provider
+  - `mark_as_rejected/2` - Track provider rejections with reason
+  - `mark_as_failed/2` - Track send failures with error details
+  - `mark_as_delayed/2` - Track delivery delays
+- **Event system improvements** - Extended event tracking for complete visibility
+  - New `queued` event type - Created when email enters queue
+  - New `send` event type - Created when email successfully sent to provider
+  - Event helpers: `create_queued_event/1`, `create_send_event/2`
+- **Enhanced UI status indicators** - Visual distinction for all email statuses
+  - New badge styles for queued, hard_bounced, soft_bounced, rejected, delayed, complaint
+  - Color-coded timeline events with appropriate icons
+  - Bounce type indicators (hard = red, soft = orange) in event details
+  - Provider information display in send events
+
+### Changed
+- **Email default status** - Changed from `"sent"` to `"queued"` for better lifecycle tracking
+  - Emails now created with `queued` status instead of immediately `sent`
+  - Status updated to `sent` after successful provider delivery
+  - Backward compatible - existing emails remain unchanged
+- **Interceptor workflow** - Updated email creation and delivery flow
+  - Creates `queued` event when email log is created
+  - Creates `send` event after successful provider delivery
+  - Removed premature `sent_at` timestamp from log creation
+- **SQS event processor** - All AWS SES events now set appropriate timestamps
+  - Bounce events → set `bounced_at`
+  - Complaint events → set `complained_at`
+  - Reject events → set `rejected_at`
+  - Delay events → set `delayed_at`
+  - Rendering failures → set `failed_at`
+- **Email details UI** - Improved event timeline visualization
+  - Queued events show queue timestamp
+  - Send events show provider information
+  - Bounce events display type (hard/soft) with color coding
+  - Reject events show rejection reason and diagnostic code
+  - Delay events show delay type and expiration time
+  - Fail events show failure reason and error details
 
 ### Fixed
+- **Event display bug** - Fixed KeyError when viewing email with send events
+  - Removed incorrect `aws_message_id` field access in Event (field exists only in Log)
+  - Events now correctly use `event_data` for metadata display
+  - File: lib/phoenix_kit_web/live/modules/emails/details.ex
+
+### Email Status Flow
+
+```
+QUEUED (queued_at) → SENT (sent_at) → DELIVERED (delivered_at)
+                   ↘ FAILED (failed_at)
+                   ↘ REJECTED (rejected_at)
+
+DELIVERED → OPENED (opened_at) → CLICKED (clicked_at)
+         ↘ HARD_BOUNCED/SOFT_BOUNCED (bounced_at)
+         ↘ COMPLAINT (complained_at)
+         ↘ DELAYED (delayed_at)
+```
+
+### Impact
+- Complete visibility into email lifecycle from queue to final delivery state
+- Better debugging capabilities with granular timestamps for all status changes
+- Enhanced AWS SES integration with comprehensive event processing
+- Improved UI/UX with clear visual indicators for all email states
+- Production-ready email tracking system with full audit trail
+
+### Migration Guide
+- Migration V19 is **additive only** - safe to run on existing databases
+- No data migration required - new fields start as NULL
+- Existing emails retain their current status and timestamps
+- New emails automatically use enhanced lifecycle tracking
+
+## 1.4.9 - 2025-11-03
+
+### Added
+- **Comprehensive OAuth module testing** - Added 43 tests covering all OAuth components
+  - OAuthConfigLoader worker: 7 tests for initialization, retry logic, and error handling
+  - OAuthConfig module: 23 tests for provider configuration and credential validation
+  - EnsureOAuthConfig plug: 13 tests for fallback mechanism and error responses
+  - Tests work without database access for library integration
+
+### Changed
+- **Improved OAuth error handling** - Enhanced error categorization and recovery
+  - Distinguish between retriable errors (cache not ready, DB connection) and non-retriable errors
+  - Added specific error handling for RuntimeError, UndefinedFunctionError, DBConnection errors
+  - OAuthConfigLoader now provides detailed status information through new APIs
+- **Enhanced OAuth configuration APIs** - Added new public methods for monitoring
+  - `OAuthConfigLoader.get_status/0` - Returns current configuration status with reason
+  - `OAuthConfigLoader.reload_config/0` - Allows manual configuration reload
+  - Better visibility into OAuth configuration state for debugging
+- **Optimized supervisor startup order** - Moved OAuth loader after cache initialization
+  - OAuthConfigLoader now starts after Settings cache is warmed
+  - Reduces startup errors related to cache availability
+  - More reliable OAuth configuration loading during application boot
+
+### Fixed
+- **Logging levels optimization** - Adjusted log levels for better observability
+  - Changed debug logs to info for important OAuth configuration events
+  - Added warning logs for missing credentials and configuration failures
+  - Better distinction between expected startup behavior and actual issues
+- **Code quality improvements**
+  - Fixed Credo warning: converted explicit try blocks to implicit try with rescue
+  - Fixed Dialyzer warning: removed unreachable pattern match in error handling
+  - All code passes strict quality checks (Credo, Dialyzer, formatted)
+
+### Impact
+- OAuth module is now thoroughly tested and more resilient to startup race conditions
+- Better error messages and logging help diagnose OAuth configuration issues
+- New APIs enable monitoring tools and admin interfaces to check OAuth health
+- Improved reliability when PhoenixKit is used as a library in parent applications
+
+## 1.4.8 - 2025-11-02
+
+### Fixes and improvements
+- Improved and update project configuration files
+- Changes to publishing module
+  - Rrenamed to Blogs
+  - Better 404 handling
+  - Comprehensive markdown styling
+  - Support both slug-mode and timestamp-mode blog URLs
+  - Multi-language support with automatic fallback to default language
+  - Trash logic for safe blog deletion
+  - Various UI/UX enhancements to the blogging module in general
+
+## 1.4.7 - 2025-10-30
+
+### Fixed
+- **CRITICAL: OAuth base_path preservation** - Fixed Ueberauth base_path being lost during provider configuration
+  - Function `configure_ueberauth_base/0` now preserves existing base_path from configuration
+  - Added `get_oauth_base_path/0` helper to automatically determine base path from PhoenixKit URL prefix
+  - Prevents "Ueberauth plugin did not process request for provider" error
+  - Ensures OAuth routes like `/phoenix_kit/users/auth/google` work correctly
+  - File: lib/phoenix_kit/users/oauth_config.ex
+- **CRITICAL: OAuth struct field access** - Fixed UndefinedFunctionError when processing OAuth callbacks
+  - Replaced bracket notation `auth.credentials[:token]` with dot notation `auth.credentials.token`
+  - Replaced `auth.credentials[:refresh_token]` with `auth.credentials.refresh_token`
+  - Added safe `get_raw_info/1` helper for extracting raw_info with pattern matching
+  - Fixes "Ueberauth.Auth.Credentials does not implement Access behaviour" error
+  - OAuth callback processing now works correctly for all providers
+  - File: lib/phoenix_kit/users/oauth.ex
+
+### Impact
+- OAuth authentication with Google, GitHub, Apple, and Facebook now works correctly
+- Both bugs were critical and prevented OAuth from functioning entirely
+- All existing OAuth configurations will work without any changes required
+
+### Added
+- New Publishing module for Blogs and News (date related posts)
+- Pages Module disabled for now
+
+## 1.4.6 - 2025-10-26
+
+### Fixed
+- **CRITICAL: Ueberauth MatchError timing issue** - Fixed OAuth provider initialization race condition
+  - MatchError occurred when accessing `/phoenix_kit/users/auth/google`: `Ueberauth.get_providers/2 no match of right hand side value: :error`
+  - Root cause: PhoenixKit.Supervisor often starts AFTER parent application's Endpoint
+  - When Endpoint starts, router compiles and Ueberauth.init() requires :providers in config
+  - But OAuth configuration wasn't loaded yet, causing :providers key to be missing
+  - **Solution**: Created OAuthConfigLoader GenServer worker in PhoenixKit.Supervisor
+    - Loads OAuth configuration SYNCHRONOUSLY during supervisor startup
+    - Runs as FIRST child (before PubSub, Cache, etc.)
+    - Waits up to 1 second for Settings cache to be ready with automatic retry
+  - **Fallback**: Added EnsureOAuthConfig plug before Ueberauth plug
+    - Detects missing :providers configuration at request time
+    - Loads configuration synchronously if missing
+    - Provides 503 error page if configuration cannot be loaded
+    - Ensures OAuth always works even if supervisor ordering is incorrect
+  - Files: lib/phoenix_kit/workers/oauth_config_loader.ex (new), lib/phoenix_kit_web/plugs/ensure_oauth_config.ex (new)
+  - **Impact**: OAuth authentication now works reliably regardless of application startup order
+  - **Auto-enable providers**: When OAuth credentials are saved, oauth_X_enabled auto-set to "true"
+
+### Added
+- **OAuthConfigLoader Worker** - `PhoenixKit.Workers.OAuthConfigLoader`
+  - GenServer worker that loads OAuth configuration synchronously during startup
+  - Runs as first child in PhoenixKit.Supervisor
+  - Automatic retry with 100ms intervals (up to 10 attempts) if Settings cache not ready
+  - Ensures OAuth providers are configured before any requests are processed
+  - Prevents Ueberauth MatchError timing issues
+- **EnsureOAuthConfig Plug** - `PhoenixKitWeb.Plugs.EnsureOAuthConfig`
+  - Fallback plug that ensures OAuth configuration is loaded before Ueberauth plug
+  - Detects missing :providers key in Ueberauth config
+  - Loads configuration synchronously if missing
+  - Returns 503 Service Unavailable if configuration cannot be loaded
+  - Provides safety net for applications where PhoenixKit.Supervisor starts after Endpoint
+
+### Upgrade Notes
+- **No action required** - All changes are backward compatible
+- OAuth authentication now works reliably regardless of supervisor ordering
+- Existing OAuth credentials will auto-enable their providers on next settings save
+
+## 1.4.5 - 2025-10-26
+
+### Fixed
+- **CRITICAL: OAuth halt() missing in request handler** - Fixed 500 errors when clicking OAuth sign-in buttons
+  - Added missing `halt(conn)` in `handle_oauth_request()` to prevent Phoenix from attempting to render non-existent template
+  - OAuth redirects to provider now work correctly without server errors
+  - Ueberauth plug properly halts connection after processing
+  - Fixed in lib/phoenix_kit_web/users/oauth.ex:106
+- **HIGH PRIORITY: IPv6 Protocol.UndefinedError** - Fixed crashes when extracting IPv6 addresses
+  - Created centralized `PhoenixKit.Utils.IpAddress` module with proper pattern matching
+  - IPv4 addresses: `{a, b, c, d}` pattern with is_integer guards
+  - IPv6 addresses: `{a, b, c, d, e, f, g, h}` pattern with is_integer guards
+  - Invalid/nil handling: returns "unknown" safely
+  - Removed 7 duplicate implementations across codebase (dashboard, login, registration, magic_link, live_sessions, geolocation, oauth modules)
+- **Google OAuth credentials test not working after save** - Fixed credentials validation after update
+  - Auto-reload OAuth configuration immediately after credentials save via `OAuthConfig.configure_providers()`
+  - Test Credentials button now works immediately without manual reload
+  - Runtime Ueberauth configuration updates with new database values
+  - Fixed in lib/phoenix_kit_web/live/settings.ex with provider configuration reload
+- **OAuth credentials error messages unclear** - Improved user-friendly error reporting
+  - Changed field names in error messages: 'client_id' → 'Client ID', 'client_secret' → 'Client Secret', etc.
+  - Google: Shows 'Missing Google OAuth credentials: Client ID, Client Secret'
+  - Apple: Shows team_id, key_id, private_key with proper names
+  - GitHub and Facebook: Clear field names for all required credentials
+  - Fixed in lib/phoenix_kit/users/oauth_config.ex
+- **AWS credentials verification issues** - Simplified verification process
+  - Removed misleading permission checks from AWS credentials validator
+  - Focus on essential credential validation without speculative permission testing
+  - Cleaner error feedback for AWS SES/SNS/SQS setup
+- **Settings save error diagnostics** - Improved error collection on batch updates
+  - Detailed error information for each failed setting
+  - Clear field-specific error messages: 'Failed to save settings: field_name (reason)'
+  - Better troubleshooting information in logs
+  - Fixed in lib/phoenix_kit/settings/settings.ex
 - **CRITICAL: AWS Infrastructure Setup** - Email sending now works in containerized environments
   - Removed AWS CLI dependency for SES configuration (steps 8-9)
   - Fixed sweet_xml compatibility when library is installed
@@ -8,6 +235,19 @@
   - Infrastructure setup now works reliably in Docker, Kubernetes, and all environments
 
 ### Changed
+- **IPv6/IPv4 Extraction** - Centralized IP extraction utility
+  - `IpAddress.extract_from_socket/1` - Extract from LiveView socket
+  - `IpAddress.extract_from_conn/1` - Extract from Plug.Conn
+  - `IpAddress.extract_ip_address/1` - Extract from peer_data directly
+  - Updated 7 files to use centralized module instead of duplicate implementations
+- **OAuth Configuration Management** - Automatic runtime reload on credential updates
+  - Credentials now updated immediately after save without manual intervention
+  - Ueberauth providers reconfigured from database values
+  - Settings integration with live configuration updates
+- **AWS Credentials Validation** - Streamlined verification process
+  - Focus on credential format and basic validation
+  - No speculative AWS API calls during validation
+  - Clearer feedback for users configuring AWS services
 - **AWS Integration** - Improved reliability and idempotency
   - SES configuration set creation now uses SES v2 REST API
   - SES event destination setup now uses SES v2 REST API
@@ -15,6 +255,19 @@
   - Queue creation properly handles existing resources
 
 ### Added
+- **IpAddress Utility Module** - `PhoenixKit.Utils.IpAddress`
+  - Proper IPv4 and IPv6 address parsing with guard clauses
+  - Comprehensive documentation with usage examples
+  - Full test coverage (17 tests: 4 doctests + 13 unit tests)
+  - Support for LiveView sockets and Plug.Conn connections
+- **OAuth Auto-Configuration** - Automatic provider setup on credential save
+  - `OAuthConfig.configure_providers()` called after settings update
+  - Ensures Ueberauth runtime config matches database configuration
+  - No restart required for credential changes
+- **Improved Error Messages** - User-friendly OAuth field names
+  - Human-readable field names in validation errors
+  - Clear guidance on missing required credentials
+  - Supports all OAuth providers (Google, Apple, GitHub, Facebook)
 - **SES v2 API Module** - `PhoenixKit.AWS.SESv2`
   - `create_configuration_set/2` - Creates SES configuration set via API
   - `create_configuration_set_event_destination/4` - Configures event tracking
@@ -22,18 +275,59 @@
   - Production-ready error messages
 
 ### Technical Details
-- **Issue #1 (sweet_xml):** ExAws + sweet_xml returns flat maps with atom keys
+- **OAuth Request Handling:** Missing halt(conn) in handle_oauth_request() caused Phoenix to attempt rendering non-existent template
+  - Fixed: Added halt(conn) with detailed explanation (lib/phoenix_kit_web/users/oauth.ex:106)
+- **IPv6 Address Extraction:** Calling to_string() on IPv6 tuples caused Protocol.UndefinedError
+  - Root cause: Seven files had duplicate extract_ip_address() implementations without proper guards
+  - Fixed: Centralized to IpAddress module with is_integer guard clauses
+  - Impact: Users with IPv6 addresses no longer get crashes when IPs are extracted
+- **Google OAuth Credentials:** Test button showed "missing credentials" after save
+  - Root cause: OAuth runtime configuration not reloaded after database update
+  - Fixed: Added OAuthConfig.configure_providers() call in settings save handler
+  - Impact: Credentials work immediately after save without manual reload
+- **OAuth Error Messages:** Field names were cryptic (client_id, client_secret, etc.)
+  - Fixed: Map field names to user-friendly equivalents (Client ID, Client Secret)
+  - Improves user experience for credential configuration
+- **AWS Credentials Validation:** Permission checks were speculative and misleading
+  - Fixed: Remove AWS API calls from validator, focus on format validation
+  - Cleaner error feedback without false negatives
+- **AWS Issue #1 (sweet_xml):** ExAws + sweet_xml returns flat maps with atom keys
   - Fixed: Account ID, SNS Topic ARN, Subscription ARN parsing
-- **Issue #2 (SQS attributes):** ExAws.SQS requires keyword lists with atom keys
+- **AWS Issue #2 (SQS attributes):** ExAws.SQS requires keyword lists with atom keys
   - Fixed: Queue creation and policy setting across all steps
-- **Issue #3 (AWS CLI):** Email sending failed silently in Docker/Kubernetes
+- **AWS Issue #3 (AWS CLI):** Email sending failed silently in Docker/Kubernetes
   - Fixed: Complete SES v2 API implementation without external dependencies
+
+### Files Changed
+- **New:** lib/phoenix_kit/utils/ip_address.ex (102 lines)
+- **Updated:**
+  - lib/phoenix_kit_web/live/settings.ex - Add OAuth config reload on credential save
+  - lib/phoenix_kit_web/users/login.ex - Use centralized IpAddress module
+  - lib/phoenix_kit_web/users/registration.ex - Use centralized IpAddress module
+  - lib/phoenix_kit_web/users/magic_link.ex - Use centralized IpAddress module
+  - lib/phoenix_kit_web/live/dashboard.ex - Use centralized IpAddress module
+  - lib/phoenix_kit_web/live/users/live_sessions.ex - Use centralized IpAddress module
+  - lib/phoenix_kit_web/users/oauth.ex - Add halt(conn) + use centralized IpAddress module
+  - lib/phoenix_kit/utils/geolocation.ex - Use centralized IpAddress module
+  - lib/phoenix_kit/users/oauth_config.ex - Improve OAuth credential error messages
+  - lib/phoenix_kit/settings/settings.ex - Improve error collection on batch updates
+
+### Commits Included
+- bfe808f - Fix critical OAuth and IPv6 handling issues
+- 9aeb5ca - Fix Google OAuth credentials test and improve OAuth configuration
+- 25df3a7 - Simplify AWS credentials verification to remove misleading permission checks
+- b29de2d - Add AWS credentials verification with permission checks
+- bf2dd73 - Fix critical AWS infrastructure setup for containerized environments
 
 ### Upgrade Notes
 - **No action required** - All changes are backward compatible
+- OAuth sign-in buttons now work reliably without 500 errors
+- Google OAuth credentials save immediately without manual reload
+- Users with IPv6 addresses no longer experience crashes
+- AWS SES email delivery works in containerized environments
 - Existing AWS infrastructure continues to work
 - Docker/Kubernetes deployments now work without manual intervention
-- Re-run setup if previous attempts failed: `PhoenixKit.AWS.InfrastructureSetup.run(project_name: "yourapp")`
+- Re-run setup if previous AWS attempts failed: `PhoenixKit.AWS.InfrastructureSetup.run(project_name: "yourapp")`
 
 ## 1.4.4 - 2025-10-23
 

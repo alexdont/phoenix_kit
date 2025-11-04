@@ -192,7 +192,7 @@ defmodule PhoenixKit.Migrations.Postgres do
   alias PhoenixKit.Config
 
   @initial_version 1
-  @current_version 19
+  @current_version 20
   @default_prefix "public"
 
   @doc false

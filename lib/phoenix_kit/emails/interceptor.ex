@@ -38,7 +38,7 @@ defmodule PhoenixKit.Emails.Interceptor do
       logged_email = PhoenixKit.Emails.Interceptor.intercept_before_send(email)
 
       # With additional context
-      logged_email = PhoenixKit.Emails.Interceptor.intercept_before_send(email, 
+      logged_email = PhoenixKit.Emails.Interceptor.intercept_before_send(email,
         user_id: 123,
         template_name: "welcome_email",
         campaign_id: "welcome_series"
@@ -52,7 +52,9 @@ defmodule PhoenixKit.Emails.Interceptor do
 
   require Logger
 
+  alias PhoenixKit.Emails.Event
   alias PhoenixKit.Emails.Log
+  alias PhoenixKit.Emails.Utils
   alias Swoosh.Email
 
   @doc """
@@ -141,7 +143,7 @@ defmodule PhoenixKit.Emails.Interceptor do
         "smtp"
 
       true ->
-        detect_provider_from_config()
+        Utils.detect_provider_from_config()
     end
   end
 
@@ -156,7 +158,15 @@ defmodule PhoenixKit.Emails.Interceptor do
   def create_email_log(%Email{} = email, opts \\ []) do
     log_attrs = extract_email_data(email, opts)
 
-    PhoenixKit.Emails.create_log(log_attrs)
+    case PhoenixKit.Emails.create_log(log_attrs) do
+      {:ok, log} ->
+        # Create queued event
+        Event.create_queued_event(log.id)
+        {:ok, log}
+
+      error ->
+        error
+    end
   end
 
   @doc """
@@ -296,6 +306,9 @@ defmodule PhoenixKit.Emails.Interceptor do
           status: updated_log.status
         })
 
+        # Create send event
+        Event.create_send_event(updated_log.id, updated_log.provider)
+
         {:ok, updated_log}
 
       {:error, reason} ->
@@ -348,8 +361,7 @@ defmodule PhoenixKit.Emails.Interceptor do
       user_id: Keyword.get(opts, :user_id),
       provider: detect_provider(email, opts),
       configuration_set: get_configuration_set(opts),
-      message_tags: build_message_tags(email, opts),
-      sent_at: DateTime.utc_now()
+      message_tags: build_message_tags(email, opts)
     }
   end
 
@@ -597,29 +609,6 @@ defmodule PhoenixKit.Emails.Interceptor do
   end
 
   defp has_smtp_headers?(_), do: false
-
-  # Detect provider from configuration
-  defp detect_provider_from_config do
-    # Try to detect from application configuration
-    case PhoenixKit.Config.get(:mailer) do
-      {:ok, mailer} when not is_nil(mailer) ->
-        # Try to determine provider from mailer configuration
-        config = Application.get_env(:phoenix_kit, mailer, [])
-        adapter = Keyword.get(config, :adapter)
-
-        case adapter do
-          Swoosh.Adapters.AmazonSES -> "aws_ses"
-          Swoosh.Adapters.SMTP -> "smtp"
-          Swoosh.Adapters.Sendgrid -> "sendgrid"
-          Swoosh.Adapters.Mailgun -> "mailgun"
-          Swoosh.Adapters.Local -> "local"
-          _ -> "unknown"
-        end
-
-      _ ->
-        "unknown"
-    end
-  end
 
   # Extract data from provider response
   defp extract_provider_data(%{} = response) do

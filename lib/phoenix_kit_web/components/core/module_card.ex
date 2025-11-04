@@ -46,20 +46,21 @@ defmodule PhoenixKitWeb.Components.Core.ModuleCard do
         </:stats>
       </.module_card>
   """
-  attr :title, :string, required: true, doc: "Module title"
-  attr :description, :string, required: true, doc: "Module description text"
-  attr :icon, :string, required: true, doc: "Emoji icon for the module"
-  attr :enabled, :boolean, required: true, doc: "Whether the module is enabled"
-  attr :toggle_event, :string, required: true, doc: "Phoenix event name for the toggle switch"
-  attr :show_toggle, :boolean, default: true, doc: "Whether to show the toggle switch"
+  attr(:title, :string, required: true, doc: "Module title")
+  attr(:description, :string, required: true, doc: "Module description text")
+  attr(:icon, :string, required: true, doc: "Emoji icon for the module")
+  attr(:enabled, :boolean, required: true, doc: "Whether the module is enabled")
+  attr(:toggle_event, :string, required: true, doc: "Phoenix event name for the toggle switch")
 
-  slot :status_badges, required: true, doc: "Status badges to display (left side of actions row)"
+  slot(:status_badges, required: true, doc: "Status badges to display (left side of actions row)")
 
-  slot :action_buttons,
+  slot(:action_buttons,
     required: true,
     doc: "Action buttons to display (right side of actions row)"
+  )
 
-  slot :stats, doc: "Optional stats/configuration section (shown when enabled)"
+  slot(:stats, doc: "Optional stats/configuration section (shown when enabled)")
+  slot(:info, doc: "Optional informational content rendered between header and actions")
 
   def module_card(assigns) do
     ~H"""
@@ -87,6 +88,12 @@ defmodule PhoenixKitWeb.Components.Core.ModuleCard do
             </div>
           <% end %>
         </div>
+
+        <%= if @info != [] do %>
+          <div class="mt-4 bg-base-200/60 rounded-lg p-3 text-xs text-base-content/80 space-y-2">
+            {render_slot(@info)}
+          </div>
+        <% end %>
 
         <div class="divider my-2"></div>
 

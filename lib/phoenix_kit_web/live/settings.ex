@@ -34,7 +34,7 @@ defmodule PhoenixKitWeb.Live.Settings do
     # Create form changeset
     changeset = Settings.change_settings(merged_settings)
 
-    # Load Languages module status
+    # Load module statuses
     languages_enabled = Languages.enabled?()
 
     # Load content language
@@ -251,7 +251,7 @@ defmodule PhoenixKitWeb.Live.Settings do
   # Helper function to generate OAuth callback URL
   def get_oauth_callback_url(settings, provider) do
     site_url = settings["site_url"] || "https://example.com"
-    url_prefix = Application.get_env(:phoenix_kit, :url_prefix, "/phoenix_kit")
+    url_prefix = PhoenixKit.Config.get_url_prefix()
 
     "#{site_url}#{url_prefix}/users/auth/#{provider}/callback"
   end

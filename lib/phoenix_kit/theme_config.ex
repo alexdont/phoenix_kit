@@ -237,15 +237,6 @@ defmodule PhoenixKit.ThemeConfig do
   }
 
   @doc """
-  Returns true when the theme system is enabled for PhoenixKit.
-
-  Defaults to true but can be overridden via `config :phoenix_kit, :theme_enabled`.
-  """
-  def theme_enabled? do
-    Application.get_env(:phoenix_kit, :theme_enabled, true)
-  end
-
-  @doc """
   Returns the logical default theme name stored in the user's preferences.
   """
   def default_theme, do: "system"

@@ -13,8 +13,10 @@ defmodule PhoenixKitWeb.Users.MagicLink do
   use PhoenixKitWeb, :live_view
 
   alias PhoenixKit.Admin.Presence
+  alias PhoenixKit.Config
   alias PhoenixKit.Mailer
   alias PhoenixKit.Users.MagicLink
+  alias PhoenixKit.Utils.IpAddress
   alias PhoenixKit.Utils.Routes
 
   @impl true
@@ -25,7 +27,7 @@ defmodule PhoenixKitWeb.Users.MagicLink do
 
       Presence.track_anonymous(session_id, %{
         connected_at: DateTime.utc_now(),
-        ip_address: get_connect_info(socket, :peer_data) |> extract_ip_address(),
+        ip_address: IpAddress.extract_from_socket(socket),
         user_agent: get_connect_info(socket, :user_agent),
         current_page: Routes.path("/users/magic-link")
       })
@@ -131,18 +133,10 @@ defmodule PhoenixKitWeb.Users.MagicLink do
   end
 
   defp show_dev_notice? do
-    case Application.get_env(:phoenix_kit, PhoenixKit.Mailer)[:adapter] do
-      Swoosh.Adapters.Local -> true
-      _ -> false
-    end
+    Config.mailer_local?()
   end
 
   defp generate_session_id do
     :crypto.strong_rand_bytes(16) |> Base.encode64()
   end
-
-  defp extract_ip_address(nil), do: "unknown"
-  defp extract_ip_address(%{address: {a, b, c, d}}), do: "#{a}.#{b}.#{c}.#{d}"
-  defp extract_ip_address(%{address: address}), do: to_string(address)
-  defp extract_ip_address(_), do: "unknown"
 end

@@ -102,7 +102,7 @@ This will automatically:
   - Newsletter Module
   - Notifications Module
     - Integration with notification providers (Twilio, etc...)
-  - Content publishing Module
+  - Blogging module
     - Media / Gallery (with s3 backend)
     - Video (Video processing, streaming, Adaptive Bitrate (ABR): stream in multiple bitrates and resolutions for difference devices, HTTP Live Streaming (HLS): reduce bandwidth usage, playback latency, and buffering, H.264, H.265, VP8 & VP9: optimized next-generation video codecs)
     - Audio
@@ -133,7 +133,7 @@ This will automatically:
   - Booking Module (Calendar based)
   - Popups Module
   - Contact Us Module
-  - SEO Module
+  - SEO Module (sitemap, open graph)
   - AI Module
     - OpenRouter Integration
     - Integration with other AI providers

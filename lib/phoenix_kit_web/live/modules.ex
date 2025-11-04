@@ -14,6 +14,7 @@ defmodule PhoenixKitWeb.Live.Modules do
   alias PhoenixKit.Pages
   alias PhoenixKit.ReferralCodes
   alias PhoenixKit.Settings
+  alias PhoenixKitWeb.Live.Modules.Blogging
 
   def mount(params, _session, socket) do
     # Set locale for LiveView process
@@ -29,6 +30,7 @@ defmodule PhoenixKitWeb.Live.Modules do
     languages_config = Languages.get_config()
     entities_config = Entities.get_config()
     pages_enabled = Pages.enabled?()
+    blogging_enabled = Blogging.enabled?()
     under_construction_config = Maintenance.get_config()
     storage_config = Storage.get_config()
 
@@ -52,6 +54,7 @@ defmodule PhoenixKitWeb.Live.Modules do
       |> assign(:entities_count, entities_config.entity_count)
       |> assign(:entities_total_data, entities_config.total_data_count)
       |> assign(:pages_enabled, pages_enabled)
+      |> assign(:blogging_enabled, blogging_enabled)
       |> assign(:under_construction_module_enabled, under_construction_config.module_enabled)
       |> assign(:under_construction_enabled, under_construction_config.enabled)
       |> assign(:under_construction_header, under_construction_config.header)
@@ -200,6 +203,36 @@ defmodule PhoenixKitWeb.Live.Modules do
       {:error, _changeset} ->
         socket = put_flash(socket, :error, "Failed to update entities system")
         {:noreply, socket}
+    end
+  end
+
+  def handle_event("toggle_blogging", _params, socket) do
+    new_enabled = !socket.assigns.blogging_enabled
+
+    result =
+      if new_enabled do
+        Blogging.enable_system()
+      else
+        Blogging.disable_system()
+      end
+
+    case result do
+      {:ok, _} ->
+        socket =
+          socket
+          |> assign(:blogging_enabled, new_enabled)
+          |> put_flash(
+            :info,
+            if(new_enabled,
+              do: "Blogging module enabled",
+              else: "Blogging module disabled"
+            )
+          )
+
+        {:noreply, socket}
+
+      {:error, _reason} ->
+        {:noreply, put_flash(socket, :error, "Failed to update blogging module")}
     end
   end
 
