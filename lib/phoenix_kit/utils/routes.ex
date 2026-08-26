@@ -619,6 +619,95 @@ defmodule PhoenixKit.Utils.Routes do
   end
 
   @doc """
+  The current page's path, under a different locale.
+
+  What the language switcher links to. Strips whatever locale segment the path
+  already carries and rebuilds it for `locale`, so switching twice cannot stack
+  prefixes.
+
+  ## The bug this replaces
+
+  Three near-copies of this lived in `AdminNav`, `LayoutWrapper` and
+  `UserDashboardNav`, and each decided differently which leading segment counted
+  as a locale worth removing:
+
+    * two of them tested membership of an *enabled-codes* list, while the
+      dropdown beside them was populated from `get_display_languages/0` — a
+      strictly larger set. Any language the switcher offered but the module had
+      not enabled was therefore not recognised on the way back out: from
+      `/phoenix_kit/ja/admin`, switching to English produced
+      `/phoenix_kit/en/ja/admin`, which routes nowhere.
+    * the third matched by shape (a 2-character segment, or 5 with a dash),
+      which strips `ja` correctly but would also eat an unrelated two-letter
+      path segment and misses 3-letter codes entirely.
+
+  The set used here is the one the switcher itself can emit — every display
+  language plus every enabled code, with base codes for both. A path the
+  switcher produced is therefore always recognised on the next switch, and a
+  segment it could never have produced (`/api`, `/id`) is left alone.
+
+  ## Options
+
+    * `:current_locale` — the locale the page is being viewed in. Included in
+      the strip set, so an active locale is removed even if it has since been
+      disabled.
+  """
+  @spec locale_switch_path(String.t() | nil, String.t(), keyword()) :: String.t()
+  def locale_switch_path(current_path, locale, opts \\ []) do
+    base = DialectMapper.extract_base(locale)
+
+    url_prefix = Config.get_url_prefix()
+    prefix = if url_prefix == "/", do: "", else: url_prefix
+
+    (current_path || "")
+    |> String.replace_prefix(prefix, "")
+    |> strip_locale_segment(opts[:current_locale])
+    |> path(locale: base)
+  end
+
+  # Drop a leading locale segment, leaving "/" when it was the whole path.
+  defp strip_locale_segment(path, current_locale) do
+    known = switchable_locale_codes(current_locale)
+
+    case String.split(path, "/", parts: 3) do
+      ["", segment, rest] -> if segment in known, do: "/" <> rest, else: nonempty(path)
+      ["", segment] -> if segment in known, do: "/", else: nonempty(path)
+      _ -> nonempty(path)
+    end
+  end
+
+  defp nonempty(""), do: "/"
+  defp nonempty(path), do: path
+
+  # Everything the switcher could have put in a URL. Deliberately wider than
+  # "enabled": the dropdown lists display languages, so those are exactly the
+  # codes that can come back at us.
+  defp switchable_locale_codes(current_locale) do
+    display =
+      if Code.ensure_loaded?(Languages) and
+           function_exported?(Languages, :get_display_languages, 0) do
+        Languages.get_display_languages()
+        |> Enum.map(fn lang -> if is_struct(lang), do: lang.code, else: lang[:code] end)
+        |> Enum.filter(&is_binary/1)
+      else
+        []
+      end
+
+    enabled =
+      if Code.ensure_loaded?(Languages) and
+           function_exported?(Languages, :enabled_locale_codes, 0),
+         do: Languages.enabled_locale_codes(),
+         else: []
+
+    codes = display ++ enabled ++ List.wrap(current_locale)
+
+    codes
+    |> Enum.flat_map(fn code -> [code, DialectMapper.extract_base(code)] end)
+    |> Enum.filter(&is_binary/1)
+    |> Enum.uniq()
+  end
+
+  @doc """
   Whether `path` actually resolves to a `GET` route in the application's router.
 
   The router is taken from the request: `conn.private[:phoenix_router]`, set by

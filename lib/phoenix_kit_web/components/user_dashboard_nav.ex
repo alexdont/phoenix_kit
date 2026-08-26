@@ -471,7 +471,11 @@ defmodule PhoenixKitWeb.Components.UserDashboardNav do
         <div class="!p-0 block w-full max-h-60 overflow-y-auto overflow-x-hidden !bg-transparent hover:!bg-transparent focus:!bg-transparent">
           <a
             :for={language <- @user_languages}
-            href={generate_language_switch_url(@current_path, language.code)}
+            href={
+              Routes.locale_switch_path(@current_path, language.code,
+                current_locale: assigns[:current_locale]
+              )
+            }
             class={[
               "w-full flex items-center gap-3 rounded-lg px-4 py-2 text-sm",
               "focus:outline-none focus-visible:outline-none",
@@ -601,51 +605,5 @@ defmodule PhoenixKitWeb.Components.UserDashboardNav do
   # Check if it looks like a locale code
   defp looks_like_locale?(locale) do
     String.length(locale) <= 8 and String.match?(locale, ~r/^[a-z]{2,3}(-[A-Za-z]{2,4})?$/)
-  end
-
-  # Legacy helper - kept for backward compatibility
-  defp generate_language_switch_url(current_path, new_locale) do
-    base_code = DialectMapper.extract_base(new_locale)
-
-    # Extract the path without locale and regenerate with new locale
-    url_prefix = PhoenixKit.Config.get_url_prefix()
-    base_prefix = if url_prefix === "/", do: "", else: url_prefix
-
-    # Remove prefix and locale from current_path
-    clean_path =
-      current_path
-      |> String.replace_prefix(base_prefix, "")
-      |> remove_locale_from_path()
-
-    # Generate new path with the new locale
-    Routes.path(clean_path, locale: base_code)
-  end
-
-  # Remove locale from path.
-  #
-  # A path that is *only* a locale segment (e.g. "/ru", "/en-GB") reduces
-  # to "/". The empty-`rest` guard matters: `Path.join([])` raises a
-  # FunctionClauseError, which used to 500 a host's bare `/:locale` landing
-  # route (e.g. a locale-prefixed landing page introduced in 1.7.150+).
-  defp remove_locale_from_path(path) do
-    case String.split(path, "/", trim: true) do
-      [segment | rest] when byte_size(segment) in [2, 5] ->
-        cond do
-          not locale_segment?(segment) -> path
-          rest == [] -> "/"
-          true -> "/" <> Path.join(rest)
-        end
-
-      _ ->
-        path
-    end
-  end
-
-  # A 2-char base code or a 5-char dialect ("en-GB"). Mirrors the original
-  # inline guard; kept narrow on purpose so a real 3-char page segment
-  # (e.g. "/faq") isn't mistaken for a locale.
-  defp locale_segment?(segment) do
-    String.length(segment) == 2 or
-      (String.length(segment) == 5 and String.contains?(segment, "-"))
   end
 end

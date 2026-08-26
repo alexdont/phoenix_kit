@@ -294,7 +294,11 @@ defmodule PhoenixKitWeb.Components.AdminNav do
                     type="button"
                     phx-click="phoenix_kit_set_locale"
                     phx-value-locale={language.code}
-                    phx-value-url={generate_language_switch_url(@current_path, language.code)}
+                    phx-value-url={
+                      Routes.locale_switch_path(@current_path, language.code,
+                        current_locale: assigns[:current_locale]
+                      )
+                    }
                     class={[
                       "w-full flex items-center gap-3 rounded-lg px-4 py-2 text-sm",
                       "focus:outline-none focus-visible:outline-none",
@@ -675,45 +679,6 @@ defmodule PhoenixKitWeb.Components.AdminNav do
     else
       "🌐"
     end
-  end
-
-  # Build URL with base code - expects base code directly (e.g., "en" not "en-US")
-  # Uses Routes.path/2 which automatically skips locale prefix for default language
-  defp build_locale_url(current_path, base_code) do
-    # Get valid language codes from the unified Languages module
-    language_codes =
-      if Code.ensure_loaded?(Languages),
-        do: Languages.enabled_locale_codes(),
-        else: []
-
-    base_codes = Enum.map(language_codes, &DialectMapper.extract_base/1)
-    valid_codes = Enum.uniq(language_codes ++ base_codes)
-
-    # Remove PhoenixKit prefix if present (use dynamic config, not hardcoded)
-    url_prefix = PhoenixKit.Config.get_url_prefix()
-    prefix_to_remove = if url_prefix == "/", do: "", else: url_prefix
-    normalized_path = String.replace_prefix(current_path || "", prefix_to_remove, "")
-
-    # Remove existing locale prefix only if it matches actual language codes
-    clean_path =
-      case String.split(normalized_path, "/", parts: 3) do
-        ["", potential_locale, rest] ->
-          if potential_locale in valid_codes, do: "/" <> rest, else: normalized_path
-
-        ["", potential_locale] ->
-          if potential_locale in valid_codes, do: "/", else: normalized_path
-
-        _ ->
-          normalized_path
-      end
-
-    Routes.admin_path(clean_path, base_code)
-  end
-
-  # Legacy helper - kept for backward compatibility
-  defp generate_language_switch_url(current_path, new_locale) do
-    base_code = DialectMapper.extract_base(new_locale)
-    build_locale_url(current_path, base_code)
   end
 
   # Badge naming the role of the account that is *currently active* — which,
