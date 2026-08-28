@@ -4088,7 +4088,7 @@ if (typeof window.Chart === "undefined") {
   // ============================================================================
 
   (function() {
-    var LEAF_CDN = "https://cdn.jsdelivr.net/gh/alexdont/leaf@v0.5.1/priv/static/assets/leaf.js";
+    var LEAF_CDN = "https://cdn.jsdelivr.net/gh/alexdont/leaf@v0.6.0/priv/static/assets/leaf.js";
     var leafLoading = false;
     var leafCallbacks = [];
 
