@@ -2332,6 +2332,12 @@ if (typeof window.Chart === "undefined") {
         // (where large suffices and originals would be pure waste).
         var column = self.el.querySelector('[id^="pk-annotation-actions-"]');
         var colW = (column && column.clientWidth) || window.innerWidth || 0;
+        // Device px, not CSS px — Tessera picks its raster against the
+        // physical pixels it lights (0.3.7), so a 4K monitor at 200% OS
+        // scaling (~1632 CSS px column, dpr 2) does open on the original.
+        // Gating the warm in CSS px left exactly those viewers stepping
+        // onto multi-MB originals nothing had warmed.
+        colW = colW * (window.devicePixelRatio || 1);
         if (colW > 1920 * 1.1) {
           warmList += " " + ((self.el.dataset && self.el.dataset.neighborPrefetchHi) || "");
         }
@@ -5009,7 +5015,7 @@ if (typeof window.Chart === "undefined") {
   // ============================================================================
 
   (function() {
-    var TESSERA_CDN = "https://cdn.jsdelivr.net/gh/alexdont/tessera@v0.3.6/priv/static/tessera.js";
+    var TESSERA_CDN = "https://cdn.jsdelivr.net/gh/alexdont/tessera@v0.3.7/priv/static/tessera.js";
     var tesseraLoading = false;
     var tesseraCallbacks = [];
 

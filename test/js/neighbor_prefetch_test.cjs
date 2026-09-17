@@ -144,3 +144,33 @@ test("a step re-announces the viewer and re-warms — the modal is patched, not 
   assert.deepStrictEqual(fetched, ["/f/q/small/qq", "/f/q/large/ql"],
     "and the NEXT press's neighbours warm now, not never");
 });
+
+test("a hiDPI column counts device pixels for the original warm", () => {
+  // Tessera 0.3.7 picks its raster against physical pixels, so a 4K
+  // monitor at 200% OS scaling (~1632 CSS px, dpr 2) opens straight on
+  // the original — the warm gate must count the same pixels, or exactly
+  // those viewers step onto multi-MB originals nothing warmed.
+  const { hook, fetched, win } = loadKeydown();
+  win.devicePixelRatio = 2;
+  hook.mounted.call({
+    el: mountEl({
+      neighborPrefetch: "/f/n/small/aa",
+      neighborPrefetchHi: "/f/n/original/xx",
+    }, 1600),
+    pushEventTo: () => {},
+  });
+  assert.ok(fetched.includes("/f/n/original/xx"),
+    "1600 CSS px at dpr 2 is 3200 device px — past large's 1920 rung");
+
+  // …and dpr 1 at the same CSS width still skips it, as ever.
+  const second = loadKeydown();
+  second.hook.mounted.call({
+    el: mountEl({
+      neighborPrefetch: "/f/n/small/aa",
+      neighborPrefetchHi: "/f/n/original/xx",
+    }, 1600),
+    pushEventTo: () => {},
+  });
+  assert.ok(!second.fetched.includes("/f/n/original/xx"),
+    "a genuinely 1600-device-px column has no use for the original");
+});
