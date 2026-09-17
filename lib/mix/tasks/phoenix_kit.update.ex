@@ -2102,7 +2102,8 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
 
       # Always call add_oban_configuration - it handles both:
       # - Adding new configuration if missing
-      # - Updating existing configuration with new queues (posts, sitemap, sqs_polling)
+      # - Adding any declared queue (PhoenixKit.ObanQueues) the existing
+      #   configuration is missing, without changing limits already set
       igniter =
         igniter
         |> ObanConfig.add_oban_configuration(prefix)
@@ -2144,7 +2145,8 @@ if Code.ensure_loaded?(Igniter.Mix.Task) do
     defp add_oban_config_updated_notice(igniter) do
       notice = """
       ⚙️  Oban configuration verified/updated in config.exs
-         New queues may have been added: posts, sitemap, sqs_polling
+         Any queue PhoenixKit or an installed module declares was added if it
+         was missing (existing limits are never changed).
          IMPORTANT: If your server is running, restart it to apply changes.
       """
 

@@ -210,8 +210,14 @@ defmodule PhoenixKitWeb.Live.Settings do
      |> assign(:media_selector_target, nil)}
   end
 
-  # Catch-all for other settings changes (future-proof)
+  # Every committed settings write is broadcast, including this page's own
+  # saves; the page reloads from its own save handler, so the events are
+  # accepted and ignored here rather than left to crash the process.
   def handle_info({:setting_changed, _key, _value}, socket) do
+    {:noreply, socket}
+  end
+
+  def handle_info({:setting_deleted, _key}, socket) do
     {:noreply, socket}
   end
 

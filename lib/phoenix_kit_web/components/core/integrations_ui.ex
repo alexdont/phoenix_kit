@@ -251,6 +251,7 @@ defmodule PhoenixKitWeb.Components.Core.IntegrationsUI do
       assigns
       |> assign(:value, setup_field_value(assigns))
       |> assign(:placeholder, setup_field_placeholder(assigns))
+      |> assign(:required, setup_field_required?(assigns))
 
     ~H"""
     <div class="fieldset">
@@ -300,7 +301,7 @@ defmodule PhoenixKitWeb.Components.Core.IntegrationsUI do
         value={@value}
         class="input w-full"
         placeholder={@placeholder}
-        required={@field.required}
+        required={@required}
         autocomplete="off"
       />
 
@@ -319,6 +320,16 @@ defmodule PhoenixKitWeb.Components.Core.IntegrationsUI do
       field_type(field) == :password and saved != "" -> ""
       true -> saved
     end
+  end
+
+  # A masked secret renders empty, and empty means "keep the saved one" — so it
+  # cannot also be `required`, or the browser refuses Save Changes until the
+  # secret is typed again (e.g. when only a login next to it changed).
+  defp setup_field_required?(%{typed_value: typed, saved_value: saved, field: field}) do
+    # `== true`: a provider may leave `required` nil, which every other reader
+    # takes as false.
+    field.required == true and
+      not (typed == "" and field_type(field) == :password and saved != "")
   end
 
   defp setup_field_placeholder(%{typed_value: typed, saved_value: saved, field: field}) do

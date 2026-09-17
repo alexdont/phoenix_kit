@@ -20,6 +20,7 @@ if Code.ensure_loaded?(Igniter) do
     # Mix functions only available at compile-time during installation
     @dialyzer {:nowarn_function, update_existing_oban_config: 3}
     @dialyzer {:nowarn_function, ensure_queue: 4}
+    @dialyzer {:nowarn_function, ensure_declared_queues: 3}
     @dialyzer {:nowarn_function, insert_queue: 4}
     @dialyzer {:nowarn_function, ensure_scheduled_jobs_queue: 2}
     @dialyzer {:nowarn_function, ensure_cron_plugin: 2}
@@ -225,19 +226,15 @@ if Code.ensure_loaded?(Igniter) do
 
       oban_config = """
 
-      # Configure Oban for PhoenixKit background jobs
-      # Required for file processing (storage system), posts, and sitemap
+      # Configure Oban for PhoenixKit background jobs.
+      # Queues come from PhoenixKit and the installed modules (their
+      # `oban_queues/0` declarations); `mix phoenix_kit.update` adds any a
+      # later module declares, and never changes a limit you set here.
+      # Limits are per node.
       config :#{app_name}, Oban,
         repo: #{repo_module},#{prefix_line}
         queues: [
-          default: 10,           # General purpose queue
-          file_processing: 20,   # File variant generation (storage system)
-          posts: 10,             # Posts scheduled publishing
-          scheduled_jobs: 1,     # Scheduled jobs cron
-          sitemap: 5,            # Sitemap generation
-          newsletters_delivery: 10, # Newsletters broadcast deliveries
-          catalogue_pdf: 2,      # phoenix_kit_catalogue PDF text extraction
-          notifications: 10      # Notification delivery channels (Telegram, etc.)
+      #{generated_queue_lines()}
         ],
         plugins: [
           # Pruner: delete completed/discarded jobs after 30 days
@@ -303,30 +300,16 @@ if Code.ensure_loaded?(Igniter) do
     defp update_existing_oban_config(source, content, app_name) do
       Mix.shell().info("🔍 Updating existing Oban configuration for :#{app_name}...")
 
-      # Every queue PhoenixKit or one of its modules enqueues into. All are
-      # added unconditionally — an idle queue costs nothing, and a host that
-      # adds the module later is then already wired. The reverse is the failure
-      # this list exists to prevent: Oban only fetches for queues the node
-      # lists, so a job enqueued into a missing queue sits `available` forever
-      # (Pruner deletes terminal states only) while the feature looks fine.
-      #
-      #   catalogue_pdf         phoenix_kit_catalogue's per-upload pdfinfo /
-      #                         pdftotext extraction — without it uploads
-      #                         succeed but text search never works
-      #   notifications         Notifications.DeliveryWorker's external sends
-      #                         (Telegram, …), off the request path — without
-      #                         it external notifications silently never arrive
-      #   scheduled_jobs        ProcessScheduledJobsWorker's per-minute sweep,
-      #                         see ensure_scheduled_jobs_queue/2 below
+      # Every queue PhoenixKit or an installed module declares
+      # (`PhoenixKit.ObanQueues`) is added when missing — an idle queue costs
+      # nothing, and the reverse is the failure this exists to prevent: Oban
+      # only fetches for queues the node lists, so a job enqueued into a
+      # missing queue sits `available` forever (Pruner deletes terminal states
+      # only) while the feature looks fine. A limit already present is never
+      # changed.
       updated_content =
         content
-        |> ensure_queue(app_name, "posts", 10)
-        |> ensure_queue(app_name, "sitemap", 5)
-        |> ensure_queue(app_name, "shop_imports", 2)
-        |> ensure_queue(app_name, "newsletters_delivery", 10)
-        |> ensure_queue(app_name, "catalogue_pdf", 2)
-        |> ensure_queue(app_name, "notifications", 10)
-        |> ensure_scheduled_jobs_queue(app_name)
+        |> ensure_declared_queues(app_name)
         |> ensure_cron_plugin(app_name)
         |> ensure_digest_cron_entries(app_name)
         |> ensure_worker_cron_entries(app_name)
@@ -344,6 +327,75 @@ if Code.ensure_loaded?(Igniter) do
       end
 
       Rewrite.Source.update(source, :content, updated_content)
+    end
+
+    @doc """
+    Adds every declared queue (`PhoenixKit.ObanQueues.declared/1`) that a host's
+    existing Oban block is missing.
+
+    A block that runs no queues — `queues: false` or `queues: []`, a web-only
+    node — is left exactly as it is, with one line saying so, rather than a
+    "please add manually" error per queue. Conflicting declarations are
+    reported, and the first one wins (PhoenixKit's own, then modules in a
+    stable order).
+
+    Public so it can be unit-tested against content strings; `declared` is
+    injectable for the same reason.
+    """
+    @spec ensure_declared_queues(String.t(), atom() | String.t(), [map()] | nil) :: String.t()
+    def ensure_declared_queues(content, app_name, declared \\ nil) do
+      {declared, conflicts} =
+        case declared do
+          nil -> PhoenixKit.ObanQueues.resolve()
+          list -> {list, []}
+        end
+
+      Enum.each(conflicts, fn conflict ->
+        Mix.shell().error("  ⚠️  " <> PhoenixKit.ObanQueues.describe_conflict(conflict))
+      end)
+
+      if queues_disabled?(content, app_name) do
+        Mix.shell().info(
+          "  ℹ️  This node's Oban config runs no queues (queues: false or []); leaving it as is"
+        )
+
+        content
+      else
+        Enum.reduce(declared, content, fn spec, acc ->
+          ensure_queue(acc, app_name, Atom.to_string(spec.name), spec.limit)
+        end)
+      end
+    end
+
+    @doc false
+    # `queues: false`, `queues: []` — Oban's two spellings of "this node runs
+    # no queues". Scoped to this app's Oban block, like `insert_queue/4`.
+    def queues_disabled?(content, app_name) do
+      case app_oban_block(content, app_name) do
+        nil -> false
+        block -> Regex.match?(~r/^\s*queues:\s*(?:false\b|\[\s*\])/m, block)
+      end
+    end
+
+    @doc false
+    # The queue lines of a freshly generated Oban block, one per declared
+    # queue, with who asked for it. The comma goes BEFORE the comment — after
+    # it, it would be part of the comment and the list would not parse.
+    def generated_queue_lines(declared \\ PhoenixKit.ObanQueues.declared()) do
+      last = length(declared) - 1
+
+      declared
+      |> Enum.with_index()
+      |> Enum.map_join("\n", fn {spec, index} ->
+        comma = if index == last, do: "", else: ","
+        "    #{spec.name}: #{spec.limit}#{comma}" <> queue_comment(spec)
+      end)
+    end
+
+    defp queue_comment(%{owner: owner, kind: kind}) do
+      who = PhoenixKit.ObanQueues.owner_label(owner)
+      what = if kind, do: ", #{kind}", else: ""
+      "   # #{who}#{what}"
     end
 
     # The one queue a host can be missing through no fault of its own.
@@ -381,7 +433,7 @@ if Code.ensure_loaded?(Igniter) do
     """
     @spec ensure_queue(String.t(), atom() | String.t(), String.t(), pos_integer()) :: String.t()
     def ensure_queue(content, app_name, queue, limit) do
-      if queue_configured?(content, queue) do
+      if queue_configured?(content, app_name, queue) do
         Mix.shell().info("  ℹ️  #{queue} queue already configured")
         content
       else
@@ -408,11 +460,29 @@ if Code.ensure_loaded?(Igniter) do
     # host's own `push_notifications: 5` — the siblings' unanchored patterns
     # read any key *ending* in the queue's name as the queue itself and skipped
     # the insert, which is the missing-queue failure all over again.
-    defp queue_configured?(content, queue) do
+    #
+    # Scoped to THIS app's Oban block: in a config holding several apps' Oban
+    # blocks (an umbrella, a host that also runs a second instance), another
+    # block listing the same queue used to make the updater skip it here — the
+    # missing-queue failure again, for a queue that is plainly absent from this
+    # app.
+    defp queue_configured?(content, app_name, queue) do
       Regex.match?(
         ~r/^\s*#{Regex.escape(queue)}:\s*(?:\d+|\[)/m,
-        strip_comment_lines(content)
+        app_oban_block(content, app_name) || strip_comment_lines(content)
       )
+    end
+
+    # The body of `config :app_name, Oban, ...` up to the next top-level
+    # `config`/`import_config`, comment lines removed; nil when there is none.
+    defp app_oban_block(content, app_name) do
+      case Regex.run(
+             ~r/^config\s+:#{app_name},\s+Oban\b((?:(?!\n(?:config\s|import_config\s)).)*)/ms,
+             strip_comment_lines(content)
+           ) do
+        [_, block] -> block
+        nil -> nil
+      end
     end
 
     # Two ways string surgery on a queues list goes wrong, both already paid for

@@ -432,6 +432,52 @@
               </.checkbox>
             </div>
 
+            <%!-- Image Editing --%>
+            <div class="fieldset">
+              <div class="mb-2">
+                <span class="fieldset-legend font-semibold">{gettext("Image Editing")}</span>
+                <span class="block text-xs text-base-content/60">
+                  {gettext(
+                    "What saving an edited image (crop, turn, redaction…) does with the original."
+                  )}
+                </span>
+              </div>
+              <label class="label cursor-pointer justify-start gap-3 py-1">
+                <input
+                  type="radio"
+                  name="form_image_edit_mode"
+                  value="keep_original"
+                  checked={@form_image_edit_mode == "keep_original"}
+                  class="radio radio-sm"
+                />
+                <span class="flex flex-col">
+                  <span class="text-sm">{gettext("Keep the original (recommended)")}</span>
+                  <span class="text-xs text-base-content/60 whitespace-normal">
+                    {gettext(
+                      "The unedited image is kept privately, so an edit can be changed or undone. Owners can delete it themselves."
+                    )}
+                  </span>
+                </span>
+              </label>
+              <label class="label cursor-pointer justify-start gap-3 py-1">
+                <input
+                  type="radio"
+                  name="form_image_edit_mode"
+                  value="replace_original"
+                  checked={@form_image_edit_mode == "replace_original"}
+                  class="radio radio-sm"
+                />
+                <span class="flex flex-col">
+                  <span class="text-sm">{gettext("Replace the original")}</span>
+                  <span class="text-xs text-base-content/60 whitespace-normal">
+                    {gettext(
+                      "Every save overwrites the image for good. Nothing can be undone, and redacted areas are gone from storage."
+                    )}
+                  </span>
+                </span>
+              </label>
+            </div>
+
             <%!-- Max Upload Size --%>
             <div class="fieldset">
               <div class="mb-2">
@@ -458,6 +504,7 @@
               @form_auto_generate_variants == @auto_generate_variants and
               @form_tile_generation_enabled == @tile_generation_enabled and
               @form_annotated_thumbnails_enabled == @annotated_thumbnails_enabled and
+              @form_image_edit_mode == @image_edit_mode and
               @form_max_upload_size_mb == @max_upload_size_mb %>
           <div class="fieldset mt-4">
             <button

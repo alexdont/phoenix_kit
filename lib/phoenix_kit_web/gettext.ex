@@ -20,5 +20,11 @@ defmodule PhoenixKitWeb.Gettext do
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
   """
-  use Gettext.Backend, otp_app: :phoenix_kit
+
+  # One module per locale, compiled in parallel. Unified, ~2.7k messages x
+  # 8 locales became clauses of one giant function, which the compiler
+  # handles superlinearly: a clean `mix compile --force` took 69s, 58s of
+  # it on this file. Split: 20s. Elixir may still print "taking more than
+  # 10s" for this file on a clean build; that is an informational notice.
+  use Gettext.Backend, otp_app: :phoenix_kit, split_module_by: [:locale]
 end

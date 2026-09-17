@@ -242,23 +242,66 @@ defmodule PhoenixKit.Users.Permissions do
     # registration only happens at app startup, not at runtime.
     # Re-registration of existing keys is always allowed (override).
     current = custom_keys_map()
-
-    if not Map.has_key?(current, key) and map_size(current) >= @max_custom_keys do
-      raise ArgumentError,
-            "Cannot register more than #{@max_custom_keys} custom permission keys"
-    end
-
-    if Map.has_key?(current, key) do
-      Logger.warning(
-        "[Permissions] Custom permission key #{inspect(key)} re-registered, overriding previous metadata"
-      )
-    end
+    check_registration!(current, key, meta, opts)
 
     :persistent_term.put(@custom_keys_pterm, Map.put(current, key, meta))
 
     maybe_auto_grant_custom_key(key, opts)
 
     :ok
+  end
+
+  # A new key must fit under the cap; an existing one may be re-registered.
+  defp check_registration!(current, key, meta, opts) do
+    case Map.fetch(current, key) do
+      {:ok, previous} ->
+        warn_on_reregistration(key, previous, meta, opts)
+
+      :error when map_size(current) >= @max_custom_keys ->
+        raise ArgumentError,
+              "Cannot register more than #{@max_custom_keys} custom permission keys"
+
+      :error ->
+        :ok
+    end
+  end
+
+  # Re-registering a key replaces its metadata (the latest registration wins,
+  # as it always has). Whether that deserves a warning depends on who is
+  # registering:
+  #
+  #   * Admin tabs register the key they are gated on, one call per tab, and
+  #     again on every registry reload. Several tabs sharing one permission is
+  #     normal — each carries its own label and icon — so a warning per tab is
+  #     noise: one app key produced eight of them per boot. The registry marks
+  #     those calls `from_admin_tab: true` and they stay quiet…
+  #   * …unless the tabs disagree on `auto_grant_admin`. That flag decides
+  #     whether Admin holds the key by default, and "the last tab to load
+  #     wins" is not a rule anyone should rely on for it, so that conflict is
+  #     always reported.
+  #   * A direct `register_custom_key/2` call re-registering a key is still
+  #     worth knowing about, so it keeps its warning.
+  defp warn_on_reregistration(key, previous, meta, opts) do
+    auto_grant_conflict? =
+      Map.get(previous, :auto_grant_admin, true) != Map.get(meta, :auto_grant_admin, true)
+
+    cond do
+      auto_grant_conflict? ->
+        Logger.warning(
+          "[Permissions] Custom permission key #{inspect(key)} registered with conflicting " <>
+            "auto_grant_admin values (#{inspect(Map.get(previous, :auto_grant_admin, true))} " <>
+            "then #{inspect(Map.get(meta, :auto_grant_admin, true))}); the latest registration " <>
+            "wins, but every tab gated on this key should agree"
+        )
+
+      Keyword.get(opts, :from_admin_tab, false) ->
+        :ok
+
+      true ->
+        Logger.warning(
+          "[Permissions] Custom permission key #{inspect(key)} re-registered, overriding previous metadata"
+        )
+    end
   end
 
   # Auto-grant a newly-registered custom key to Admin so a host's custom admin

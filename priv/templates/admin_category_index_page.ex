@@ -14,7 +14,6 @@ defmodule <%= @web_module_prefix %>.PhoenixKit.Admin.<%= @category %>.Index do
       socket
       |> assign(:project_title, Settings.get_setting("project_title", "PhoenixKit"))
       |> assign(:page_title, gettext("<%= @category %>"))
-      |> assign(:url_path, "<%= @url %>")
 
     {:ok, socket}
   end

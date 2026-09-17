@@ -7,7 +7,7 @@
 // for — and a browser that fell back once stayed on longpoll for the tab's
 // life: laggy, and prone to full-page reloads that ate in-progress work.
 //
-//   node --test test/js/transport_cache_test.cjs
+//   node --test test/js/transport_cache.test.cjs
 
 const fs = require("fs");
 const path = require("path");
@@ -38,7 +38,7 @@ test("the filter clears Phoenix's fallback key and spares PhoenixKit's", () => {
 
 test("phoenix.js really does use that key shape", () => {
   const phoenix = fs.readFileSync(
-    path.join(__dirname, "..", "..", "..", "..", "deps", "phoenix", "priv", "static", "phoenix.js"),
+    path.join(__dirname, "..", "..", "deps", "phoenix", "priv", "static", "phoenix.js"),
     "utf8"
   );
   assert.ok(phoenix.includes("phx:fallback:"),

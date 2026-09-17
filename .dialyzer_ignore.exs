@@ -17,6 +17,8 @@
   {"lib/phoenix_kit/install/js_integration.ex", :unknown_function},
   {"lib/mix/tasks/phoenix_kit.status.ex", :unknown_function},
   {"lib/phoenix_kit/migrations/postgres.ex", :unknown_function},
+  # Dev-only warning checks Mix.env/0 at runtime, guarded by function_exported?/3
+  {"lib/phoenix_kit_web/components/core/language_switcher.ex", :unknown_function},
   {"lib/mix/tasks/phoenix_kit.cleanup_orphaned_files.ex", :unknown_function},
   {"lib/mix/tasks/compile.phoenix_kit_css_sources.ex", :unknown_function},
   {"lib/mix/tasks/compile.phoenix_kit_js_sources.ex", :unknown_function},

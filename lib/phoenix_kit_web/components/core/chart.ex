@@ -45,6 +45,8 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
 
   use Phoenix.Component
 
+  alias PhoenixKitWeb.Components.Core.ChartScale
+
   @doc """
   A line chart for a numeric series, optionally filled.
 
@@ -63,6 +65,21 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
 
       <%!-- a bare line, auto domains --%>
       <.line_chart id="signups" data={@signups} area={false} />
+
+      <%!-- hover readout: native tooltips, no JavaScript --%>
+      <.line_chart
+        id="price-today"
+        data={Enum.map(@slots, &{minute_of_day(&1.starts_at), &1.eur_kwh})}
+        x_domain={{0, 1440}}
+        step
+        hover
+        value_format={&"€\#{&1}/kWh"}
+        x_format={&clock_label/1}
+      />
+
+  `x_format` gets the plotted NUMBER, never the struct it came from — a
+  time axis formats back from the number it plotted (`clock_label(810)` →
+  `"13:30"` here), since a `DateTime` x is not a point and is dropped.
 
   With `step` each point holds its y until the next x (right-open steps —
   the correct reading for slot/interval data like prices). `marker_x`
@@ -89,6 +106,30 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
         "result and belongs at the top. Without it callers had to negate " <>
         "their own values, which flips the sign of every domain and marker " <>
         "they pass too."
+
+  attr :hover, :boolean,
+    default: false,
+    doc:
+      "Add a hover readout: an invisible band per data point, spanning the " <>
+        "stretch of x the point stands for (its step with `step`, otherwise " <>
+        "half-way to each neighbour), with a native tooltip. No JavaScript. Each " <>
+        "band also carries `data-x` / `data-y` with the raw values, so a host's " <>
+        "own hook (a crosshair, a richer popover) can snap to points without " <>
+        "reverse-engineering the stretched SVG."
+
+  attr :value_format, :any,
+    default: nil,
+    doc:
+      "With `hover`: 1-arity fun formatting a y value for the tooltip. It " <>
+        "receives the NUMBER. Defaults to a compact numeric rendering, as in `bar_chart/1`."
+
+  attr :x_format, :any,
+    default: nil,
+    doc:
+      "With `hover`: 1-arity fun formatting an x value; when given, the tooltip " <>
+        "reads `\"<x>: <y>\"` (a time slot and its price, say). Like " <>
+        "`value_format` it receives the NUMBER that was plotted — map it back " <>
+        "yourself (minutes of the day to a clock time, say)."
 
   attr :width, :integer, default: 960, doc: "viewBox width (the SVG scales to its container)"
   attr :height, :integer, default: 240, doc: "viewBox height"
@@ -171,6 +212,22 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
           stroke-dasharray="4 4"
           vector-effect="non-scaling-stroke"
         />
+
+        <%!-- Hover bands last, so they sit on top. `fill="transparent"`, not
+             "none": an unfilled shape takes no pointer events, and the
+             tooltip would never show. --%>
+        <rect
+          :for={band <- @geometry.hover_bands}
+          x={band.x}
+          y="0"
+          width={band.w}
+          height={@height}
+          fill="transparent"
+          data-x={band.raw_x}
+          data-y={band.raw_y}
+        >
+          <title>{band.title}</title>
+        </rect>
       </svg>
 
       <div :if={!@geometry}>{render_slot(@empty)}</div>
@@ -352,15 +409,7 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
   # Ecto-backed caller hands us Decimals; a JSON-backed one hands us strings
   # and nils. Coerce what we can, drop what we can't, and let the :empty slot
   # handle "nothing usable left".
-  defp numeric(value) when is_integer(value) or is_float(value), do: value
-
-  defp numeric(%Decimal{} = value) do
-    Decimal.to_float(value)
-  rescue
-    _ -> nil
-  end
-
-  defp numeric(_), do: nil
+  defp numeric(value), do: ChartScale.numeric(value)
 
   defp normalize_points(data) when is_list(data) do
     data
@@ -390,7 +439,9 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
         nil
 
       data ->
-        {x_min, x_max} = normalize_domain(assigns.x_domain, minmax_x(data))
+        # The public scale, so an overlay aligned with `ChartScale` cannot
+        # drift from what is drawn here.
+        {x_min, x_max} = ChartScale.domain(assigns.x_domain, Enum.map(data, &elem(&1, 0)))
         {y_min, y_max} = normalize_domain(assigns.y_domain, padded_y_domain(data))
 
         to_x = axis_scale(x_min, x_max, width)
@@ -419,10 +470,73 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
           # widening it into a full-width line asserts a reading across a range
           # that was never measured, and did exactly that for out-of-domain
           # data too.
-          dot: collapsed_point(points)
+          dot: collapsed_point(points),
+          hover_bands: hover_bands(assigns, data, x_min, x_max, px)
         }
     end
   end
+
+  # One band per datum, covering the x the datum stands for.
+  #
+  # With `step`, a value holds from its x to the next x (the last to the
+  # domain's right edge) — the same right-open reading the line draws. Without
+  # it, each band reaches half-way to its neighbours, so the nearest point wins
+  # wherever the pointer is. A datum sharing its x with the next one has no
+  # stretch of its own; it gets no band rather than a zero-width one, and the
+  # later datum at that x answers for it.
+  #
+  # A domain with no width (one x, no `x_domain`) draws every x at the
+  # centre, so no datum has a stretch of its own: the whole chart answers for
+  # the last one, in both modes.
+  defp hover_bands(%{hover: true} = assigns, [_ | _] = data, x_min, x_max, _px)
+       when x_min == x_max do
+    {x, y} = List.last(data)
+    [hover_band(assigns, x, y, 0, assigns.width)]
+  end
+
+  defp hover_bands(%{hover: true} = assigns, data, _x_min, x_max, px) do
+    xs = Enum.map(data, fn {x, _} -> px.(x) end)
+    edges = band_edges(xs, assigns.step, px.(x_max), assigns.width)
+
+    data
+    |> Enum.zip(edges)
+    |> Enum.flat_map(fn {{x, y}, {left, right}} ->
+      if round1(right - left) > 0, do: [hover_band(assigns, x, y, left, right)], else: []
+    end)
+  end
+
+  defp hover_bands(_assigns, _data, _x_min, _x_max, _px), do: []
+
+  defp hover_band(assigns, x, y, left, right) do
+    %{
+      x: round1(left),
+      w: round1(right - left),
+      raw_x: x,
+      raw_y: y,
+      title: hover_title(x, y, Map.get(assigns, :x_format), Map.get(assigns, :value_format))
+    }
+  end
+
+  defp band_edges(xs, true = _step, right_edge, _width) do
+    xs
+    |> Enum.chunk_every(2, 1)
+    |> Enum.map(fn
+      [x, next] -> {x, next}
+      [x] -> {x, max(x, right_edge)}
+    end)
+  end
+
+  defp band_edges(xs, false = _step, _right_edge, width) do
+    mids = xs |> Enum.chunk_every(2, 1, :discard) |> Enum.map(fn [a, b] -> (a + b) / 2 end)
+    lefts = [0 | mids]
+    rights = mids ++ [width]
+    Enum.zip(lefts, rights)
+  end
+
+  defp hover_title(_x, y, nil, value_format), do: display(y, value_format)
+
+  defp hover_title(x, y, x_format, value_format),
+    do: "#{display(x, x_format)}: #{display(y, value_format)}"
 
   # Right-open steps: each y holds until the next x, and the last extends to
   # the domain's right edge — the correct reading for interval data.
@@ -446,12 +560,7 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
   # every value belongs at the CENTRE, exactly as a flat y series centres
   # vertically. Dividing by a 1.0e-9 floor instead pinned everything to the
   # left edge, where half of each stroke is clipped away.
-  defp axis_scale(lo, hi, extent) when hi > lo do
-    span = hi - lo
-    fn v -> (v - lo) / span * extent end
-  end
-
-  defp axis_scale(_lo, _hi, extent), do: fn _v -> extent / 2 end
+  defp axis_scale(lo, hi, extent), do: fn v -> ChartScale.fraction({lo, hi}, v) * extent end
 
   # Only a path whose points ALL coincide paints nothing. Two points sharing an
   # x still draw a vertical segment, and collapsing that to one y silently
@@ -484,11 +593,6 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
     end
   end
 
-  defp minmax_x(data) do
-    {{x_min, _}, {x_max, _}} = Enum.min_max_by(data, &elem(&1, 0))
-    {x_min, x_max}
-  end
-
   # A reversed domain ({10, 0}) otherwise drove the span negative, which the
   # 1.0e-9 floor turned into coordinates around 1.0e12 — the chart vanished
   # off-canvas instead of simply drawing.
@@ -496,18 +600,7 @@ defmodule PhoenixKitWeb.Components.Core.Chart do
   # An unusable bound falls back to the DATA's own domain, never to a constant:
   # a {0, 1} fallback recreated exactly that failure, because every real x range
   # then scaled by a factor of thousands and left the canvas just as finally.
-  defp normalize_domain(nil, fallback), do: fallback
-
-  defp normalize_domain({a, b}, fallback) do
-    case {numeric(a), numeric(b)} do
-      {nil, _} -> fallback
-      {_, nil} -> fallback
-      {lo, hi} when lo > hi -> {hi, lo}
-      {lo, hi} -> {lo, hi}
-    end
-  end
-
-  defp normalize_domain(_, fallback), do: fallback
+  defp normalize_domain(explicit, fallback), do: ChartScale.domain(explicit, []) || fallback
 
   defp padded_y_domain(data) do
     {y_min, y_max} = data |> Enum.map(&elem(&1, 1)) |> Enum.min_max()

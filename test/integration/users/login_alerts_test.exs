@@ -108,11 +108,35 @@ defmodule PhoenixKit.Integration.Users.LoginAlertsTest do
 
     test "the same browser from a new IP still records a device row for that IP" do
       # Preserves Active Sessions enrichment, which matches each live
-      # session token's exact (ip, ua) against a KnownDevice row.
+      # session token's (network, ua) against a KnownDevice row.
       user = create_user()
 
       assert :ok = LoginAlerts.check(user, conn_with_ua(@chrome_mac, {203, 0, 113, 42}))
       assert :ok = LoginAlerts.check(user, conn_with_ua(@chrome_mac, {198, 51, 100, 7}))
+
+      assert [_, _] = Repo.all(KnownDevice)
+    end
+
+    test "the same browser from a rotated IPv6 address in the same /64 reuses its row" do
+      # Operating systems rotate a temporary IPv6 address inside the /64
+      # daily — that is the same connection, not a row per day.
+      user = create_user()
+      first = {0x2A0D, 0x3344, 0x6A, 0xC310, 0x88F8, 0x482C, 0xE41A, 0x9EF5}
+      rotated = {0x2A0D, 0x3344, 0x6A, 0xC310, 0x1111, 0x2222, 0x3333, 0x4444}
+
+      assert :ok = LoginAlerts.check(user, conn_with_ua(@chrome_mac, first))
+      assert :ok = LoginAlerts.check(user, conn_with_ua(@chrome_mac, rotated))
+
+      assert [_] = Repo.all(KnownDevice)
+    end
+
+    test "the same browser from a different IPv6 /64 still records a second row" do
+      user = create_user()
+      first = {0x2A0D, 0x3344, 0x6A, 0xC310, 0, 0, 0, 1}
+      other = {0x2A0D, 0x3344, 0x6A, 0xC311, 0, 0, 0, 1}
+
+      assert :ok = LoginAlerts.check(user, conn_with_ua(@chrome_mac, first))
+      assert :ok = LoginAlerts.check(user, conn_with_ua(@chrome_mac, other))
 
       assert [_, _] = Repo.all(KnownDevice)
     end

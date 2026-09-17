@@ -45,7 +45,8 @@ defmodule PhoenixKit.Modules.Storage.FileServer do
   ## Returns
 
   - `{:ok, file_info}` - Contains file metadata and location options
-  - `{:error, :not_found}` - File instance or locations not found
+  - `{:error, :not_found}` - File instance or locations not found, or the
+    file is system-managed
   - `{:error, :no_active_locations}` - No active storage locations available
 
   ## Example Response
@@ -82,10 +83,15 @@ defmodule PhoenixKit.Modules.Storage.FileServer do
       when is_binary(file_uuid) and is_binary(instance_name) do
     repo = get_repo()
 
-    # Query for file instance with all its locations
+    # Query for file instance with all its locations. Never a system-managed
+    # file's: an edited image's hidden unedited original is served only to
+    # those who may edit it (`GET /api/files/:uuid/unedited`).
     query =
       from fi in FileInstance,
-        where: fi.file_uuid == ^file_uuid and fi.variant_name == ^instance_name,
+        join: f in assoc(fi, :file),
+        where:
+          fi.file_uuid == ^file_uuid and fi.variant_name == ^instance_name and
+            f.system_managed == false,
         preload: [
           locations: [
             bucket: []

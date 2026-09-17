@@ -379,6 +379,98 @@ token = :crypto.hash(:md5, data <> secret)
 - ✅ Secure comparison prevents timing attacks
 - ✅ No user-guessable patterns
 
+### Versions and caching
+
+A file URL may carry `?v=` — the first 16 hex characters of the served
+instance's checksum (`URLSigner.signed_url(uuid, variant, version: instance)`,
+`URLSigner.version/1`). Build URLs with it wherever the instance is at hand.
+
+| Request | Response |
+|---|---|
+| `v` names the bytes the variant holds now (any hex prefix of 8+ characters) | `public, max-age=31536000, immutable` |
+| `v` names other bytes | `302` to the current `v`, `no-store` |
+| no `v`, file never edited | `public, max-age=86400` + ETag |
+| no `v`, file edited before | `public, no-cache` + ETag (revalidated on every use) |
+| variant not generated yet (the original stands in) | `no-store`, `x-variant-status: pending` |
+| an image edit is rendering, or failed | a grey SVG placeholder, `no-store` (also `cdn-cache-control`), `x-variant-status: editing` / `edit-failed` |
+| a system-managed file (tile chunk, an edited image's unedited original) | `404` |
+
+Deep-zoom tiles carry the version in the path, because the viewer derives
+tile URLs from the manifest's path and drops its query:
+`/tiles/<token>/<uuid>-<v>.dzi` and `/tiles/<token>/<uuid>-<v>_files/<level>/<col>_<row>.<ext>`,
+stored under `_tiles/<uuid>/<v>/`. A version that is not the current one is
+a 404. The legacy `/tiles/<token>/<uuid>.dzi` resolves to the current version
+and is never cached.
+
+---
+
+## Editing images
+
+`PhoenixKit.Modules.Storage.ImageEditing` edits a stored image after upload:
+crop, quarter turns, mirroring, straightening, redaction (blur, pixelate,
+black box), brightness and contrast. The edit is data
+(`PhoenixKit.Modules.Storage.ImageEdit`, stored in `files.edits`), always
+applied to the unedited original by `ApplyImageEditJob` with ImageMagick. The
+UI is `PhoenixKitWeb.Components.ImageEditor`.
+
+**The file keeps its uuid.** Its `"original"` instance becomes the edited
+bytes, so every module that stored the uuid shows the edit, and every reader
+of the original (variants, tiles, downloads, public URLs) gets it without
+knowing. Object keys are content-addressed, so the edited bytes get new keys.
+
+**The unedited original is not destroyed** (setting
+`storage_image_edit_mode`, default `keep_original`). Its instance rows move
+to a hidden child file — `system_managed`, `file_name: "unedited-original"`,
+`parent_file_uuid` = the file, `files.original_file_uuid` points at it — that
+is never listed, never a dedup target and never served by the public routes.
+Whoever may edit the image can download it
+(`GET /api/files/:uuid/unedited`), restore it, or delete it, which bakes the
+edit in. With `replace_original`, every save bakes immediately.
+
+**The unedited original leaves the keys it was served under.** On a public
+bucket a file's objects are reachable as plain bucket URLs (the file routes
+redirect to them), so bytes left at those keys would survive a redaction
+behind any saved link. The first edit therefore copies every unedited object
+to a private key (`unedited_<128 random bits>_<name>`, same directory), points
+the backup's rows and locations at the copies, and deletes the served keys
+once nothing references them. A key another file still references (a
+cross-user copy of the same bytes) is that file's and stays. A backup made
+before this (2.28.0) moves on its next edit; a revert brings the copies back
+as the file's keys, and the next edit copies them again.
+
+**What an edit cannot take back:** copies already made of a response. A
+versioned file URL is served `immutable`, so a browser or CDN that fetched
+the unredacted image keeps it until its own cache expires. If you front
+files with a CDN and redact, purge it: `[:phoenix_kit, :storage,
+:file_edited]` telemetry fires after each swap with the `file_uuid` and the
+`removed_keys`.
+
+**While an edit renders** (`edit_state: "pending"`) **or after it failed**
+(`"failed"`), every variant of the file is served as a placeholder: a
+half-applied redaction must never show what it hides. Retry from the editor
+or with `ImageEditing.retry/2`.
+
+**Concurrency.** Saving bumps `edit_revision`. Every step of the job checks
+it: a render for an older revision is thrown away, a revision already
+published is not published twice, and a failure marks only its own revision.
+Variant and dimension results are recorded only while the original they were
+made from is still the file's (`Storage.original_key?/2`).
+
+**Deleting stored objects.** An object is deleted exactly when no instance
+row references its key any more (an edited file and its backup share a
+directory; cross-user copies share keys). `Storage.delete_stored_objects/2`
+re-checks the references under the directory's advisory lock and deletes
+inside it; publishing a new object takes the same lock and checks the object
+still exists. Never delete a stored object any other way.
+
+**Annotations** are drawn in pixel space, so an image with annotations
+refuses edits that change its geometry (crop, turn, mirror, straighten);
+redaction and tone changes are fine, and "save as copy" always is. An edit
+that changes the geometry also clears avatar crops made on the image.
+
+**Not editable:** GIFs and other animated images, system-managed files,
+trashed files, and formats ImageMagick cannot write back.
+
 ---
 
 ## Settings

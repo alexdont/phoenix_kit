@@ -387,6 +387,18 @@
                 <.icon name="hero-arrow-down-tray" class="w-4 h-4" /> {gettext("Download")}
               </a>
             <% end %>
+            <button
+              :if={
+                @edit_target && f.file_type == "image" &&
+                  PhoenixKit.Modules.Storage.ImageEditing.editable_mime?(f.mime_type)
+              }
+              type="button"
+              phx-click="edit_image"
+              phx-target={@myself}
+              class="btn btn-ghost btn-sm gap-2"
+            >
+              <.icon name="hero-adjustments-horizontal" class="w-4 h-4" /> {gettext("Edit image")}
+            </button>
             <%!-- Admin-context hosts pass details_path — full-page detail view --%>
             <%!-- with the metadata editor, variants, and storage locations.    --%>
             <.link

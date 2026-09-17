@@ -384,6 +384,30 @@ defmodule PhoenixKit.Module do
   @callback sitemap_sources() :: [module()]
 
   @doc """
+  Returns the Oban queues this module's jobs run in.
+
+  A keyword list of `name: limit` or `name: [limit: n, kind: :interactive |
+  :batch]`. `mix phoenix_kit.install` and `mix phoenix_kit.update` write the
+  queues a host's Oban config is missing — never changing a limit the host
+  already set — and `mix phoenix_kit.doctor` and a boot-time log line report
+  any that are still absent. Without a queue, Oban never runs the jobs
+  inserted into it. Details: `PhoenixKit.ObanQueues`.
+
+  Split by kind of work, not one queue per module: interactive work someone is
+  waiting for deserves its own small queue, so a long batch cannot hold it up.
+  The limit is per node.
+
+  ## Example
+
+      @impl PhoenixKit.Module
+      def oban_queues, do: [image_generation: [limit: 3, kind: :interactive], image_import: 2]
+
+  Modules whose workers use an existing core queue (`default`,
+  `file_processing`, …) skip this callback — the default is `[]`.
+  """
+  @callback oban_queues() :: keyword(pos_integer() | keyword())
+
+  @doc """
   Returns top-level route path segments this module owns for its own
   LiveViews/controllers (e.g. a host app declares `live "/legal", LegalLive`
   and this module IS the "legal" feature).
@@ -535,6 +559,7 @@ defmodule PhoenixKit.Module do
     css_sources: 0,
     js_sources: 0,
     sitemap_sources: 0,
+    oban_queues: 0,
     reserved_route_prefixes: 0,
     migrate_legacy: 0,
     email_settings_sections: 0,
@@ -606,6 +631,9 @@ defmodule PhoenixKit.Module do
       def sitemap_sources, do: []
 
       @impl PhoenixKit.Module
+      def oban_queues, do: []
+
+      @impl PhoenixKit.Module
       def reserved_route_prefixes, do: []
 
       @impl PhoenixKit.Module
@@ -635,6 +663,7 @@ defmodule PhoenixKit.Module do
                      css_sources: 0,
                      js_sources: 0,
                      sitemap_sources: 0,
+                     oban_queues: 0,
                      reserved_route_prefixes: 0,
                      migrate_legacy: 0,
                      email_settings_sections: 0,

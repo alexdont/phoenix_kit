@@ -12,6 +12,7 @@ defmodule PhoenixKitWeb.Live.Modules.Storage.Settings do
   import Ecto.Query
 
   alias PhoenixKit.Modules.Storage
+  alias PhoenixKit.Modules.Storage.ImageEditing
   alias PhoenixKit.Settings
   alias PhoenixKit.System.Dependencies
   alias PhoenixKit.Utils.Routes
@@ -38,6 +39,8 @@ defmodule PhoenixKitWeb.Live.Modules.Storage.Settings do
 
     annotated_thumbnails_enabled =
       Settings.get_setting("storage_annotated_thumbnails_enabled", "false")
+
+    image_edit_mode = ImageEditing.mode()
 
     # Calculate maximum redundancy based on available buckets
     active_buckets = Enum.count(buckets, & &1.enabled)
@@ -77,6 +80,8 @@ defmodule PhoenixKitWeb.Live.Modules.Storage.Settings do
       |> assign(:form_annotated_thumbnails_enabled, form_annotated_thumbnails_enabled)
       |> assign(:max_upload_size_mb, current_max_upload_size_mb)
       |> assign(:form_max_upload_size_mb, current_max_upload_size_mb)
+      |> assign(:image_edit_mode, image_edit_mode)
+      |> assign(:form_image_edit_mode, image_edit_mode)
       |> assign(:imagemagick_status, imagemagick_status)
       |> assign(:ffmpeg_status, ffmpeg_status)
       |> assign(:active_tab, "buckets")
@@ -201,10 +206,16 @@ defmodule PhoenixKitWeb.Live.Modules.Storage.Settings do
           socket.assigns.form_max_upload_size_mb
       end
 
+    form_image_edit_mode =
+      if params["form_image_edit_mode"] in ImageEditing.modes(),
+        do: params["form_image_edit_mode"],
+        else: socket.assigns.form_image_edit_mode
+
     socket =
       socket
       |> assign(:form_redundancy, form_redundancy)
       |> assign(:form_max_upload_size_mb, form_max_upload_size_mb)
+      |> assign(:form_image_edit_mode, form_image_edit_mode)
 
     {:noreply, socket}
   end
@@ -257,6 +268,8 @@ defmodule PhoenixKitWeb.Live.Modules.Storage.Settings do
         to_string(new_max_upload_size_mb)
       )
 
+      Settings.update_setting(ImageEditing.mode_setting(), socket.assigns.form_image_edit_mode)
+
       case {redundancy_result, variants_result} do
         {{:ok, _}, {:ok, _}} ->
           # Verify the settings were saved correctly by reading them back
@@ -281,6 +294,8 @@ defmodule PhoenixKitWeb.Live.Modules.Storage.Settings do
             |> assign(:form_annotated_thumbnails_enabled, saved_annotated_thumbnails == "true")
             |> assign(:max_upload_size_mb, String.to_integer(saved_max_upload))
             |> assign(:form_max_upload_size_mb, String.to_integer(saved_max_upload))
+            |> assign(:image_edit_mode, ImageEditing.mode())
+            |> assign(:form_image_edit_mode, ImageEditing.mode())
             |> put_flash(:info, gettext("Storage settings updated successfully"))
 
           {:noreply, socket}

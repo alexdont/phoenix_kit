@@ -13,6 +13,8 @@ defmodule PhoenixKitWeb.Users.ForgotPassword do
   alias PhoenixKit.Utils.Routes
 
   def mount(_params, _session, socket) do
+    socket = assign(socket, :page_title, gettext("Forgot your password?"))
+
     case PhoenixKitWeb.Users.Auth.maybe_redirect_authenticated(socket) do
       {:redirect, socket} ->
         {:ok, socket}

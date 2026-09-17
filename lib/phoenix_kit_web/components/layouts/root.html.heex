@@ -40,10 +40,11 @@
         content={if og[:image], do: "summary_large_image", else: "summary"}
       />
     <% end %>
-    <.live_title
-      default={PhoenixKit.Settings.get_project_title()}
-      suffix=" · Phoenix Framework"
-    >
+    <%!-- The page supplies its own name; the project supplies the brand. No
+    suffix: a stock `phx.new` layout ships " · Phoenix Framework" here, which
+    every install inherited as its browser-tab branding. A host that wants a
+    suffix owns its own root layout. --%>
+    <.live_title default={PhoenixKit.Settings.get_project_title()}>
       {assigns[:page_title]}
     </.live_title>
     <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />

@@ -122,6 +122,9 @@ defmodule PhoenixKitWeb do
       import PhoenixKitWeb.Components.Core.Badge
       import PhoenixKitWeb.Components.Core.StatCard
       import PhoenixKitWeb.Components.Core.Chart
+      # `only:` for the same reason as NavTabs below: a later helper on the
+      # module must not silently join every LiveView's namespace.
+      import PhoenixKitWeb.Components.Core.ChartLanes, only: [chart_lanes: 1]
       import PhoenixKitWeb.Components.Core.StatusDot
       import PhoenixKitWeb.Components.Core.ConnectAccountButton
       # Only the component. This module also exports `format_status/1` and

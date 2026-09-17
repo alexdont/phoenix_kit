@@ -1,10 +1,9 @@
 defmodule PhoenixKit.Migrations.Repair.Environment do
   @moduledoc """
   Spec §6.3's environment rules: pooled-connection detection and the
-  advisory lock. `classify_config/1` is pure (the config-based half of
-  `mix phoenix_kit.doctor`'s existing PgBouncer heuristic,
-  `doctor.ex:174-195`, reused rather than re-derived); `pooled?/1` and the
-  lock functions execute real queries and have no unit test.
+  advisory lock. `classify_config/1` is pure (the config-based hint, which
+  `mix phoenix_kit.doctor` reports beside the probe); `probe/1`, `pooled?/1`
+  and the lock functions execute real queries.
 
   ## Detection is two-layered, on purpose
 
@@ -50,13 +49,18 @@ defmodule PhoenixKit.Migrations.Repair.Environment do
       :maybe_pooled
       iex> Environment.classify_config(url: "ecto://user:pass@pgbouncer:6432/db")
       :maybe_pooled
+      iex> Environment.classify_config(url: "ecto://user:pass@db.internal/db")
+      :direct
   """
   @spec classify_config(keyword()) :: config_verdict()
   def classify_config(config) do
+    # A URL without an explicit port means Postgres's default. Treating the
+    # missing port as "not 5432" reported every `ecto://user@host/db`
+    # deployment as a likely pooler.
     port =
       cond do
         config[:port] -> config[:port]
-        config[:url] -> extract_port_from_url(config[:url])
+        config[:url] -> extract_port_from_url(config[:url]) || 5432
         true -> 5432
       end
 
@@ -95,16 +99,32 @@ defmodule PhoenixKit.Migrations.Repair.Environment do
   other way around.
   """
   @spec pooled?(Ecto.Repo.t()) :: boolean()
-  def pooled?(repo) do
+  def pooled?(repo), do: probe(repo) != :not_detected
+
+  @typedoc """
+  What the behavioral probe observed. `:not_detected` is NOT "direct": a
+  session-pooling proxy keeps one backend for the checkout too, so the same
+  pid twice rules out transaction pooling and nothing more.
+  """
+  @type probe_result :: :transaction_pooled | :not_detected | {:inconclusive, String.t()}
+
+  @doc """
+  The behavioral check, reporting what it could establish rather than a
+  boolean — `pooled?/1` folds an inconclusive probe into "pooled" (the safe
+  default before a repair), which is the wrong thing to *print*: a diagnostic
+  must say "could not tell" when it could not tell.
+  """
+  @spec probe(Ecto.Repo.t()) :: probe_result()
+  def probe(repo) do
     repo.checkout(fn ->
       first = backend_pid!(repo)
       second = backend_pid!(repo)
-      first != second
+      if first != second, do: :transaction_pooled, else: :not_detected
     end)
   rescue
-    _ -> true
+    error -> {:inconclusive, Exception.message(error)}
   catch
-    _, _ -> true
+    kind, reason -> {:inconclusive, "#{kind}: #{inspect(reason)}"}
   end
 
   defp backend_pid!(repo) do

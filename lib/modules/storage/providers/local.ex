@@ -10,21 +10,60 @@ defmodule PhoenixKit.Modules.Storage.Providers.Local do
 
   require Logger
 
+  @cwd_key {__MODULE__, :cwd}
+
+  @doc """
+  The bucket's directory as an absolute path. A relative endpoint (the
+  default is `priv/media`) is relative to the directory the application
+  started in, not to the current one: the working directory is VM-wide, and
+  in development Phoenix's code reloader switches it into each path
+  dependency while it recompiles — a relative read or write during that
+  window lands in the dependency's directory.
+  """
+  @spec root(map()) :: String.t()
+  def root(bucket), do: Path.expand(bucket.endpoint || "priv/media", start_dir())
+
+  @doc false
+  # Called at application start, while the working directory is still the
+  # host's own.
+  def remember_start_dir do
+    :persistent_term.put(@cwd_key, File.cwd!())
+  end
+
+  defp start_dir do
+    case :persistent_term.get(@cwd_key, nil) do
+      nil -> File.cwd!()
+      dir -> dir
+    end
+  end
+
   @impl true
   def store_file(bucket, source_path, destination_path, _opts \\ []) do
     # Build the full destination path
-    full_destination = Path.join(bucket.endpoint || "priv/media", destination_path)
+    full_destination = Path.join(root(bucket), destination_path)
 
     Logger.info(
       "[LocalStorage] store_file: source=#{source_path}, destination=#{full_destination}"
     )
 
+    # Written next to the destination and renamed into place: a reader (or
+    # an existence check) never sees a half-written object, and a failed
+    # copy leaves nothing under the real key. Keys are content-addressed and
+    # written again by later jobs, so "the key exists" must mean "the whole
+    # object is there".
+    partial = "#{full_destination}.partial-#{System.unique_integer([:positive])}"
+
     with :ok <- validate_source_exists(source_path),
          {:ok, source_size} <- get_source_size(source_path),
          :ok <- ensure_destination_dir(full_destination),
-         :ok <- copy_file(source_path, full_destination),
-         :ok <- verify_copy(full_destination, source_size) do
+         :ok <- copy_file(source_path, partial),
+         :ok <- verify_copy(partial, source_size),
+         :ok <- move_into_place(partial, full_destination) do
       {:ok, full_destination}
+    else
+      error ->
+        File.rm(partial)
+        error
     end
   rescue
     error ->
@@ -84,6 +123,17 @@ defmodule PhoenixKit.Modules.Storage.Providers.Local do
     end
   end
 
+  defp move_into_place(partial, full_destination) do
+    case File.rename(partial, full_destination) do
+      :ok ->
+        :ok
+
+      {:error, reason} ->
+        Logger.error("[LocalStorage] Failed to move #{partial} into place: #{inspect(reason)}")
+        {:error, "Failed to move file into place: #{inspect(reason)}"}
+    end
+  end
+
   defp verify_copy(full_destination, expected_size) do
     if File.exists?(full_destination) do
       case File.stat(full_destination) do
@@ -113,7 +163,7 @@ defmodule PhoenixKit.Modules.Storage.Providers.Local do
 
   @impl true
   def retrieve_file(bucket, file_path, destination_path) do
-    full_source = Path.join(bucket.endpoint || "priv/media", file_path)
+    full_source = Path.join(root(bucket), file_path)
 
     # Ensure destination directory exists
     destination_dir = Path.dirname(destination_path)
@@ -134,7 +184,7 @@ defmodule PhoenixKit.Modules.Storage.Providers.Local do
 
   @impl true
   def delete_file(bucket, file_path) do
-    full_path = Path.join(bucket.endpoint || "priv/media", file_path)
+    full_path = Path.join(root(bucket), file_path)
 
     case File.rm(full_path) do
       :ok -> :ok
@@ -148,7 +198,7 @@ defmodule PhoenixKit.Modules.Storage.Providers.Local do
 
   @impl true
   def file_exists?(bucket, file_path) do
-    full_path = Path.join(bucket.endpoint || "priv/media", file_path)
+    full_path = Path.join(root(bucket), file_path)
     File.exists?(full_path)
   end
 
@@ -161,7 +211,7 @@ defmodule PhoenixKit.Modules.Storage.Providers.Local do
 
   @impl true
   def test_connection(bucket) do
-    base_path = bucket.endpoint || "priv/media"
+    base_path = root(bucket)
 
     # Test if we can create the directory
     case File.mkdir_p(base_path) do

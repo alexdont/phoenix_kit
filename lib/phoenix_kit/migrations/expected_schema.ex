@@ -165,6 +165,37 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
   # over the 49 shipped files; the real-database integration suite re-ran
   # clean against a DB migrated through V183.
   #
+  # V195 (2026-09-17, image editing) DECLARES ten objects here by hand: five
+  # columns on phoenix_kit_files (`edits` jsonb, `edit_revision` integer NOT
+  # NULL DEFAULT 0, `edit_state` varchar(16), `original_file_uuid` and
+  # `edited_from_uuid` uuid), their two self-referencing foreign keys (ON
+  # DELETE SET NULL), an index on each, and a plain index on
+  # `phoenix_kit_file_instances.file_name` (reference-based object deletion).
+  # Shapes read with the repair probe from a test database migrated through
+  # V195; `pos` follows the table's real ordinal positions after V135's 22.
+  # `chain_hash` restamped over the shipped file set.
+  #
+  # V194 (2026-09-17, settings history) declares NO object here, and cannot:
+  # it is a pure data migration — an UPDATE on `phoenix_kit_activities` that
+  # withholds the values of `setting.changed` entries recorded for integration
+  # connection rows (`from`/`to` null, `restricted: true`), plus the
+  # version-marker COMMENT. No table, column, index or constraint is added,
+  # dropped or reshaped — the V182/V184/V189 class — so `chain_hash` is
+  # restamped over the shipped file set. The real statements run against
+  # seeded entries in test/phoenix_kit/migrations/v194_test.exs.
+  #
+  # V193 (2026-09-17, AI spend-cap indexes) DECLARES two objects here by
+  # hand, both new indexes and the V175 class:
+  # `index:phoenix_kit_ai_requests_endpoint_spend_idx` and
+  # `index:phoenix_kit_ai_requests_user_spend_idx`, each
+  # `(<uuid>, inserted_at) INCLUDE (cost_cents) WHERE status = 'success'`. No
+  # column, constraint or reshape. The shapes are CATALOG-EXACT: read with the
+  # repair probe (`Repair.Probe.snapshot/2`) from a test DB migrated through
+  # V193 — note that `keys` carries the INCLUDE column while `opclasses` covers
+  # only the two key columns, and the predicate is Postgres's deparse
+  # (`((status)::text = 'success'::text)`), not the migration's text.
+  # `chain_hash` restamped over the shipped file set.
+  #
   # V191 (2026-09-16, who added a user) DECLARES three objects here by hand,
   # the V92 `organization_uuid` shape repeated on a second self-reference:
   # `column:phoenix_kit_users.created_by_uuid` (uuid, nullable — NULL for a
@@ -348,7 +379,7 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
   @schema_token "__SCHEMA__"
   @name_marker_exempt "__PK_NAME_EXEMPT__"
   @name_marker_always "__PK_NAME_ALWAYS__"
-  @chain_hash "6187170005fccfd270db4110bb080fa59d6edca827a16af1651756ef834429d1"
+  @chain_hash "bd3d1b985c9729558831eff78e7827f81f996e9c52d2bf0ce5d439b418d33ef4"
 
   def objects(prefix) do
     prefix = normalize_prefix!(prefix)
@@ -13912,8 +13943,14 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
         owner: :core,
         check:
           "SELECT EXISTS (SELECT 1 FROM __SCHEMA__.phoenix_kit_settings WHERE \"key\" = 'billing_default_currency')",
-        create:
-          "INSERT INTO __SCHEMA__.phoenix_kit_settings (\"key\", \"module\", \"value\", \"value_json\")\nVALUES ('billing_default_currency', 'billing', 'EUR', NULL)\nON CONFLICT (\"key\") DO NOTHING",
+        # DECLARED POST-GENERATION (2026-09-17): V189 DELETES this seed
+        # (a dead setting that disagreed with the default currency row), so it is bimodal like the
+        # V179 foreign key — present on installs that stopped before V189,
+        # absent after. `:legacy_optional` + `create: nil`
+        # keeps `mix phoenix_kit.repair` from re-creating a setting the chain
+        # removed on purpose; while it was `:required`, repair put it back on
+        # every healthy install (`s8` caught it).
+        create: nil,
         since: 31,
         class: :seed,
         revisions: [
@@ -13929,7 +13966,7 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
              key_column: "key"
            }}
         ],
-        presence: :required,
+        presence: :legacy_optional,
         backfill: nil
       },
       %{
@@ -25954,8 +25991,14 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
         owner: :core,
         check:
           "SELECT EXISTS (SELECT 1 FROM __SCHEMA__.phoenix_kit_settings WHERE \"key\" = 'shop_currency')",
-        create:
-          "INSERT INTO __SCHEMA__.phoenix_kit_settings (\"key\", \"module\", \"value\", \"value_json\")\nVALUES ('shop_currency', 'shop', 'USD', NULL)\nON CONFLICT (\"key\") DO NOTHING",
+        # DECLARED POST-GENERATION (2026-09-17): V184 DELETES this seed
+        # (a dead setting superseded by the currency table), so it is bimodal like the
+        # V179 foreign key — present on installs that stopped before V184,
+        # absent after. `:legacy_optional` + `create: nil`
+        # keeps `mix phoenix_kit.repair` from re-creating a setting the chain
+        # removed on purpose; while it was `:required`, repair put it back on
+        # every healthy install (`s8` caught it).
+        create: nil,
         since: 45,
         class: :seed,
         revisions: [
@@ -25971,7 +26014,7 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
              key_column: "key"
            }}
         ],
-        presence: :required,
+        presence: :legacy_optional,
         backfill: nil
       },
       %{
@@ -49654,6 +49697,13 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
       # pg_index on a live V169 database after creating the indexes, not
       # hand-derived. `verify.exs --scenario s7,s8` against a real database is
       # still what proves the body.
+      #
+      # CORRECTED 2026-09-17: the two `keys` lists had been copied from the full
+      # definition, which wraps an expression column in a second pair of
+      # parentheses. `keys` is the per-column form the probe reads
+      # (`pg_get_indexdef(oid, n, true)`: `(seen_at IS NOT NULL)`), so every
+      # healthy install reported both indexes as the wrong shape — `s8` caught
+      # it on a freshly migrated chain.
       %{
         id: "index:phoenix_kit_notifications_dedupe_unseen_idx",
         owner: :core,
@@ -49672,7 +49722,7 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
           {170,
            %{
              table: "phoenix_kit_notifications",
-             keys: ["recipient_uuid", "((metadata ->> 'dedupe_key'::text))"],
+             keys: ["recipient_uuid", "(metadata ->> 'dedupe_key'::text)"],
              unique: true,
              method: "btree",
              definition:
@@ -49706,7 +49756,7 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
              table: "phoenix_kit_notifications",
              keys: [
                "recipient_uuid",
-               "((seen_at IS NOT NULL))",
+               "(seen_at IS NOT NULL)",
                "inserted_at",
                "uuid"
              ],
@@ -71106,6 +71156,289 @@ defmodule PhoenixKit.Migrations.ExpectedSchema do
              foreign_columns: ["uuid"],
              on_delete: "n",
              on_update: "a"
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      # ── V195: image editing ──
+      %{
+        id: "column:phoenix_kit_files.edits",
+        owner: :core,
+        check: {:catalog, %{table: "phoenix_kit_files", column: "edits", kind: :column}},
+        create:
+          "ALTER TABLE __SCHEMA__.phoenix_kit_files ADD COLUMN IF NOT EXISTS \"edits\" jsonb",
+        since: 195,
+        class: :column,
+        revisions: [{195, %{default: nil, type: "jsonb", pos: 23, not_null: false}}],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "column:phoenix_kit_files.edit_revision",
+        owner: :core,
+        check: {:catalog, %{table: "phoenix_kit_files", column: "edit_revision", kind: :column}},
+        create:
+          "ALTER TABLE __SCHEMA__.phoenix_kit_files ADD COLUMN IF NOT EXISTS \"edit_revision\" integer DEFAULT 0 NOT NULL",
+        since: 195,
+        class: :column,
+        revisions: [{195, %{default: "0", type: "integer", pos: 24, not_null: true}}],
+        presence: :required,
+        backfill: :default
+      },
+      %{
+        id: "column:phoenix_kit_files.edit_state",
+        owner: :core,
+        check: {:catalog, %{table: "phoenix_kit_files", column: "edit_state", kind: :column}},
+        create:
+          "ALTER TABLE __SCHEMA__.phoenix_kit_files ADD COLUMN IF NOT EXISTS \"edit_state\" character varying(16)",
+        since: 195,
+        class: :column,
+        revisions: [
+          {195, %{default: nil, type: "character varying(16)", pos: 25, not_null: false}}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "column:phoenix_kit_files.original_file_uuid",
+        owner: :core,
+        check:
+          {:catalog, %{table: "phoenix_kit_files", column: "original_file_uuid", kind: :column}},
+        create:
+          "ALTER TABLE __SCHEMA__.phoenix_kit_files ADD COLUMN IF NOT EXISTS \"original_file_uuid\" uuid",
+        since: 195,
+        class: :column,
+        revisions: [{195, %{default: nil, type: "uuid", pos: 26, not_null: false}}],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "column:phoenix_kit_files.edited_from_uuid",
+        owner: :core,
+        check:
+          {:catalog, %{table: "phoenix_kit_files", column: "edited_from_uuid", kind: :column}},
+        create:
+          "ALTER TABLE __SCHEMA__.phoenix_kit_files ADD COLUMN IF NOT EXISTS \"edited_from_uuid\" uuid",
+        since: 195,
+        class: :column,
+        revisions: [{195, %{default: nil, type: "uuid", pos: 27, not_null: false}}],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "constraint:phoenix_kit_files.phoenix_kit_files_original_file_uuid_fkey",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_files_original_file_uuid_fkey",
+             table: "phoenix_kit_files",
+             kind: :constraint
+           }},
+        create:
+          "DO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1\n    FROM pg_constraint c\n    JOIN pg_class t ON t.oid = c.conrelid\n    JOIN pg_namespace n ON n.oid = t.relnamespace\n    WHERE c.conname = 'phoenix_kit_files_original_file_uuid_fkey'\n      AND t.relname = 'phoenix_kit_files'\n      AND n.nspname = '__SCHEMA__'\n  ) THEN\n    ALTER TABLE __SCHEMA__.phoenix_kit_files ADD CONSTRAINT phoenix_kit_files_original_file_uuid_fkey FOREIGN KEY (original_file_uuid) REFERENCES __SCHEMA__.phoenix_kit_files(uuid) ON DELETE SET NULL;\n  END IF;\nEND\n$$",
+        since: 195,
+        class: :constraint,
+        revisions: [
+          {195,
+           %{
+             type: "f",
+             columns: ["original_file_uuid"],
+             definition:
+               "FOREIGN KEY (original_file_uuid) REFERENCES __SCHEMA__.phoenix_kit_files(uuid) ON DELETE SET NULL",
+             name_template: nil,
+             foreign_table: "phoenix_kit_files",
+             foreign_columns: ["uuid"],
+             on_delete: "n",
+             on_update: "a"
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "constraint:phoenix_kit_files.phoenix_kit_files_edited_from_uuid_fkey",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_files_edited_from_uuid_fkey",
+             table: "phoenix_kit_files",
+             kind: :constraint
+           }},
+        create:
+          "DO $$\nBEGIN\n  IF NOT EXISTS (\n    SELECT 1\n    FROM pg_constraint c\n    JOIN pg_class t ON t.oid = c.conrelid\n    JOIN pg_namespace n ON n.oid = t.relnamespace\n    WHERE c.conname = 'phoenix_kit_files_edited_from_uuid_fkey'\n      AND t.relname = 'phoenix_kit_files'\n      AND n.nspname = '__SCHEMA__'\n  ) THEN\n    ALTER TABLE __SCHEMA__.phoenix_kit_files ADD CONSTRAINT phoenix_kit_files_edited_from_uuid_fkey FOREIGN KEY (edited_from_uuid) REFERENCES __SCHEMA__.phoenix_kit_files(uuid) ON DELETE SET NULL;\n  END IF;\nEND\n$$",
+        since: 195,
+        class: :constraint,
+        revisions: [
+          {195,
+           %{
+             type: "f",
+             columns: ["edited_from_uuid"],
+             definition:
+               "FOREIGN KEY (edited_from_uuid) REFERENCES __SCHEMA__.phoenix_kit_files(uuid) ON DELETE SET NULL",
+             name_template: nil,
+             foreign_table: "phoenix_kit_files",
+             foreign_columns: ["uuid"],
+             on_delete: "n",
+             on_update: "a"
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "index:phoenix_kit_files_original_file_uuid_index",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_files_original_file_uuid_index",
+             table: "phoenix_kit_files",
+             kind: :index
+           }},
+        create:
+          "CREATE INDEX IF NOT EXISTS phoenix_kit_files_original_file_uuid_index ON __SCHEMA__.phoenix_kit_files USING btree (original_file_uuid)",
+        since: 195,
+        class: :index,
+        revisions: [
+          {195,
+           %{
+             table: "phoenix_kit_files",
+             keys: ["original_file_uuid"],
+             unique: false,
+             method: "btree",
+             definition:
+               "CREATE INDEX phoenix_kit_files_original_file_uuid_index ON __SCHEMA__.phoenix_kit_files USING btree (original_file_uuid)",
+             predicate: nil,
+             opclasses: ["uuid_ops"],
+             name_template: nil
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "index:phoenix_kit_files_edited_from_uuid_index",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_files_edited_from_uuid_index",
+             table: "phoenix_kit_files",
+             kind: :index
+           }},
+        create:
+          "CREATE INDEX IF NOT EXISTS phoenix_kit_files_edited_from_uuid_index ON __SCHEMA__.phoenix_kit_files USING btree (edited_from_uuid)",
+        since: 195,
+        class: :index,
+        revisions: [
+          {195,
+           %{
+             table: "phoenix_kit_files",
+             keys: ["edited_from_uuid"],
+             unique: false,
+             method: "btree",
+             definition:
+               "CREATE INDEX phoenix_kit_files_edited_from_uuid_index ON __SCHEMA__.phoenix_kit_files USING btree (edited_from_uuid)",
+             predicate: nil,
+             opclasses: ["uuid_ops"],
+             name_template: nil
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "index:phoenix_kit_file_instances_file_name_index",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_file_instances_file_name_index",
+             table: "phoenix_kit_file_instances",
+             kind: :index
+           }},
+        create:
+          "CREATE INDEX IF NOT EXISTS phoenix_kit_file_instances_file_name_index ON __SCHEMA__.phoenix_kit_file_instances USING btree (file_name)",
+        since: 195,
+        class: :index,
+        revisions: [
+          {195,
+           %{
+             table: "phoenix_kit_file_instances",
+             keys: ["file_name"],
+             unique: false,
+             method: "btree",
+             definition:
+               "CREATE INDEX phoenix_kit_file_instances_file_name_index ON __SCHEMA__.phoenix_kit_file_instances USING btree (file_name)",
+             predicate: nil,
+             opclasses: ["text_ops"],
+             name_template: nil
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      # ── V193: AI spend-cap indexes ──
+      %{
+        id: "index:phoenix_kit_ai_requests_endpoint_spend_idx",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_ai_requests_endpoint_spend_idx",
+             table: "phoenix_kit_ai_requests",
+             kind: :index
+           }},
+        create:
+          "CREATE INDEX IF NOT EXISTS phoenix_kit_ai_requests_endpoint_spend_idx ON __SCHEMA__.phoenix_kit_ai_requests USING btree (endpoint_uuid, inserted_at) INCLUDE (cost_cents) WHERE ((status)::text = 'success'::text)",
+        since: 193,
+        class: :index,
+        revisions: [
+          {193,
+           %{
+             table: "phoenix_kit_ai_requests",
+             keys: ["endpoint_uuid", "inserted_at", "cost_cents"],
+             unique: false,
+             method: "btree",
+             definition:
+               "CREATE INDEX phoenix_kit_ai_requests_endpoint_spend_idx ON __SCHEMA__.phoenix_kit_ai_requests USING btree (endpoint_uuid, inserted_at) INCLUDE (cost_cents) WHERE ((status)::text = 'success'::text)",
+             predicate: "((status)::text = 'success'::text)",
+             opclasses: ["uuid_ops", "timestamptz_ops"],
+             name_template: nil
+           }}
+        ],
+        presence: :required,
+        backfill: nil
+      },
+      %{
+        id: "index:phoenix_kit_ai_requests_user_spend_idx",
+        owner: :core,
+        check:
+          {:catalog,
+           %{
+             name: "phoenix_kit_ai_requests_user_spend_idx",
+             table: "phoenix_kit_ai_requests",
+             kind: :index
+           }},
+        create:
+          "CREATE INDEX IF NOT EXISTS phoenix_kit_ai_requests_user_spend_idx ON __SCHEMA__.phoenix_kit_ai_requests USING btree (user_uuid, inserted_at) INCLUDE (cost_cents) WHERE ((status)::text = 'success'::text)",
+        since: 193,
+        class: :index,
+        revisions: [
+          {193,
+           %{
+             table: "phoenix_kit_ai_requests",
+             keys: ["user_uuid", "inserted_at", "cost_cents"],
+             unique: false,
+             method: "btree",
+             definition:
+               "CREATE INDEX phoenix_kit_ai_requests_user_spend_idx ON __SCHEMA__.phoenix_kit_ai_requests USING btree (user_uuid, inserted_at) INCLUDE (cost_cents) WHERE ((status)::text = 'success'::text)",
+             predicate: "((status)::text = 'success'::text)",
+             opclasses: ["uuid_ops", "timestamptz_ops"],
+             name_template: nil
            }}
         ],
         presence: :required,

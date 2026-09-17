@@ -6,8 +6,11 @@ defmodule PhoenixKit.Modules.Storage.Manager do
   redundancy, failover, and variant generation.
   """
 
+  require Logger
+
   alias PhoenixKit.Modules.Storage
   alias PhoenixKit.Modules.Storage.ProviderRegistry
+  alias PhoenixKit.Modules.Storage.Providers.Local
   alias PhoenixKit.Settings
   alias PhoenixKit.Utils.Date, as: UtilsDate
 
@@ -230,7 +233,11 @@ defmodule PhoenixKit.Modules.Storage.Manager do
       :ok ->
         {:ok, destination_path}
 
-      {:error, _reason} ->
+      {:error, reason} ->
+        Logger.debug(
+          "Storage: #{file_path} not read from bucket #{bucket.name}: #{inspect(reason)}"
+        )
+
         retrieve_with_failover(file_path, remaining_buckets, opts)
     end
   end
@@ -327,7 +334,7 @@ defmodule PhoenixKit.Modules.Storage.Manager do
 
     Enum.find_value(buckets, {:error, :not_local}, fn bucket ->
       if bucket.provider == "local" do
-        full_path = Path.join(bucket.endpoint || "priv/media", file_path)
+        full_path = Path.join(Local.root(bucket), file_path)
 
         if File.exists?(full_path) do
           {:ok, full_path}

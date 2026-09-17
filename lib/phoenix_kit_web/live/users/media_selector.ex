@@ -383,7 +383,7 @@ defmodule PhoenixKitWeb.Live.Users.MediaSelector do
 
   defp generate_urls_from_instances(instances, file_uuid) do
     Enum.reduce(instances, %{}, fn instance, acc ->
-      url = URLSigner.signed_url(file_uuid, instance.variant_name)
+      url = URLSigner.signed_url(file_uuid, instance.variant_name, version: instance)
       Map.put(acc, instance.variant_name, url)
     end)
   end

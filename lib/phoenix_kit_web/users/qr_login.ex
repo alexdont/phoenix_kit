@@ -27,6 +27,8 @@ defmodule PhoenixKitWeb.Users.QrLogin do
   @request_ttl_ms :timer.minutes(2)
 
   def mount(params, _session, socket) do
+    socket = assign(socket, :page_title, gettext("Sign in with QR code"))
+
     case Auth.maybe_redirect_authenticated(socket) do
       {:redirect, socket} ->
         {:ok, socket}

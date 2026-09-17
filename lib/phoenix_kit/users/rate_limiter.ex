@@ -43,6 +43,7 @@ defmodule PhoenixKit.Users.RateLimiter do
 
   - **Email-based rate limiting**: Prevents targeted attacks on specific accounts
   - **IP-based rate limiting**: Prevents distributed attacks from single sources
+    (an IPv6 address counts by its `/64` — see `PhoenixKit.Utils.IpAddress.network/1`)
   - **Timing attack mitigation**: Consistent response times for valid/invalid emails
   - **Exponential backoff**: Automatically enforced through time windows
   - **Comprehensive logging**: All rate limit violations are logged for security monitoring
@@ -72,6 +73,7 @@ defmodule PhoenixKit.Users.RateLimiter do
   require Logger
 
   alias PhoenixKit.Users.RateLimiter.Backend
+  alias PhoenixKit.Utils.IpAddress
 
   @default_config [
     # Login: 5 attempts per minute per email
@@ -192,7 +194,8 @@ defmodule PhoenixKit.Users.RateLimiter do
       :ok ->
         # Also check IP-based rate limit if IP is provided
         if ip_address do
-          ip_key = "auth:login:ip:#{ip_address}"
+          ip = IpAddress.network(ip_address)
+          ip_key = "auth:login:ip:#{ip}"
           # Allow slightly higher limit for IP (to avoid false positives in shared networks)
           ip_limit = limit * 3
 
@@ -201,7 +204,7 @@ defmodule PhoenixKit.Users.RateLimiter do
               :ok
 
             {:error, :rate_limit_exceeded} = error ->
-              log_rate_limit_violation("login", "ip:#{ip_address}", ip_limit, window)
+              log_rate_limit_violation("login", "ip:#{ip}", ip_limit, window)
               error
           end
         else
@@ -341,7 +344,8 @@ defmodule PhoenixKit.Users.RateLimiter do
       :ok ->
         # Also check IP-based rate limit if IP is provided
         if ip_address do
-          ip_key = "auth:registration:ip:#{ip_address}"
+          ip = IpAddress.network(ip_address)
+          ip_key = "auth:registration:ip:#{ip}"
           ip_limit = Keyword.get(config, :registration_ip_limit)
           ip_window = Keyword.get(config, :registration_ip_window_ms)
 
@@ -350,7 +354,7 @@ defmodule PhoenixKit.Users.RateLimiter do
               :ok
 
             {:error, :rate_limit_exceeded} = error ->
-              log_rate_limit_violation("registration", "ip:#{ip_address}", ip_limit, ip_window)
+              log_rate_limit_violation("registration", "ip:#{ip}", ip_limit, ip_window)
               error
           end
         else
@@ -379,7 +383,8 @@ defmodule PhoenixKit.Users.RateLimiter do
   def check_qr_login_rate_limit(ip_address) when is_binary(ip_address) do
     config = get_config()
 
-    key = "auth:qr_login:ip:#{ip_address}"
+    ip = IpAddress.network(ip_address)
+    key = "auth:qr_login:ip:#{ip}"
     limit = Keyword.get(config, :qr_login_limit)
     window = Keyword.get(config, :qr_login_window_ms)
 
@@ -388,7 +393,7 @@ defmodule PhoenixKit.Users.RateLimiter do
         :ok
 
       {:error, :rate_limit_exceeded} = error ->
-        log_rate_limit_violation("qr_login", "ip:#{ip_address}", limit, window)
+        log_rate_limit_violation("qr_login", "ip:#{ip}", limit, window)
         error
     end
   end
@@ -412,7 +417,8 @@ defmodule PhoenixKit.Users.RateLimiter do
   def check_referral_validation_rate_limit(ip_address) when is_binary(ip_address) do
     config = get_config()
 
-    key = "auth:referral_validation:ip:#{ip_address}"
+    ip = IpAddress.network(ip_address)
+    key = "auth:referral_validation:ip:#{ip}"
     limit = Keyword.get(config, :referral_validation_limit)
     window = Keyword.get(config, :referral_validation_window_ms)
 
@@ -421,7 +427,7 @@ defmodule PhoenixKit.Users.RateLimiter do
         :ok
 
       {:error, :rate_limit_exceeded} = error ->
-        log_rate_limit_violation("referral_validation", "ip:#{ip_address}", limit, window)
+        log_rate_limit_violation("referral_validation", "ip:#{ip}", limit, window)
         error
     end
   end
@@ -644,8 +650,10 @@ defmodule PhoenixKit.Users.RateLimiter do
   # call `check_login_rate_limit/2` makes.
   defp charge_ip(_action, ip, _window, _limit) when ip in [nil, "", "unknown"], do: :ok
 
-  defp charge_ip(action, ip_address, window, limit),
-    do: charge("auth:#{action}:ip:#{ip_address}", window, limit, action, "ip:#{ip_address}")
+  defp charge_ip(action, ip_address, window, limit) do
+    ip = IpAddress.network(ip_address)
+    charge("auth:#{action}:ip:#{ip}", window, limit, action, "ip:#{ip}")
+  end
 
   defp charge_global(_action, _window, limit) when limit in [nil, false], do: :ok
 

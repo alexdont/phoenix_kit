@@ -8,7 +8,10 @@ defmodule PhoenixKit.Settings.Queries do
 
   import Ecto.Query
 
+  require Logger
+
   alias PhoenixKit.RepoHelper
+  alias PhoenixKit.Settings.Events
   alias PhoenixKit.Settings.History
   alias PhoenixKit.Settings.Setting
 
@@ -229,16 +232,59 @@ defmodule PhoenixKit.Settings.Queries do
         end
       end)
 
-    # The feed hears of the change only once it is committed.
+    # Nobody hears of the change until it is committed.
     case result do
       {:ok, {setting, recorded}} ->
-        History.publish(recorded)
+        announce_committed([{setting, recorded}])
         {:ok, setting}
 
       {:error, _} = error ->
         error
     end
   end
+
+  @doc false
+  # What every committed settings write does next, in this order: drop the
+  # cached values (synchronously — a subscriber that reacts by reading the
+  # setting must not get the old value back), then tell the activity feed and
+  # the settings subscribers. `pairs` is `[{written_setting, history_result}]`;
+  # a write that changed no value (`:unchanged`) is announced to nobody.
+  def announce_committed(pairs) do
+    PhoenixKit.Cache.invalidate_now(:settings, Enum.map(pairs, fn {s, _} -> s.key end))
+
+    for {setting, recorded} <- pairs, recorded != :unchanged do
+      announce(fn -> History.publish(recorded) end)
+
+      announce(fn ->
+        Events.broadcast_setting_changed(setting.key, committed_value(setting), setting.module)
+      end)
+    end
+
+    :ok
+  end
+
+  @doc false
+  # One announcement of a committed change. The write already stands, so a
+  # failed notification (PubSub not running in a Mix task, a feed subscriber
+  # raising) is logged and the next one still goes out — it must never turn
+  # the write into an error or skip the settings broadcast.
+  def announce(fun) do
+    fun.()
+    :ok
+  rescue
+    error ->
+      Logger.warning("Settings change not announced: #{Exception.message(error)}")
+      :ok
+  catch
+    kind, reason ->
+      Logger.warning("Settings change not announced: #{inspect({kind, reason})}")
+      :ok
+  end
+
+  # The value a subscriber sees: the JSON document for a JSON setting, else
+  # the string.
+  defp committed_value(%Setting{value_json: json}) when not is_nil(json), do: json
+  defp committed_value(%Setting{value: value}), do: value
 
   defp record_or_error(before, setting, changeset, opts) do
     case History.record(before, setting, opts) do

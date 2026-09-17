@@ -6,7 +6,7 @@
 // modal now carries the neighbours' variant URLs, and ViewerKeydown
 // warms them on mount, deduped page-wide across remounts.
 //
-//   node --test test/js/neighbor_prefetch_test.cjs
+//   node --test test/js/neighbor_prefetch.test.cjs
 
 const fs = require("fs");
 const path = require("path");

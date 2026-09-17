@@ -28,6 +28,101 @@ defmodule PhoenixKit.Install.JsIntegrationThemeBootstrapTest do
       assert JsIntegration.theme_bootstrap_plan(html) == :before_head_close
     end
 
+    test "places the bootstrap after the real phx.new 1.8 script, which clears the theme" do
+      html = """
+      <head>
+        <script>
+          (() => {
+            const setTheme = (theme) => {
+              if (theme === "system") {
+                localStorage.removeItem("phx:theme");
+                document.documentElement.removeAttribute("data-theme");
+              } else {
+                localStorage.setItem("phx:theme", theme);
+                document.documentElement.setAttribute("data-theme", theme);
+              }
+            };
+            setTheme(localStorage.getItem("phx:theme") || "system");
+          })();
+        </script>
+      </head>
+      """
+
+      assert JsIntegration.theme_bootstrap_plan(html) == :before_head_close
+    end
+
+    test "leaves a layout alone when the host stamps data-theme itself" do
+      # A host's own stamp from the same key, which never clears the attribute.
+      # Injecting after it would override it and kill the host's
+      # [data-theme=dark] rules.
+      html = """
+      <head>
+        <script>
+          const t = localStorage.getItem("phx:theme") || "light";
+          document.documentElement.setAttribute("data-theme", t === "system" ? "light" : t);
+        </script>
+      </head>
+      """
+
+      assert JsIntegration.theme_bootstrap_plan(html) == :host_managed
+    end
+
+    test "a host switcher that sets AND clears, with its own key, stays the host's" do
+      # Not the stock script: that one reads `phx:theme`. Treating this as stock
+      # would inject the kit after it, and the kit's stamp would win every load.
+      html = """
+      <head>
+        <script>
+          const t = localStorage.getItem("theme");
+          if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
+          else document.documentElement.removeAttribute("data-theme");
+        </script>
+      </head>
+      """
+
+      assert JsIntegration.theme_bootstrap_plan(html) == :host_managed
+    end
+
+    test "a dataset assignment or a static html attribute also counts as the host's stamp" do
+      assert JsIntegration.theme_bootstrap_plan("""
+             <head><script>document.documentElement.dataset.theme = "dark"</script></head>
+             """) == :host_managed
+
+      assert JsIntegration.theme_bootstrap_plan("""
+             <html lang="en" data-theme="corporate"><head></head></html>
+             """) == :host_managed
+    end
+
+    test "the explicit host marker opts out" do
+      html = """
+      <head>
+        <%!-- phoenix_kit: theme managed by host --%>
+      </head>
+      """
+
+      assert JsIntegration.theme_bootstrap_plan(html) == :host_managed
+    end
+
+    test "a comment naming ThemeBootstrap still opts out, as hosts rely on" do
+      html = """
+      <head>
+        <%!-- no ThemeBootstrap here: this app stamps its own theme --%>
+      </head>
+      """
+
+      assert JsIntegration.theme_bootstrap_plan(html) == :already_present
+    end
+
+    test "a host-managed layout is never rewritten" do
+      html = """
+      <head>
+        <script>document.documentElement.setAttribute("data-theme", "light")</script>
+      </head>
+      """
+
+      assert JsIntegration.inject_theme_bootstrap_into(html) == html
+    end
+
     test "lands at the top of head when there is no stock script" do
       html = """
       <html>

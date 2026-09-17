@@ -26,6 +26,7 @@ defmodule PhoenixKit.Utils.Multilang do
 
   alias PhoenixKit.Modules.Languages
   alias PhoenixKit.Modules.Languages.DialectMapper
+  alias PhoenixKitWeb.Components.Core.LanguageSwitcher
 
   @primary_language_key "_primary_language"
 
@@ -372,6 +373,11 @@ defmodule PhoenixKit.Utils.Multilang do
   @doc """
   Builds language tab data for the UI from the Languages module.
   Returns a list of maps with code, name, flag, and is_primary fields.
+
+  `name` drops the country qualifier when only one dialect of its base
+  language is enabled ("German (Germany)" → "German"); enabling a sibling
+  dialect (en-US + en-GB) brings the qualifier back. Same rule as the
+  navigation dropdowns — see `PhoenixKitWeb.Components.Core.LanguageSwitcher.dedupe_names/1`.
   """
   @spec build_language_tabs() :: [map()]
   def build_language_tabs do
@@ -393,6 +399,7 @@ defmodule PhoenixKit.Utils.Multilang do
           short_code: compute_short_code(code, ordered)
         }
       end)
+      |> LanguageSwitcher.dedupe_names()
     else
       []
     end

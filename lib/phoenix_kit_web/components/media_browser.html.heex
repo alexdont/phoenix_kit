@@ -1613,6 +1613,17 @@
                                     only). Persists like the viewer's rotate
                                     button; the thumbnail reorients live. --%>
                               <.table_row_menu_button
+                                :if={
+                                  file.file_type == "image" and not @filter_trash and
+                                    ImageEditing.editable_mime?(file.mime_type)
+                                }
+                                phx-click="open_image_editor"
+                                phx-target={@myself}
+                                phx-value-file-uuid={file.file_uuid}
+                                icon="hero-adjustments-horizontal"
+                                label={gettext("Edit image")}
+                              />
+                              <.table_row_menu_button
                                 :if={file.file_type == "image"}
                                 phx-click="rotate_file"
                                 phx-target={@myself}
@@ -2249,6 +2260,17 @@
                                           (images only). Persists like the
                                           viewer; the thumbnail reorients live. --%>
                                     <.table_row_menu_button
+                                      :if={
+                                        file.file_type == "image" and not @filter_trash and
+                                          ImageEditing.editable_mime?(file.mime_type)
+                                      }
+                                      phx-click="open_image_editor"
+                                      phx-target={@myself}
+                                      phx-value-file-uuid={file.file_uuid}
+                                      icon="hero-adjustments-horizontal"
+                                      label={gettext("Edit image")}
+                                    />
+                                    <.table_row_menu_button
                                       :if={file.file_type == "image"}
                                       phx-click="rotate_file"
                                       phx-target={@myself}
@@ -2693,9 +2715,33 @@
           has_next={has_next}
           persist_rotation={true}
           details_path={if @admin, do: Routes.path("/admin/media/#{f.file_uuid}")}
+          edit_target={if not @select_mode, do: {__MODULE__, @id}}
         />
       </div>
       <div class="modal-backdrop" phx-click="close_viewer" phx-target={@myself}></div>
+    </div>
+  <% end %>
+
+  <%!-- ── Image editor ─────────────────────────────────────────────── --%>
+  <%= if file = assigns[:image_editor_file] do %>
+    <div
+      id={"#{@id}-image-editor-modal"}
+      class="modal modal-open"
+      phx-window-keydown="close_image_editor"
+      phx-key="Escape"
+      phx-target={@myself}
+    >
+      <div class="modal-box !fixed !inset-0 !w-auto !h-auto !min-w-0 !max-w-none !max-h-none !m-0 !rounded-none lg:!relative lg:!inset-auto lg:!w-[95vw] lg:!h-[90vh] lg:!rounded-2xl lg:!m-auto p-4 !overflow-y-auto">
+        <.live_component
+          module={PhoenixKitWeb.Components.ImageEditor}
+          id={image_editor_id(@id, file.uuid)}
+          file={file}
+          scope={assigns[:image_editor_scope]}
+          authorized={true}
+          on_close={JS.push("close_image_editor", target: @myself)}
+        />
+      </div>
+      <div class="modal-backdrop" phx-click="close_image_editor" phx-target={@myself}></div>
     </div>
   <% end %>
 </div>

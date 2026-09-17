@@ -11,6 +11,8 @@ defmodule PhoenixKitWeb.Users.ResetPassword do
   alias PhoenixKit.Utils.Routes
 
   def mount(params, _session, socket) do
+    socket = assign(socket, :page_title, gettext("Reset Password"))
+
     case PhoenixKitWeb.Users.Auth.maybe_redirect_authenticated(socket) do
       {:redirect, socket} ->
         {:ok, socket}

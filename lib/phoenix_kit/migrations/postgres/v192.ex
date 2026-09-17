@@ -52,7 +52,7 @@ defmodule PhoenixKit.Migrations.Postgres.V192 do
       CHECK (kind IN ('rectangle', 'circle', 'polygon', 'freehand', 'callout', 'text', 'dimension', 'line', 'marker', 'image', 'arrow'))
     """)
 
-    execute("COMMENT ON TABLE #{p}phoenix_kit IS '191'")
+    execute("COMMENT ON TABLE #{p}phoenix_kit IS '192'")
   end
 
   def down(opts) do
@@ -73,7 +73,7 @@ defmodule PhoenixKit.Migrations.Postgres.V192 do
       CHECK (kind IN ('rectangle', 'circle', 'polygon', 'freehand', 'callout', 'text', 'dimension', 'line', 'marker', 'image'))
     """)
 
-    execute("COMMENT ON TABLE #{p}phoenix_kit IS '190'")
+    execute("COMMENT ON TABLE #{p}phoenix_kit IS '191'")
   end
 
   defp guard_no_arrow_annotations!(p) do
@@ -82,10 +82,10 @@ defmodule PhoenixKit.Migrations.Postgres.V192 do
 
     if count > 0 do
       raise """
-      Cannot roll back V191: #{count} annotation(s) with kind = 'arrow' exist \
+      Cannot roll back V192: #{count} annotation(s) with kind = 'arrow' exist \
       in #{p}phoenix_kit_annotations.
 
-      V191 widened phoenix_kit_annotations_kind_check to allow 'arrow'. Rolling \
+      V192 widened phoenix_kit_annotations_kind_check to allow 'arrow'. Rolling \
       back re-adds the narrower CHECK, which Postgres validates against every \
       existing row — so these rows would make the ALTER fail regardless.
 
@@ -95,7 +95,7 @@ defmodule PhoenixKit.Migrations.Postgres.V192 do
              DELETE FROM #{p}phoenix_kit_annotations WHERE kind = 'arrow';
            (or UPDATE ... SET kind = 'callout' to keep the geometry), then \
       re-run the rollback; or
-        2. Stay on V191 — the widened CHECK is a superset of V190's and is \
+        2. Stay on V192 — the widened CHECK is a superset of V191's and is \
       harmless to a host that no longer draws arrow annotations.
       """
     end

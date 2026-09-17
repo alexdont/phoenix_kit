@@ -105,7 +105,7 @@ defmodule PhoenixKitWeb.Components.LayoutWrapper do
   attr :page_action, :map,
     default: nil,
     doc:
-      "Optional compact action button rendered right after the breadcrumb title: `%{icon: \"hero-plus\", label: \"New template\", navigate: path}`. Lets a page keep its primary create action without spending an in-content header row. `label` becomes the tooltip/aria-label; `icon` defaults to hero-plus. Navigation only — for a `phx-click` action (or anything needing `phx-target`), use the `:action` slot instead. ⚠️ Plugin LiveViews rendered through the admin layout can only use this map: the layout threads it as an assign, and a slot cannot travel that way."
+      "Optional compact action button rendered right after the breadcrumb title: `%{icon: \"hero-plus\", label: \"New template\", navigate: path}`. Lets a page keep its primary create action without spending an in-content header row. `label` becomes the tooltip/aria-label; `icon` defaults to hero-plus. Navigation only, by design: it renders a real link, so middle-click, open-in-new-tab and copy-link keep working. For anything interactive — a `phx-click`, a modal, a `JS` command — use `page_toolbar: {Module, :fun}` on the socket (see the `:toolbar` slot), which reaches every page including plugin LiveViews rendered through the admin layout. Do not add click handling to this map."
 
   attr :current_path, :string, default: nil
   attr :inner_content, :string, default: nil
@@ -132,6 +132,10 @@ defmodule PhoenixKitWeb.Components.LayoutWrapper do
 
   slot :action,
     doc: """
+    **Superseded by `:toolbar` / `page_toolbar`** — prefer those for new code:
+    they reach every page, including plugin LiveViews routed through the admin
+    layout, which this slot never can. Kept for existing direct callers.
+
     The same compact action button, for pages whose primary action is not a
     navigation — a `phx-click`, a `JS` command, anything needing `phx-target`.
     The map attribute cannot express those and cannot address a LiveComponent.

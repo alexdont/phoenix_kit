@@ -639,6 +639,17 @@ PhoenixKitAI.disable_system()
 - `{prefix}/profile/settings/integrations` - Personal (per-user) integration credentials
 - `{prefix}/admin/settings/integrations` - System-wide integration credentials (OAuth/API keys/bot tokens)
 
+**Your own admin pages** are declared, not hand-routed. List them under
+`config :phoenix_kit, :admin_dashboard_tabs` (with a `live_view:` field) and
+the kit wires the route into its admin `live_session`, adds the sidebar entry,
+applies the permission, and keeps the active state and the language switcher
+working — no `url_path` or router edits on your side. `mix phoenix_kit.gen.admin.page`
+writes a starting page and its config entry. Full reference:
+[Custom admin pages](guides/custom-admin-pages.md).
+
+In the page header, `page_action` is a single **navigation** chip (a real link);
+anything **interactive** — a modal, a `phx-click` — goes in `page_toolbar`.
+
 **The following require installing their companion package** (see "Companion Modules" above) — they 404 until that package is added:
 
 - `{prefix}/admin/publishing` - Blog posts and articles management (`phoenix_kit_publishing`)

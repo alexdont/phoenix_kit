@@ -2,11 +2,15 @@ defmodule PhoenixKit.Users.Auth.KnownDevice do
   @moduledoc """
   A device (IP + hashed user-agent) a user has previously logged in from.
 
-  Backs the new-login security alert: a login whose `(ip_address,
+  Backs the new-login security alert: a login whose `(network,
   user_agent_hash)` pair has no matching row for the user is a "new
   device" and — when `new_login_alert_enabled` is on — triggers
   `user.new_login_detected` in the activity log plus an email via
   `PhoenixKit.Users.Auth.UserNotifier.deliver_new_login_alert/2`.
+
+  Match uses `PhoenixKit.Utils.IpAddress.network/1` (IPv4 is the address,
+  IPv6 is its `/64`). The unique index and stored `ip_address` stay the
+  full address so Active Sessions / geo / audit still see it.
 
   The user agent is stored pre-hashed (SHA-256 hex, via
   `PhoenixKit.Utils.SessionFingerprint.hash_user_agent/1`) — the raw UA

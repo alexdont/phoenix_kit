@@ -1,7 +1,7 @@
 <PhoenixKitWeb.Components.AuthPageWrapper.auth_page_wrapper
   flash={@flash}
   phoenix_kit_current_scope={assigns[:phoenix_kit_current_scope]}
-  page_title={gettext("Resend confirmation")}
+  page_title={@page_title}
   current_path={assigns[:url_path] || "/users/confirm"}
   dev_mailbox_message={gettext("confirmation emails")}
 >

@@ -64,6 +64,10 @@ defmodule PhoenixKit.Cache do
     :warmer,
     :ttl,
     :max_size,
+    # Bumped by every invalidation. A miss-fill carries the value it read at
+    # its miss (`get_with_generation/3`), and a fill from before an
+    # invalidation is dropped — see `put/4`.
+    generation: 0,
     stats: %{
       hits: 0,
       misses: 0,
@@ -165,7 +169,71 @@ defmodule PhoenixKit.Cache do
   end
 
   @doc """
+  `get/3`, plus the cache's generation at the moment of the read — for a
+  caller that fills a miss from the database. Pass it to `put/4` as
+  `if_generation:`.
+
+  A miss-fill races every write: the reader misses, reads the old row, and
+  the writer commits and invalidates before the reader's `put` arrives. That
+  `put` would bring the old value back after the invalidation, and it would
+  stay until its TTL. Carrying the generation drops it instead.
+
+  The generation is `nil` when the cache could not answer; a `put/4` with
+  `if_generation: nil` writes nothing.
+  """
+  @spec get_with_generation(cache_name(), cache_key(), default_value()) ::
+          {cache_value(), non_neg_integer() | nil}
+  def get_with_generation(cache_name, key, default \\ nil) do
+    GenServer.call(via_tuple(cache_name), {:get_with_generation, key, default}, 5000)
+  rescue
+    error in [ArgumentError, RuntimeError] ->
+      unless compilation_or_test_mode?() do
+        Logger.warning("Cache #{cache_name} unavailable: #{inspect(error)}")
+      end
+
+      {default, nil}
+  catch
+    :exit, reason ->
+      unless compilation_or_test_mode?() do
+        Logger.warning("Cache #{cache_name} did not answer: #{inspect(reason)}")
+      end
+
+      {default, nil}
+  end
+
+  @doc """
+  `get_multiple/3`, plus the generation — see `get_with_generation/3`.
+  """
+  @spec get_multiple_with_generation(cache_name(), [cache_key()], map()) ::
+          {map(), non_neg_integer() | nil}
+  def get_multiple_with_generation(cache_name, keys, defaults \\ %{}) do
+    GenServer.call(
+      via_tuple(cache_name),
+      {:get_multiple_with_generation, keys, defaults},
+      5000
+    )
+  rescue
+    error in [ArgumentError, RuntimeError] ->
+      unless compilation_or_test_mode?() do
+        Logger.warning("Cache #{cache_name} unavailable: #{inspect(error)}")
+      end
+
+      {defaults, nil}
+  catch
+    :exit, reason ->
+      unless compilation_or_test_mode?() do
+        Logger.warning("Cache #{cache_name} did not answer: #{inspect(reason)}")
+      end
+
+      {defaults, nil}
+  end
+
+  @doc """
   Puts a value in the cache.
+
+  With `if_generation: generation` (from `get_with_generation/3`), the value
+  is written only if nothing has been invalidated since that read — the form
+  a miss-fill must use. Without it the write is unconditional.
 
   ## Examples
 
@@ -173,9 +241,13 @@ defmodule PhoenixKit.Cache do
       PhoenixKit.Cache.put(:user_roles, user_uuid, ["admin", "user"])
 
   """
-  @spec put(cache_name(), cache_key(), cache_value()) :: :ok
-  def put(cache_name, key, value) do
-    GenServer.cast(via_tuple(cache_name), {:put, key, value})
+  @spec put(cache_name(), cache_key(), cache_value(), keyword()) :: :ok
+  def put(cache_name, key, value, opts \\ [])
+
+  def put(_cache_name, _key, _value, if_generation: nil), do: :ok
+
+  def put(cache_name, key, value, opts) do
+    GenServer.cast(via_tuple(cache_name), {:put, [{key, value}], opts[:if_generation]})
   rescue
     error in [ArgumentError, RuntimeError] ->
       Logger.warning("Cache #{cache_name} unavailable: #{inspect(error)}")
@@ -187,16 +259,23 @@ defmodule PhoenixKit.Cache do
   end
 
   @doc """
-  Puts multiple values in the cache.
+  Puts multiple values in the cache. Takes `if_generation:` like `put/4`.
 
   ## Examples
 
       PhoenixKit.Cache.put_multiple(:settings, %{"date_format" => "m/d/Y", "time_format" => "h:i A"})
 
   """
-  @spec put_multiple(cache_name(), map()) :: :ok
-  def put_multiple(cache_name, key_values) do
-    GenServer.cast(via_tuple(cache_name), {:put_multiple, key_values})
+  @spec put_multiple(cache_name(), map(), keyword()) :: :ok
+  def put_multiple(cache_name, key_values, opts \\ [])
+
+  def put_multiple(_cache_name, _key_values, if_generation: nil), do: :ok
+
+  def put_multiple(cache_name, key_values, opts) do
+    GenServer.cast(
+      via_tuple(cache_name),
+      {:put, Map.to_list(key_values), opts[:if_generation]}
+    )
   rescue
     error in [ArgumentError, RuntimeError] ->
       Logger.warning("Cache #{cache_name} unavailable: #{inspect(error)}")
@@ -225,6 +304,33 @@ defmodule PhoenixKit.Cache do
   catch
     :exit, {:noproc, _} ->
       Logger.warning("Cache #{cache_name} not started")
+      :ok
+  end
+
+  @doc """
+  Invalidates `keys` and returns only once they are gone.
+
+  `invalidate/2` and `invalidate_multiple/2` are casts: the caller moves on
+  while the cache process still holds the old values. That is fine for a
+  write nobody is watching, and wrong for one that is about to be announced —
+  a subscriber that reacts to "this setting changed" by reading it again
+  would get the value from before the change. Use this when a notification
+  follows.
+
+  Never turns a successful write into a failure: a slow, dead or missing
+  cache process is logged and reported as `:ok`, and the entry expires on its
+  TTL like any other.
+  """
+  @spec invalidate_now(cache_name(), [cache_key()]) :: :ok
+  def invalidate_now(cache_name, keys) when is_list(keys) do
+    GenServer.call(via_tuple(cache_name), {:invalidate_multiple, keys})
+  rescue
+    error in [ArgumentError, RuntimeError] ->
+      Logger.warning("Cache #{cache_name} unavailable: #{inspect(error)}")
+      :ok
+  catch
+    :exit, reason ->
+      Logger.warning("Cache #{cache_name} could not be invalidated: #{inspect(reason)}")
       :ok
   end
 
@@ -426,6 +532,16 @@ defmodule PhoenixKit.Cache do
   end
 
   @impl GenServer
+  def handle_call({:get_with_generation, key, default}, from, state) do
+    {:reply, value, state} = handle_call({:get, key, default}, from, state)
+    {:reply, {value, state.generation}, state}
+  end
+
+  def handle_call({:get_multiple_with_generation, keys, defaults}, from, state) do
+    {:reply, values, state} = handle_call({:get_multiple, keys, defaults}, from, state)
+    {:reply, {values, state.generation}, state}
+  end
+
   def handle_call({:get, key, default}, _from, %{table: table, stats: stats} = state) do
     case :ets.lookup(table, key) do
       [{^key, value, expires_at}] when is_integer(expires_at) ->
@@ -476,6 +592,13 @@ defmodule PhoenixKit.Cache do
   end
 
   @impl GenServer
+  def handle_call({:invalidate_multiple, keys}, _from, %{table: table, stats: stats} = state) do
+    Enum.each(keys, &:ets.delete(table, &1))
+    new_stats = %{stats | invalidations: stats.invalidations + length(keys)}
+    {:reply, :ok, invalidated(%{state | stats: new_stats})}
+  end
+
+  @impl GenServer
   def handle_call(:stats, _from, %{stats: stats} = state) do
     total = stats.hits + stats.misses
     hit_rate = if total > 0, do: stats.hits / total, else: 0.0
@@ -510,7 +633,24 @@ defmodule PhoenixKit.Cache do
 
     count = length(matching_keys)
     new_stats = %{stats | invalidations: stats.invalidations + count}
-    {:reply, {:ok, count}, %{state | stats: new_stats}}
+    {:reply, {:ok, count}, invalidated(%{state | stats: new_stats})}
+  end
+
+  defp invalidated(state), do: %{state | generation: state.generation + 1}
+
+  defp insert_entries(%{table: table, ttl: ttl, stats: stats} = state, key_values) do
+    entries =
+      if ttl do
+        # Per-entry expiry, not one shared stamp for the batch: a whole batch
+        # written together would otherwise expire together, and the first read
+        # after that instant would miss on every key at once.
+        Enum.map(key_values, fn {key, value} -> {key, value, expires_at(ttl)} end)
+      else
+        key_values
+      end
+
+    :ets.insert(table, entries)
+    maybe_evict(%{state | stats: %{stats | puts: stats.puts + length(key_values)}})
   end
 
   # Up to 10% jitter, always forward, so entries written in the same instant do
@@ -520,59 +660,35 @@ defmodule PhoenixKit.Cache do
     System.monotonic_time(:millisecond) + ttl + :rand.uniform(max(div(ttl, 10), 1))
   end
 
+  # A fill that read before the latest invalidation carries an older
+  # generation, and is dropped: its value may be the one that was invalidated.
   @impl GenServer
-  def handle_cast({:put, key, value}, %{table: table, ttl: ttl, stats: stats} = state) do
-    entry =
-      if ttl do
-        {key, value, expires_at(ttl)}
-      else
-        {key, value}
-      end
-
-    :ets.insert(table, entry)
-    new_stats = %{stats | puts: stats.puts + 1}
-
-    {:noreply, maybe_evict(%{state | stats: new_stats})}
+  def handle_cast({:put, _key_values, generation}, %{generation: current} = state)
+      when is_integer(generation) and generation != current do
+    {:noreply, state}
   end
 
-  @impl GenServer
-  def handle_cast({:put_multiple, key_values}, %{table: table, ttl: ttl, stats: stats} = state) do
-    entries =
-      if ttl do
-        # Per-entry expiry, not one shared stamp for the batch: a whole batch
-        # written together would otherwise expire together, and the first read
-        # after that instant would miss on every key at once.
-        Enum.map(key_values, fn {key, value} -> {key, value, expires_at(ttl)} end)
-      else
-        Enum.map(key_values, fn {key, value} -> {key, value} end)
-      end
-
-    :ets.insert(table, entries)
-    new_stats = %{stats | puts: stats.puts + map_size(key_values)}
-
-    {:noreply, maybe_evict(%{state | stats: new_stats})}
+  def handle_cast({:put, key_values, _generation}, state) do
+    {:noreply, insert_entries(state, key_values)}
   end
 
-  @impl GenServer
   def handle_cast({:invalidate, key}, %{table: table, stats: stats} = state) do
     :ets.delete(table, key)
     new_stats = %{stats | invalidations: stats.invalidations + 1}
-    {:noreply, %{state | stats: new_stats}}
+    {:noreply, invalidated(%{state | stats: new_stats})}
   end
 
-  @impl GenServer
   def handle_cast({:invalidate_multiple, keys}, %{table: table, stats: stats} = state) do
     Enum.each(keys, &:ets.delete(table, &1))
     new_stats = %{stats | invalidations: stats.invalidations + length(keys)}
-    {:noreply, %{state | stats: new_stats}}
+    {:noreply, invalidated(%{state | stats: new_stats})}
   end
 
-  @impl GenServer
   def handle_cast(:clear, %{table: table, stats: stats} = state) do
     count = :ets.info(table, :size)
     :ets.delete_all_objects(table)
     new_stats = %{stats | invalidations: stats.invalidations + count}
-    {:noreply, %{state | stats: new_stats}}
+    {:noreply, invalidated(%{state | stats: new_stats})}
   end
 
   @impl GenServer
@@ -585,13 +701,18 @@ defmodule PhoenixKit.Cache do
   def handle_cast(:warm, %{warmer: warmer} = state) do
     case safe_warm(warmer) do
       {:ok, data} when is_map(data) and map_size(data) > 0 ->
-        put_multiple(state.name, data)
+        # Inserted here, not cast to ourselves: a cast would queue behind any
+        # invalidation that arrived while the warmer read the database, and
+        # then put the invalidated value back.
+        state = insert_entries(state, Map.to_list(data))
         Logger.info("Warmed cache #{state.name} with #{map_size(data)} entries")
+        {:noreply, state}
 
       {:ok, _empty} ->
         # Warmer ran but returned nothing — DB might not be ready yet. Retry in 10 s.
         Logger.warning("Cache #{state.name}: warmer returned empty data, retrying in 10 s")
         Process.send_after(self(), :warm_cache, 10_000)
+        {:noreply, state}
 
       {:error, error} ->
         # DB error (timeout, connection refused, etc.). Retry in 10 s.
@@ -600,9 +721,8 @@ defmodule PhoenixKit.Cache do
         )
 
         Process.send_after(self(), :warm_cache, 10_000)
+        {:noreply, state}
     end
-
-    {:noreply, state}
   end
 
   @impl GenServer

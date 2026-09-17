@@ -32,9 +32,49 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
 
       # Inline text links (for footers)
       <.language_switcher_inline current_locale={@current_locale} />
+
+  ## Locale routing contract
+
+  **The language of a page lives in its URL** — `/et/products`, `/ru/products`
+  — never in the session. The default language may be served without a
+  prefix when the site is configured that way; every other language carries
+  its segment. This is deliberate, and the switcher is built on it:
+
+    * A shared link must show the same language to everyone who opens it. A
+      session language makes the same URL show different content to different
+      people.
+    * Search engines need a distinct URL per language: `hreflang` and
+      canonical links point at URLs, crawlers send no cookies, and a page that
+      varies by session gets indexed in one language for everyone.
+    * Caches and CDNs key on the URL; link previews (chat apps, social cards)
+      fetch without cookies and would always show the default language.
+
+  PhoenixKit once had a session fallback and removed it after it overrode the
+  language of URLs people had been sent. The navigation hook sets the page
+  language from the URL on every navigation, so a session-locale page is
+  fighting the kit, and the switcher's links will not behave there. In
+  development the switcher logs a warning (once per boot) when it renders a
+  non-default language at a URL without a locale segment.
+
+  **Not supported, on purpose:** a "session locale mode", or a hook that lets
+  the switcher emit the same URL for every language. What a host can do:
+
+    * Route its localized pages under the locale segment (the migration is
+      usually a `scope "/:locale"` around the existing routes plus
+      `Routes.path/2` for links).
+    * Use a cookie or saved preference only to pick the language of a
+      **bare** landing request (`/`), redirecting to `/<locale>/…`. Once a URL
+      carries a locale, the URL wins.
+    * Build its own switcher markup with `locale_path/2`, which returns
+      exactly the links this component renders.
+
+  A subdomain per language satisfies the same rule — the invariant is "a
+  distinct, stable URL per language", not "a path segment".
   """
 
   use Phoenix.Component
+
+  require Logger
 
   alias Phoenix.LiveView.JS
   alias PhoenixKit.Config
@@ -78,7 +118,13 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
   attr(:show_flags, :boolean, default: true, doc: "Show language flags")
   attr(:show_names, :boolean, default: true, doc: "Show language names")
   attr(:show_native_names, :boolean, default: false, doc: "Show native language names")
-  attr(:goto_home, :boolean, default: false, doc: "Redirect to home page on language switch")
+
+  attr(:goto_home, :boolean,
+    default: false,
+    doc:
+      "Send every language link to that language's home page instead of the current page in that language"
+  )
+
   attr(:hide_current, :boolean, default: false, doc: "Hide currently selected language from list")
   attr(:class, :string, default: "", doc: "Additional CSS classes")
 
@@ -274,7 +320,13 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
                   </li>
                 <% end %>
                 <%= for language <- langs do %>
-                  <% url = resolve_url(language["base_code"], @current_path, @per_translation_urls) %>
+                  <% url =
+                    resolve_url(
+                      language["base_code"],
+                      @current_path,
+                      @per_translation_urls,
+                      @goto_home
+                    ) %>
                   <li
                     class="w-full language-item flex items-stretch"
                     data-name={String.downcase(language["name"] || "")}
@@ -345,7 +397,8 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
                 </li>
               <% end %>
               <%= for language <- @languages do %>
-                <% url = resolve_url(language["base_code"], @current_path, @per_translation_urls) %>
+                <% url =
+                  resolve_url(language["base_code"], @current_path, @per_translation_urls, @goto_home) %>
                 <li
                   class="w-full language-item flex items-stretch"
                   data-name={String.downcase(language["name"] || "")}
@@ -521,7 +574,13 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
 
   attr(:show_flags, :boolean, default: true, doc: "Show language flags")
   attr(:show_names, :boolean, default: true, doc: "Show language names")
-  attr(:goto_home, :boolean, default: false, doc: "Redirect to home page on language switch")
+
+  attr(:goto_home, :boolean,
+    default: false,
+    doc:
+      "Send every language link to that language's home page instead of the current page in that language"
+  )
+
   attr(:hide_current, :boolean, default: false, doc: "Hide currently selected language from list")
   attr(:class, :string, default: "", doc: "Additional CSS classes")
 
@@ -574,6 +633,7 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
 
     # Extract base code from current locale for matching
     current_base = DialectMapper.extract_base(locale)
+    warn_if_session_locale(current_base, assigns[:current_path])
 
     # Filter out current dialect if hide_current is enabled
     filtered_languages =
@@ -592,7 +652,7 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
     ~H"""
     <div class={["flex gap-2", @class]}>
       <%= for language <- @languages do %>
-        <% url = resolve_url(language["base_code"], @current_path, @per_translation_urls) %>
+        <% url = resolve_url(language["base_code"], @current_path, @per_translation_urls, @goto_home) %>
         <a
           href={url}
           phx-click="phoenix_kit_set_locale"
@@ -641,7 +701,13 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
 
   attr(:show_flags, :boolean, default: true, doc: "Show language flags")
   attr(:show_names, :boolean, default: true, doc: "Show language names")
-  attr(:goto_home, :boolean, default: false, doc: "Redirect to home page on language switch")
+
+  attr(:goto_home, :boolean,
+    default: false,
+    doc:
+      "Send every language link to that language's home page instead of the current page in that language"
+  )
+
   attr(:hide_current, :boolean, default: false, doc: "Hide currently selected language from list")
   attr(:class, :string, default: "", doc: "Additional CSS classes")
 
@@ -694,6 +760,7 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
 
     # Extract base code from current locale for matching
     current_base = DialectMapper.extract_base(locale)
+    warn_if_session_locale(current_base, assigns[:current_path])
 
     # Filter out current dialect if hide_current is enabled
     filtered_languages =
@@ -712,7 +779,7 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
     ~H"""
     <div class={["flex gap-4 items-center", @class]}>
       <%= for {language, index} <- Enum.with_index(@languages) do %>
-        <% url = resolve_url(language["base_code"], @current_path, @per_translation_urls) %>
+        <% url = resolve_url(language["base_code"], @current_path, @per_translation_urls, @goto_home) %>
         <div class="flex items-center gap-1">
           <%= if index > 0 do %>
             <span class="text-base-content/30">|</span>
@@ -791,6 +858,7 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
       end
 
     current_base = DialectMapper.extract_base(locale)
+    warn_if_session_locale(current_base, assigns[:current_path])
 
     current_language =
       Enum.find(all_dialects, &(&1["dialect"] == locale)) ||
@@ -1056,6 +1124,14 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
   # maps. We normalize each `code` to its base via `DialectMapper.extract_base/1`
   # so `"en-US"` and `"en"` both resolve cleanly when the consumer's switcher
   # iterates languages keyed by base code.
+  # `goto_home` sends every language to its home page; otherwise the link is
+  # the current page in that language (or its per-translation URL).
+  defp resolve_url(base_code, _current_path, _per_translation_urls, true),
+    do: generate_base_code_url(base_code, "/")
+
+  defp resolve_url(base_code, current_path, per_translation_urls, _goto_home),
+    do: resolve_url(base_code, current_path, per_translation_urls)
+
   defp resolve_url(base_code, current_path, nil),
     do: generate_base_code_url(base_code, current_path)
 
@@ -1085,6 +1161,95 @@ defmodule PhoenixKitWeb.Components.Core.LanguageSwitcher do
   defp entry_url(%{url: url}) when is_binary(url), do: url
   defp entry_url(%{"url" => url}) when is_binary(url), do: url
   defp entry_url(_), do: nil
+
+  @doc """
+  The path of `current_path` in the language `base_code` — what the switcher
+  links to. The default language gets an unprefixed path when the site is
+  configured that way; every other language gets its locale segment.
+
+  Public so a host that needs its own switcher markup builds the same links
+  the kit does, instead of re-deriving the locale rules.
+
+      iex> locale_path("/phoenix_kit/et/admin/users", "ru")
+      "/phoenix_kit/ru/admin/users"
+
+  See "Locale routing contract" in the moduledoc: the language of a page lives
+  in its URL, so this always produces a URL that carries it.
+  """
+  @spec locale_path(String.t() | nil, String.t()) :: String.t()
+  def locale_path(current_path, base_code) when is_binary(base_code) do
+    generate_base_code_url(DialectMapper.extract_base(base_code), current_path)
+  end
+
+  # Development-only: say, once per boot, when a page is showing a
+  # non-default language at a URL that does not carry it. That is the
+  # signature of a host keeping the language in the session — the design the
+  # kit deliberately does not support — and without this the host only sees a
+  # switcher whose links "don't work", and files a bug.
+  #
+  # Decided at runtime, not with `if Mix.env() == :dev` around the function:
+  # Mix compiles dependencies in :prod whatever the host runs, so a
+  # compile-time branch never reaches a host's dev server. `Mix` is absent
+  # from a release, and `Mix.env/0` is the host's own env under `mix`.
+  @session_locale_warned {__MODULE__, :session_locale_warned}
+
+  defp warn_if_session_locale(current_base, current_path) do
+    if dev_runtime?() and is_binary(current_path) and is_binary(current_base) and
+         not :persistent_term.get(@session_locale_warned, false) and
+         session_locale_page?(current_base, current_path) do
+      :persistent_term.put(@session_locale_warned, true)
+
+      Logger.warning(
+        "[PhoenixKit] The language switcher is rendering #{inspect(current_base)} on " <>
+          "#{current_path}, a URL with no language in it. PhoenixKit keeps the language " <>
+          "in the URL (/#{current_base}/...), never in the session: a shared link must show " <>
+          "the same language to everyone, and search engines need one URL per language. " <>
+          "The switcher's links will not behave on a session-locale page. Route your pages " <>
+          "under the locale segment instead — see \"Locale routing contract\" in " <>
+          "PhoenixKitWeb.Components.Core.LanguageSwitcher."
+      )
+    end
+
+    :ok
+  rescue
+    _ -> :ok
+  end
+
+  defp dev_runtime? do
+    function_exported?(Mix, :env, 0) and Mix.env() == :dev
+  end
+
+  @doc false
+  # The page shows `current_base`, yet the path carries no locale, and the kit
+  # would have given this language a prefix. (The default language on an
+  # unprefixed site is the one case where no locale in the URL is right.)
+  # Public for tests: the warning that uses it only fires in :dev.
+  def session_locale_page?(current_base, current_path) do
+    # Only the path decides: a query would hide the locale segment itself
+    # ("/fr?page=2") and sits after the slash a built URL carries.
+    current_path = current_path |> String.split(["?", "#"], parts: 2) |> hd()
+    url_prefix = PhoenixKit.Config.get_url_prefix()
+    prefix_to_remove = if url_prefix == "/", do: "", else: url_prefix
+    normalized = String.replace_prefix(current_path, prefix_to_remove, "")
+    normalized = if String.starts_with?(normalized, "/"), do: normalized, else: "/" <> normalized
+
+    # A trailing slash is the same page: the default language's root at a
+    # prefixed mount is built as "/phoenix_kit/", and the request is
+    # "/phoenix_kit".
+    # Both sides without the mount prefix: `Routes.path/2` puts it on every
+    # built URL, host pages outside the mount included, so comparing the
+    # built URL with the raw path flagged every default-language host page.
+    built =
+      current_base
+      |> generate_base_code_url(current_path)
+      |> String.replace_prefix(prefix_to_remove, "")
+
+    extract_locale_from_path(normalized) == nil and
+      trim_trailing_slash(built) != trim_trailing_slash(normalized)
+  end
+
+  defp trim_trailing_slash("/"), do: "/"
+  defp trim_trailing_slash(path), do: String.trim_trailing(path, "/")
 
   # Generate URL with ONLY base code - no dialect, no query params
   # This is the clean URL used in href attributes

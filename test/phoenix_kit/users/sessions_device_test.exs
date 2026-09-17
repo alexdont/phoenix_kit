@@ -69,6 +69,28 @@ defmodule PhoenixKit.Users.SessionsDeviceTest do
       assert other.location == nil
     end
 
+    test "enriches a session whose IPv6 address is in the known device's /64" do
+      user = user_fixture("qr-sessions-v6net@example.com")
+      ua = String.duplicate("a", 64)
+      current = session_token(user, "2001:db8:1:1::2", ua)
+      _other = session_token(user, "2001:db8:1:2::1", ua)
+
+      known_device(user, "2001:db8:1:1::1", ua, %{
+        browser: "Firefox",
+        os: "Linux",
+        location: "Lisbon, PT"
+      })
+
+      sessions = Sessions.list_user_device_sessions(user, current)
+      cur = Enum.find(sessions, & &1.is_current)
+      assert cur.location == "Lisbon, PT"
+      assert cur.ip_address == "2001:db8:1:1::2"
+
+      other = Enum.find(sessions, &(not &1.is_current))
+      assert other.location == nil
+      assert other.ip_address == "2001:db8:1:2::1"
+    end
+
     test "device name comes from the token itself, no known-device row needed" do
       user = user_fixture("qr-sessions-tokendev@example.com")
 

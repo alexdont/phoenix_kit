@@ -21,6 +21,8 @@ defmodule PhoenixKitWeb.Users.Registration do
   alias PhoenixKitWeb.Users.AuthSEO
 
   def mount(params, session, socket) do
+    socket = assign(socket, :page_title, gettext("Register"))
+
     case WebAuth.maybe_redirect_authenticated(socket) do
       {:redirect, socket} ->
         {:ok, socket}

@@ -155,7 +155,11 @@ defmodule PhoenixKit.Utils.SessionFingerprint do
       current_ip = get_ip_address(conn)
       current_ua_hash = hash_user_agent(conn)
 
-      ip_matches? = is_nil(stored_ip) or stored_ip == current_ip
+      # By network, not address: an IPv6 client rotates its temporary
+      # address inside its /64 daily, which is the same connection.
+      ip_matches? =
+        is_nil(stored_ip) or IpAddress.network(stored_ip) == IpAddress.network(current_ip)
+
       ua_matches? = is_nil(stored_ua_hash) or stored_ua_hash == current_ua_hash
 
       # Correlation, so a line names WHICH session it is about. Without it a

@@ -7,7 +7,36 @@ defmodule PhoenixKit.Migrations.Postgres do
 
   ## Migration Versions
 
-  ### V192 - Allow 'arrow' annotations ⚡ LATEST
+  ### V195 - Image editing ⚡ LATEST
+
+  Adds `edits`, `edit_revision`, `edit_state`, `original_file_uuid` and
+  `edited_from_uuid` to `phoenix_kit_files` (an edited image keeps its uuid;
+  its unedited original moves to a hidden system-managed child), and indexes
+  `phoenix_kit_file_instances.file_name` for reference-based deletion of
+  stored objects. Additive only.
+
+  ### V194 - Settings history: integration bodies withheld
+
+  The settings history recorded integration connection rows (keyed by their
+  own uuid, tokens in the body) in full, because it withheld values by key
+  name alone. The writer now withholds them; this version withholds what was
+  already written — `from`/`to` null and `restricted: true` on those
+  `setting.changed` entries, the rest of each entry kept. Data only;
+  `down/1` moves the marker back and restores nothing, by design.
+
+  ### V193 - Indexes for the AI spend caps
+
+  Two composite partial indexes on `phoenix_kit_ai_requests` —
+  `(endpoint_uuid, inserted_at)` and `(user_uuid, inserted_at)`, each
+  `INCLUDE (cost_cents) WHERE status = 'success'` — so the trailing-24-hour
+  spend sums `phoenix_kit_ai`'s caps run are answered from the index instead
+  of an endpoint's or user's whole history. Additive only.
+
+  ### V192 - Allow 'arrow' annotations
+
+  Widens `phoenix_kit_annotations_kind_check` with `'arrow'` for Etcher's
+  single-arrow tool (V130 did the same for `'marker'`, V157 for `'image'`).
+  `down/1` refuses while any `kind = 'arrow'` row exists.
 
   ### V191 - Who added a user
 
@@ -15,6 +44,7 @@ defmodule PhoenixKit.Migrations.Postgres do
   `ON DELETE SET NULL`, indexed) — the admin who created the user from the
   admin panel, `NULL` for a self-registered user. Backfilled from the
   `user.created` Activity entries the admin form has always logged.
+
   ### V190 - Active role per session + role order
 
   Adds `phoenix_kit_users_tokens.active_role_uuid` (the role a session acts
@@ -762,7 +792,7 @@ defmodule PhoenixKit.Migrations.Postgres do
   alias PhoenixKit.Migrations.Repair.Environment
 
   @initial_version 135
-  @current_version 192
+  @current_version 195
   @default_prefix "public"
 
   # The frozen pre-squash bridge: the last 1.7.x release, which still carries
@@ -1123,6 +1153,14 @@ defmodule PhoenixKit.Migrations.Postgres do
 
     _ ->
       0
+  catch
+    # A dead or dying connection pool EXITS rather than raising (an unowned
+    # sandbox checkout raises, a pool whose owner is gone exits). This is the
+    # read path — status, doctor, the update task's "what is installed?" —
+    # and its contract is "0 when unknown", so an exit must not escape it and
+    # crash the task instead of letting it report the database unreachable.
+    :exit, _ ->
+      0
   end
 
   # Retry version detection with exponential backoff
@@ -1162,16 +1200,21 @@ defmodule PhoenixKit.Migrations.Postgres do
         end
     end
   rescue
-    _ ->
-      if retries_left > 1 do
-        Process.sleep(100)
-        retry_version_detection(opts, escaped_prefix, retries_left - 1)
-      else
-        0
-      end
+    _ -> retry_or_give_up(opts, escaped_prefix, retries_left)
+  catch
+    :exit, _ -> retry_or_give_up(opts, escaped_prefix, retries_left)
   end
 
   defp retry_version_detection(_opts, _escaped_prefix, 0), do: 0
+
+  defp retry_or_give_up(opts, escaped_prefix, retries_left) do
+    if retries_left > 1 do
+      Process.sleep(100)
+      retry_version_detection(opts, escaped_prefix, retries_left - 1)
+    else
+      0
+    end
+  end
 
   # Check version using runtime repo (same logic as migrated_version)
   defp check_version_with_runtime_repo(repo, escaped_prefix) do

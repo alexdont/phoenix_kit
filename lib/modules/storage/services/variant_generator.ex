@@ -26,6 +26,8 @@ defmodule PhoenixKit.Modules.Storage.VariantGenerator do
 
   """
 
+  import Ecto.Query, only: [from: 2]
+
   alias PhoenixKit.Modules.Storage
   alias PhoenixKit.Modules.Storage.ImageProcessor
   alias PhoenixKit.Modules.Storage.Manager
@@ -114,24 +116,23 @@ defmodule PhoenixKit.Modules.Storage.VariantGenerator do
     effective_dimension = %{dimension | format: format_override}
 
     # Download original file to temp location
-    with {:ok, original_path} <- retrieve_original_file(file),
+    with {:ok, original_path, source_key} <- retrieve_original_file(file),
          {:ok, variant_path} <-
            process_variant(original_path, variant_path, file.mime_type, effective_dimension),
          {:ok, file_stats} <- get_variant_file_stats(variant_path),
          {:ok, storage_info} <-
            store_variant_file(variant_path, variant_name, variant_storage_path, file.uuid),
          {:ok, instance} <-
-           create_variant_instance(
+           publish_variant(
              file,
              variant_name,
              variant_storage_path,
              variant_mime_type,
              variant_ext,
-             file_stats
-           ),
-         # Create file location records for this variant instance
-         {:ok, _locations} <-
-           create_variant_file_locations(instance, storage_info.bucket_ids, variant_storage_path) do
+             file_stats,
+             storage_info.bucket_ids,
+             source_key
+           ) do
       cleanup_temp_files([original_path, variant_path])
       Logger.info("Variant #{variant_name} created successfully in database with locations")
       {:ok, instance}
@@ -153,9 +154,20 @@ defmodule PhoenixKit.Modules.Storage.VariantGenerator do
   pipeline (e.g. the baked annotated thumbnail). Handles stats, bucket storage,
   the `FileInstance` row, and file-location records — then removes `prepared_path`.
 
+  Pass `source_key:` — the `file_name` of the original instance the bytes
+  were made from (`Storage.retrieve_original/1`) — and the variant is only
+  recorded while that is still the file's original.
+
   Returns `{:ok, instance}` or `{:error, reason}`.
   """
-  def store_prepared_variant(file, variant_name, prepared_path, variant_ext, variant_mime_type) do
+  def store_prepared_variant(
+        file,
+        variant_name,
+        prepared_path,
+        variant_ext,
+        variant_mime_type,
+        opts \\ []
+      ) do
     base_name = file.file_checksum || Path.basename(file.file_name, Path.extname(file.file_name))
     variant_filename = "#{base_name}_#{variant_name}.#{variant_ext}"
     variant_storage_path = "#{file.file_path}/#{variant_filename}"
@@ -164,16 +176,16 @@ defmodule PhoenixKit.Modules.Storage.VariantGenerator do
          {:ok, storage_info} <-
            store_variant_file(prepared_path, variant_name, variant_storage_path, file.uuid),
          {:ok, instance} <-
-           create_variant_instance(
+           publish_variant(
              file,
              variant_name,
              variant_storage_path,
              variant_mime_type,
              variant_ext,
-             file_stats
-           ),
-         {:ok, _locations} <-
-           create_variant_file_locations(instance, storage_info.bucket_ids, variant_storage_path) do
+             file_stats,
+             storage_info.bucket_ids,
+             Keyword.get(opts, :source_key)
+           ) do
       cleanup_temp_files([prepared_path])
       {:ok, instance}
     end
@@ -230,46 +242,111 @@ defmodule PhoenixKit.Modules.Storage.VariantGenerator do
     end
   end
 
-  defp create_variant_instance(file, variant_name, storage_path, mime_type, ext, stats) do
-    # Check if variant already exists
-    case Storage.get_file_instance_by_name(file.uuid, variant_name) do
-      %Storage.FileInstance{} = existing_instance ->
-        # Variant already exists, return it
-        {:ok, existing_instance}
+  # Records a stored variant on `file`, all or nothing.
+  #
+  # The file row is read FOR SHARE and checked against what this variant was
+  # made from — the checksum its key is named after, and the original
+  # instance it was rendered from (`source_key`): an image edit swaps the
+  # original (and the checksum) under FOR UPDATE, and a generator that
+  # started before the swap, or read the file and the original on either
+  # side of it, must not attach a variant of other bytes to the file. Such a
+  # result is dropped (its object deleted unless the backup still uses it).
+  #
+  # An existing row is refreshed rather than kept as it was: regeneration
+  # writes new bytes, and a stale checksum or size on the row misleads every
+  # consumer. Locations are only re-created when the key changed — the old
+  # code added a duplicate set on every regeneration.
+  defp publish_variant(
+         file,
+         variant_name,
+         storage_path,
+         mime_type,
+         ext,
+         stats,
+         bucket_uuids,
+         source_key
+       ) do
+    repo = PhoenixKit.Config.get_repo()
 
-      nil ->
-        # Create new variant instance
-        instance_attrs = %{
-          variant_name: variant_name,
-          file_name: storage_path,
-          mime_type: mime_type,
-          ext: ext,
-          checksum: stats.checksum,
-          size: stats.size,
-          width: stats.width,
-          height: stats.height,
-          processing_status: "completed",
-          file_uuid: file.uuid
-        }
+    attrs = %{
+      variant_name: variant_name,
+      file_name: storage_path,
+      mime_type: mime_type,
+      ext: ext,
+      checksum: stats.checksum,
+      size: stats.size,
+      width: stats.width,
+      height: stats.height,
+      processing_status: "completed",
+      file_uuid: file.uuid
+    }
 
-        Storage.create_file_instance(instance_attrs)
+    repo.transaction(fn ->
+      current =
+        from(f in Storage.File,
+          where: f.uuid == ^file.uuid,
+          lock: "FOR SHARE",
+          select: f.file_checksum
+        )
+        |> repo.one()
+
+      if current != file.file_checksum or
+           (source_key && not Storage.original_key?(file.uuid, source_key)),
+         do: repo.rollback(:stale_source)
+
+      # A deletion of this (content-addressed) key may have run since it was
+      # stored; under the directory lock the object is either still there or
+      # its deletion is over.
+      Storage.lock_storage_paths([Path.dirname(storage_path)])
+      unless Manager.file_exists?(storage_path), do: repo.rollback(:object_missing)
+
+      case Storage.get_file_instance_by_name(file.uuid, variant_name) do
+        nil ->
+          insert_variant!(repo, attrs, bucket_uuids)
+
+        %Storage.FileInstance{file_name: ^storage_path} = existing ->
+          {:ok, instance} = Storage.update_file_instance(existing, attrs)
+          {instance, []}
+
+        %Storage.FileInstance{file_name: old_key} = existing ->
+          {:ok, _} = repo.delete(existing)
+          {instance, []} = insert_variant!(repo, attrs, bucket_uuids)
+          {instance, Storage.unreferenced_keys([old_key])}
+      end
+    end)
+    |> case do
+      {:ok, {instance, stale_keys}} ->
+        _ = Storage.delete_stored_objects(stale_keys)
+        {:ok, instance}
+
+      {:error, :stale_source} ->
+        Logger.info("Variant #{variant_name} of #{file.uuid} dropped: the original changed")
+
+        _ = Storage.delete_stored_objects([storage_path])
+
+        {:error, :stale_source}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
-  defp create_variant_file_locations(instance, bucket_uuids, storage_path) do
-    case Storage.create_file_locations_for_instance(instance.uuid, bucket_uuids, storage_path) do
-      {:ok, locations} ->
-        {:ok, locations}
-
+  defp insert_variant!(repo, attrs, bucket_uuids) do
+    with {:ok, instance} <- Storage.create_file_instance(attrs),
+         {:ok, _locations} <-
+           Storage.create_file_locations_for_instance(
+             instance.uuid,
+             bucket_uuids,
+             attrs.file_name
+           ) do
+      {instance, []}
+    else
       {:error, :file_locations_failed, errors} ->
-        Logger.error(
-          "Failed to create file locations for instance #{instance.uuid}: #{inspect(errors)}"
-        )
+        Logger.error("Failed to create file locations for #{attrs.file_name}: #{inspect(errors)}")
+        repo.rollback(:file_locations_failed)
 
-        # Rollback: delete the orphaned instance
-        repo = PhoenixKit.Config.get_repo()
-        repo.delete(instance)
-        {:error, :file_locations_failed}
+      {:error, reason} ->
+        repo.rollback(reason)
     end
   end
 
@@ -377,8 +454,8 @@ defmodule PhoenixKit.Modules.Storage.VariantGenerator do
   end
 
   defp retrieve_original_file(file) do
-    case Storage.retrieve_file(file.uuid) do
-      {:ok, path, _file} -> {:ok, path}
+    case Storage.retrieve_original(file.uuid) do
+      {:ok, path, _file, instance} -> {:ok, path, instance.file_name}
       error -> error
     end
   end

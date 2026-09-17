@@ -21,3 +21,4 @@ Point-in-time analysis documents. Each captures a snapshot of the codebase at a 
 | `2026-02-23-css-overrides-analysis.md` | Analysis of CSS customization needs vs what Tailwind/daisyUI handles automatically |
 | `2026-02-23-uuid_migration_audit.md` | Database schema audit of UUID migration completeness |
 | `2026-02-23-uuid_migration_audit_corrected.md` | Root cause analysis of V40 buffering bug and corrected migration status |
+| `2026-09-16-ipv6-network-grouping-audit.md` | Review of `04084d93` IPv6 `/64` grouping: special-prefix over-grouping, known-device identity still exact-IP in the DB, website-access lockout still full-address, allowlist exact-match, `/64` vs wider delegations; what was fixed in the follow-up |

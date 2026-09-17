@@ -35,6 +35,12 @@ This folder contains comprehensive guides to help developers work with PhoenixKi
 - Extending the PhoenixKit admin interface
 - Building admin functionality for your features
 
+#### [Locale Routing](locale-routing.md)
+
+**Why the language of a page lives in its URL, and how to migrate an app that
+kept it in the session.** Read this when the language switcher's links don't
+behave, or before building a multilingual site on PhoenixKit.
+
 ### Feature Guides
 
 #### [Making Pages Live: Real-time Updates & Collaborative Editing](making-pages-live.md)

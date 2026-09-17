@@ -93,6 +93,18 @@ defmodule PhoenixKit.Supervisor do
          end},
         id: :auto_grant_admin_permissions
       ),
+      # Once per boot: say which declared Oban queues this node does not run
+      # (see PhoenixKit.ObanQueues). Delayed, because the host usually starts
+      # Oban after PhoenixKit; best-effort and silent when Oban is absent, in
+      # testing mode, or deliberately runs no queues on this node.
+      Supervisor.child_spec(
+        {Task,
+         fn ->
+           Process.sleep(:timer.seconds(10))
+           PhoenixKit.ObanQueues.warn_about_missing_queues()
+         end},
+        id: :oban_queue_check
+      ),
       # Normalize legacy admin_languages setting into unified languages_config
       # Runs once after settings cache is warmed; idempotent no-op if already migrated
       Supervisor.child_spec(

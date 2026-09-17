@@ -39,10 +39,24 @@
         <%!-- annotation persistence as the in-place modal, without its       --%>
         <%!-- sidebar (we keep MediaDetail's admin-specific sidebar to the    --%>
         <%!-- right) or modal chrome (the page header carries the back nav).  --%>
-        <div class="flex-[3] bg-base-200 rounded-lg overflow-hidden">
+        <%!-- The editor takes the whole row; its close button brings the
+             canvas and the info panel back. --%>
+        <div :if={@image_editor_open and @image_editable} class="flex-1 min-w-0 min-h-0">
+          <.live_component
+            module={PhoenixKitWeb.Components.ImageEditor}
+            id={"media-detail-image-editor-" <> @file_data.file_uuid}
+            file={@file}
+            scope={assigns[:phoenix_kit_current_scope]}
+            on_close={JS.push("close_image_editor")}
+          />
+        </div>
+        <div
+          :if={not (@image_editor_open and @image_editable)}
+          class="flex-[3] bg-base-200 rounded-lg overflow-hidden"
+        >
           <.live_component
             module={PhoenixKitWeb.Components.MediaCanvasViewer}
-            id={"media-detail-canvas-" <> @file_data.file_uuid}
+            id={@canvas_id}
             file={@file_data}
             current_user={assigns[:phoenix_kit_current_user]}
             parent_id="media-detail-root"
@@ -54,7 +68,10 @@
         </div>
 
         <%!-- Right: Info Panel (1/4) --%>
-        <div class="flex-1 flex flex-col gap-4 overflow-y-auto overflow-x-hidden min-w-0">
+        <div
+          :if={not (@image_editor_open and @image_editable)}
+          class="flex-1 flex flex-col gap-4 overflow-y-auto overflow-x-hidden min-w-0"
+        >
           <%!-- File Title Card --%>
           <div class="card bg-base-100 shadow-xl">
             <div class="card-body p-4">
@@ -73,6 +90,36 @@
                 </span>
               </div>
               <div class="mt-3 flex flex-col gap-2">
+                <button
+                  :if={@image_editable and not @image_editor_open}
+                  type="button"
+                  phx-click="open_image_editor"
+                  class="btn btn-primary btn-sm w-full gap-2"
+                >
+                  <.icon name="hero-adjustments-horizontal" class="w-4 h-4" /> {gettext(
+                    "Edit image"
+                  )}
+                </button>
+                <span
+                  :if={@file.edit_state == "pending"}
+                  class="badge badge-info badge-sm gap-1 self-start"
+                >
+                  <span class="loading loading-spinner loading-xs"></span> {gettext(
+                    "Applying edit"
+                  )}
+                </span>
+                <span
+                  :if={@file.edit_state == "failed"}
+                  class="badge badge-error badge-sm self-start"
+                >
+                  {gettext("Edit failed")}
+                </span>
+                <span
+                  :if={ImageEditing.edited?(@file) and is_nil(@file.edit_state)}
+                  class="badge badge-ghost badge-sm self-start"
+                >
+                  {gettext("Edited")}
+                </span>
                 <%= if @file_data.status == "trashed" do %>
                   <button
                     type="button"
@@ -298,7 +345,7 @@
                     MediaCanvasViewer.build_comment_decorations(@viewer_annotations)
                   }
                   parent_module={MediaCanvasViewer}
-                  parent_id={"media-detail-canvas-" <> @file_data.file_uuid}
+                  parent_id={@canvas_id}
                 />
               </div>
             </div>

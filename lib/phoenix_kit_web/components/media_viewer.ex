@@ -115,7 +115,12 @@ defmodule PhoenixKitWeb.Components.MediaViewer do
 
       file ->
         instances = safe(fn -> Storage.list_file_instances(file_uuid) end, [])
-        urls = URLSigner.put_dzi_url(signed_urls(file_uuid, instances), file_uuid, file.mime_type)
+        original = Enum.find(instances, &(&1.variant_name == "original"))
+
+        urls =
+          file_uuid
+          |> signed_urls(instances)
+          |> URLSigner.put_dzi_url(file_uuid, file.mime_type, version: original)
 
         %{
           file_uuid: file.uuid,
@@ -133,7 +138,10 @@ defmodule PhoenixKitWeb.Components.MediaViewer do
 
   defp signed_urls(file_uuid, instances) do
     Enum.reduce(instances, %{}, fn instance, acc ->
-      case safe(fn -> URLSigner.signed_url(file_uuid, instance.variant_name) end, nil) do
+      case safe(
+             fn -> URLSigner.signed_url(file_uuid, instance.variant_name, version: instance) end,
+             nil
+           ) do
         nil -> acc
         url -> Map.put(acc, instance.variant_name, url)
       end

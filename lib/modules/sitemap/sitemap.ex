@@ -53,7 +53,7 @@ defmodule PhoenixKit.Modules.Sitemap do
   - `sitemap_include_entities` - Include entities in sitemap (boolean, all entity types)
   - `sitemap_include_blogs` - Include blog posts (boolean)
   - `sitemap_include_static` - Include static pages (boolean)
-  - `sitemap_base_url` - Base URL for sitemap (string, fallback to site_url)
+  - `site_url` - Base URL for sitemap entries (string; falls back to the host endpoint's URL, see `get_base_url/0`)
   - `sitemap_html_enabled` - Enable HTML sitemap (boolean)
   - `sitemap_html_style` - HTML display style (hierarchical/flat/grouped)
   - `sitemap_default_changefreq` - Default change frequency (string)
@@ -268,7 +268,18 @@ defmodule PhoenixKit.Modules.Sitemap do
   @doc """
   Returns the base URL for sitemap generation.
 
-  Uses site_url from Settings. Returns empty string if not configured.
+  The `site_url` setting when it is set; otherwise the URL of the host
+  application's running endpoint (the same fallback email links use, but
+  stricter — see `endpoint_base_url/0`); `""` when neither gives a public
+  absolute `http(s)` URL, which the controller answers with 503 rather than
+  publishing a sitemap of relative, placeholder or `localhost` links.
+
+  The endpoint fallback matters because the generated sitemap file lives
+  inside the dependency: upgrading PhoenixKit deletes it, the next request
+  regenerates it, and a site that never set `site_url` used to lose its
+  sitemap to a 503 right after the upgrade. Set `site_url` explicitly anyway
+  when the endpoint's configured URL is not the public one (behind a proxy,
+  for instance) — `mix phoenix_kit.doctor` reports when the fallback is in use.
 
   ## Examples
 
@@ -277,7 +288,101 @@ defmodule PhoenixKit.Modules.Sitemap do
   """
   @spec get_base_url() :: String.t()
   def get_base_url do
-    settings_call(:get_setting_cached, ["site_url", ""])
+    case settings_call(:get_setting_cached, ["site_url", ""]) do
+      url when is_binary(url) and url != "" -> url
+      _ -> endpoint_base_url()
+    end
+  end
+
+  @doc """
+  The host endpoint's URL, when it is running and configured with an absolute
+  `http(s)` URL that can be the site's public address; `""` otherwise.
+
+  Deliberately strict, because a sitemap is published to crawlers:
+
+    * `PhoenixKit.Config.get_dynamic_base_url/0` ends in a static default
+      (`localhost`) when there is no endpoint — right for a dev-mode email
+      link, wrong here;
+    * a placeholder host (`example.com` — phx.new's production default when
+      `PHX_HOST` is unset — and the other RFC 2606 names) is nobody's address;
+    * a local host (`localhost` — Phoenix's default when the endpoint sets no
+      `url` — `127.0.0.1`, `::1`, a `.test` name) counts only on a development
+      server, one whose endpoint runs a code reloader. Anywhere else it means
+      the URL was never configured.
+  """
+  @spec endpoint_base_url() :: String.t()
+  def endpoint_base_url do
+    with {:ok, url} when is_binary(url) <- PhoenixKit.Config.get_parent_endpoint_url(),
+         {:ok, endpoint} <- PhoenixKit.Config.get_parent_endpoint() do
+      public_base_url(url, dev_server?(endpoint))
+    else
+      _ -> ""
+    end
+  end
+
+  @doc false
+  # Pure: `url` without its trailing slash, or "" when it cannot be the
+  # site's public address (see `endpoint_base_url/0`).
+  @spec public_base_url(String.t(), boolean()) :: String.t()
+  def public_base_url(url, dev_server?) do
+    case URI.parse(url) do
+      %URI{scheme: scheme, host: host}
+      when scheme in ["http", "https"] and is_binary(host) and host != "" ->
+        cond do
+          placeholder_host?(host) -> ""
+          local_host?(host) and not dev_server? -> ""
+          true -> String.trim_trailing(url, "/")
+        end
+
+      _ ->
+        ""
+    end
+  end
+
+  @doc false
+  # A host that only this machine or a local development setup can reach:
+  # loopback names and addresses (IPv4-mapped IPv6 forms included), the
+  # unspecified address, and RFC 6761 `.test` names.
+  @spec local_host?(String.t()) :: boolean()
+  def local_host?(host) do
+    host = normalize_host(host)
+
+    host in ["localhost", "test"] or String.ends_with?(host, [".localhost", ".test"]) or
+      local_address?(:inet.parse_address(String.to_charlist(host)))
+  end
+
+  defp local_address?({:ok, {127, _, _, _}}), do: true
+  defp local_address?({:ok, {0, _, _, _}}), do: true
+  defp local_address?({:ok, {0, 0, 0, 0, 0, 0, 0, 1}}), do: true
+  defp local_address?({:ok, {0, 0, 0, 0, 0, 0, 0, 0}}), do: true
+
+  # `::ffff:a.b.c.d` (IPv4-mapped) and `::a.b.c.d` (IPv4-compatible) name the
+  # IPv4 address in their last 32 bits.
+  defp local_address?({:ok, {0, 0, 0, 0, 0, prefix, hi, lo}}) when prefix in [0, 0xFFFF],
+    do: local_address?({:ok, {div(hi, 256), rem(hi, 256), div(lo, 256), rem(lo, 256)}})
+
+  defp local_address?(_), do: false
+
+  @placeholder_domains ~w(example.com example.net example.org example invalid)
+
+  defp placeholder_host?(host) do
+    host = normalize_host(host)
+
+    Enum.any?(@placeholder_domains, fn domain ->
+      host == domain or String.ends_with?(host, "." <> domain)
+    end)
+  end
+
+  # `localhost.` and `www.example.com.` are the same names written fully
+  # qualified.
+  defp normalize_host(host), do: host |> String.downcase() |> String.trim_trailing(".")
+
+  defp dev_server?(endpoint) do
+    function_exported?(endpoint, :config, 1) and endpoint.config(:code_reloader) == true
+  rescue
+    _ -> false
+  catch
+    :exit, _ -> false
   end
 
   @doc """

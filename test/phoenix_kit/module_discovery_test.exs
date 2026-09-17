@@ -32,18 +32,6 @@ defmodule PhoenixKit.ModuleDiscoveryTest do
       assert is_list(modules)
     end
 
-    test "includes modules from config fallback" do
-      original = Application.get_env(:phoenix_kit, :modules, [])
-
-      try do
-        Application.put_env(:phoenix_kit, :modules, [SomeFakeModule])
-        modules = ModuleDiscovery.discover_external_modules()
-        assert SomeFakeModule in modules
-      after
-        Application.put_env(:phoenix_kit, :modules, original)
-      end
-    end
-
     test "deduplicates results" do
       modules = ModuleDiscovery.discover_external_modules()
       assert length(modules) == length(Enum.uniq(modules))
@@ -137,5 +125,29 @@ defmodule PhoenixKit.ModuleDiscoveryTest do
     on_exit(fn -> Code.delete_path(dir) end)
 
     module
+  end
+end
+
+defmodule PhoenixKit.ModuleDiscoveryConfigTest do
+  # Sync on purpose: `:modules` is global, and `AdminRouteDedupTest` sets it
+  # in its file body to compile a probe router. ExUnit runs async modules
+  # while test files are still loading, so an async writer here interleaves
+  # with that file — this test then reads the router's fixtures, and the
+  # router compiles against this test's value. Sync modules start only once
+  # every file has loaded.
+  use ExUnit.Case, async: false
+
+  alias PhoenixKit.ModuleDiscovery
+
+  test "discover_external_modules/0 includes modules from config fallback" do
+    original = Application.get_env(:phoenix_kit, :modules, [])
+
+    try do
+      Application.put_env(:phoenix_kit, :modules, [SomeFakeModule])
+      modules = ModuleDiscovery.discover_external_modules()
+      assert SomeFakeModule in modules
+    after
+      Application.put_env(:phoenix_kit, :modules, original)
+    end
   end
 end

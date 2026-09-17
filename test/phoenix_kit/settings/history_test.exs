@@ -116,6 +116,36 @@ defmodule PhoenixKit.Settings.HistoryTest do
       refute Repo.all(Entry) |> Enum.any?(&(inspect(&1.metadata) =~ secret))
     end
 
+    test "an integration connection row records that it changed, never its body" do
+      # Integration rows have uuid keys, so the restricted-key list cannot name
+      # them, and with integration encryption off their JSON holds live tokens.
+      key = Ecto.UUID.generate()
+      token = "tok-#{System.unique_integer([:positive])}"
+
+      {:ok, _} =
+        Settings.update_json_setting_with_module(
+          key,
+          %{"access_token" => token, "status" => "connected"},
+          "integrations"
+        )
+
+      {:ok, _} =
+        Settings.update_json_setting_with_module(
+          key,
+          %{"access_token" => token <> "-refreshed", "status" => "connected"},
+          "integrations"
+        )
+
+      assert [_, _] = History.list(key)
+
+      for entry <- History.list(key) do
+        assert %{"restricted" => true, "from" => nil, "to" => nil} = entry.metadata
+      end
+
+      refute Repo.all(Entry) |> Enum.any?(&(inspect(&1.metadata) =~ token))
+      assert History.value_at(key, DateTime.utc_now()) == nil
+    end
+
     test "the old value is what the row holds when the write commits, not what the caller read" do
       key = key()
       {:ok, _} = Settings.update_setting(key, "A")

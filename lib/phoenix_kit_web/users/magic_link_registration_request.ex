@@ -34,7 +34,7 @@ defmodule PhoenixKitWeb.Users.MagicLinkRegistrationRequest do
 
           {:ok,
            socket
-           |> assign(:page_title, "Register via Magic Link")
+           |> assign(:page_title, gettext("Register via Magic Link"))
            |> assign(:project_title, project_title)
            |> assign(:email, "")
            |> assign(:ip_address, IpAddress.extract_from_socket(socket))

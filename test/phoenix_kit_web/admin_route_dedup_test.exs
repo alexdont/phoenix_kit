@@ -44,6 +44,12 @@ defmodule PhoenixKitWeb.AdminRouteDedupTest do
   `:modules` mid-compile. `async: false` (an ExUnit/runtime concern) cannot
   fix a compile-time race. One file, one `Application.put_env` sequence,
   is the only reliable way to keep this fixture isolated.
+
+  It also races an ASYNC test that writes `:modules`: ExUnit starts async
+  modules while files are still loading, so such a test can overwrite the
+  key while this file compiles (the router then loses its module tabs).
+  A test that writes `:modules` must be `async: false` — sync modules run
+  only after every file has loaded.
   """
   use ExUnit.Case, async: false
 

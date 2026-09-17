@@ -69,6 +69,56 @@ use PhoenixKitWeb.Components.MediaBrowser.Embed
 
 **URL sync (shareable folder deep links):** `use …Embed, url_sync: true` puts folder/search/page/view in the URL via lifecycle hooks (`attach_hook`, **not** injected clauses) — composes with a host LV that has its own `handle_params`/`handle_info`. Reference: `lib/phoenix_kit_web/live/users/media.ex`.
 
+## Charts and lanes
+
+`PhoenixKitWeb.Components.Core.Chart` draws zero-JS SVG charts (`<.line_chart>` and friends; imported everywhere through `use PhoenixKitWeb`). `<.chart_lanes>` (`Core.ChartLanes`, imported with `only: [chart_lanes: 1]`) draws rows of horizontal bands on the same x axis: what was scheduled, on or booked over the stretch the chart shows. It knows nothing about the domain; each band says only how it is drawn and in what colour.
+
+```heex
+<div class="w-full">
+  <div class="h-48"><.line_chart id="price" data={@prices} x_domain={{0, 1440}} step /></div>
+  <.chart_lanes
+    id="devices"
+    x_domain={{0, 1440}}
+    marker_x={@now_minute}
+    x_format={&clock_label/1}
+    rows={[
+      %{id: "boiler", label: "Office boiler", note: "22 °C",
+        bands: [
+          %{from: 360, to: 540, variant: :dashed, class: "text-info", title: "Scheduled"},
+          %{from: 380, to: 470, variant: :fill, class: "text-success", title: "Heating"}
+        ]}
+    ]}
+  />
+</div>
+```
+
+- **Line the lanes up with a chart by giving both the same `x_domain` and the same width** (one wrapper, no padding between). Both place x through `PhoenixKitWeb.Components.Core.ChartScale` (`domain/2`, `fraction/2`, `percent/2`, `span/3`), which is public so a custom overlay can use the same scale.
+- **Bands:** `from`/`to` of `nil` run to that edge; `from == to` is a point. `variant` is `:fill`, `:soft`, `:outline` or `:dashed`; the colour is a `text-*` class. `title` (tooltip and screen-reader text) defaults to the label, then to the range through `x_format`. Later bands sit on top.
+- **Slots:** `:row_label` (a custom label, e.g. a link), `:band` (content inside each band — a button that opens a booking), `:empty`.
+- **Rows:** `row_height` (default `2rem`); with more rows than `scroll_after` (default 12) the list scrolls under a chart that stays put. A row's DOM id follows its `:id`.
+
+Reference: the lanes demos in `phoenix_kit_parent`'s core components showcase.
+
+## Image editor
+
+`PhoenixKitWeb.Components.ImageEditor` (LiveComponent) edits a stored image after upload through `PhoenixKit.Modules.Storage.ImageEditing`: crop (with aspect presets), quarter turns, mirroring, straightening, redaction (blur, pixelate, black box), brightness and contrast. It is a plain server-rendered form; the `ImageEditor` hook adds drawing the crop and the areas on the preview.
+
+```heex
+<.live_component
+  module={PhoenixKitWeb.Components.ImageEditor}
+  id={"image-editor-" <> @file.uuid}
+  file={@file}
+  scope={@phoenix_kit_current_scope}
+  on_close={JS.push("close_image_editor")}
+/>
+```
+
+- **Who may edit:** `ImageEditing` decides from `scope` (owner, Owner/Admin, `"media"` permission). A host that has already authorized the user for the file (MediaBrowser, by folder scope) passes `authorized={true}`.
+- **Keep it current:** forward `{:phoenix_kit_file_processed, uuid}` (`Storage.subscribe_to_file_events/0`) as `send_update(ImageEditor, id: id, file_processed: uuid)`. MediaBrowser and MediaDetail already do.
+- MediaBrowser opens it from a file's menu ("Edit image"); MediaDetail from its "Edit image" button.
+
+How editing works underneath (the hidden unedited original, versioned URLs, the placeholder while rendering): `lib/modules/storage/README.md` → "Editing images".
+
 ## Built-in Dashboard
 
 Tabs, subtabs, badges, context selectors: see `lib/phoenix_kit/dashboard/README.md`.

@@ -99,9 +99,11 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
   alias PhoenixKit.Migrations.Modules, as: MigrationModules
   alias PhoenixKit.Migrations.Postgres
   alias PhoenixKit.Migrations.Repair
+  alias PhoenixKit.Migrations.Repair.Environment
   alias PhoenixKit.Migrations.Repair.Report
   alias PhoenixKit.Modules.Crawlers
   alias PhoenixKit.Modules.Crawlers.Bots
+  alias PhoenixKit.Modules.Sitemap
   alias PhoenixKit.Modules.Sitemap.RouteResolver
   alias PhoenixKit.Utils.Routes
 
@@ -145,7 +147,7 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
         run_check("Repo Detection", fn -> check_repo_detection() end),
         run_check("DB Connectivity", fn -> check_db_connectivity() end),
         run_check("Pool Configuration", fn -> check_pool_config() end),
-        run_check("PgBouncer Detection", fn -> check_pgbouncer() end),
+        run_check("PgBouncer Detection", fn -> check_pgbouncer(oban_config) end),
         run_check("Migration State", fn -> check_migration_state(prefix) end),
         run_check("Module Schema Versions", fn -> check_module_schema_versions(prefix) end),
         run_check("Schema Drift", fn -> check_schema_drift(prefix) end),
@@ -160,13 +162,14 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
         run_check("Lock Conflicts", fn -> check_lock_conflicts() end),
         run_check("Orphaned Connections", fn -> check_orphaned_connections() end),
         run_check("Oban Configuration", fn -> check_oban_config(oban_config) end),
+        run_check("Declared Oban Queues", fn -> check_declared_queues(oban_config) end),
         run_check("Oban Cron Queues", fn -> check_cron_queues(oban_config) end),
         run_check("PhoenixKit Supervisor", fn -> check_supervisor_state() end),
         run_check("Child Start Order", fn -> check_child_order() end),
         run_check("Update Mode", fn -> check_update_mode() end),
         run_check("daisyUI Version", fn -> check_daisyui() end),
         run_check("User Dashboard (deprecated)", fn -> check_user_dashboard_deprecation() end),
-        run_check("Sitemap Discoverability", fn -> check_sitemap_serving() end),
+        run_check("Sitemap Discoverability", fn -> check_sitemap_serving(prefix) end),
         run_check("Crawler Visibility", fn -> check_crawler_visibility(prefix) end),
         run_check("Demo Auth Pages", fn -> check_demo_routes() end),
         run_check("Manifest Repair (dry-run)", fn -> check_manifest_repair(prefix) end),
@@ -566,7 +569,13 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
     end
   end
 
-  defp check_pgbouncer do
+  # Whether a transaction-pooling proxy sits between the app and Postgres.
+  #
+  # The hostname/port guess alone was wrong both ways: a pooler reached as
+  # `postgres:5432` read as direct, and any URL without an explicit port read
+  # as a pooler. The authoritative signal is behavioral (two statements on one
+  # checkout landing on different backends), and the codebase already owns it.
+  defp check_pgbouncer(oban_config) do
     app = Mix.Project.config()[:app]
     repo = get_repo!()
     config = Application.get_env(app, repo, [])
@@ -574,20 +583,68 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
     port =
       cond do
         config[:port] -> config[:port]
-        config[:url] -> extract_port_from_url(config[:url])
+        config[:url] -> extract_port_from_url(config[:url]) || 5432
         true -> 5432
       end
 
     hostname = config[:hostname] || extract_host_from_url(config[:url]) || "localhost"
 
-    if port != 5432 or String.contains?(to_string(hostname), "pgbouncer") do
-      {:warn,
-       "Likely PgBouncer (port=#{port}, host=#{hostname}). " <>
-         "DDL migrations should use @disable_ddl_transaction true"}
-    else
-      {:pass, "Direct PostgreSQL (port=#{port}, host=#{hostname})"}
+    pgbouncer_verdict(
+      Environment.classify_config(config),
+      Environment.probe(repo),
+      oban_notifier(oban_config),
+      "port=#{port}, host=#{hostname}"
+    )
+  end
+
+  defp oban_notifier(config) when is_list(config), do: Keyword.get(config, :notifier)
+  defp oban_notifier(_), do: nil
+
+  @doc false
+  # Pure: what to report, given the config hint, the probe, and the Oban
+  # notifier the host configured (nil = Oban's default, the Postgres one).
+  def pgbouncer_verdict(config_verdict, probe, notifier, where) do
+    case probe do
+      :transaction_pooled ->
+        {:warn,
+         "Transaction pooling detected (#{where}): two statements on one connection " <>
+           "reached different Postgres backends. DDL migrations need " <>
+           "@disable_ddl_transaction true." <> notifier_hint(notifier)}
+
+      # The probe can prove pooling, never rule it out: on an idle pool
+      # PgBouncer hands the same server connection back (LIFO), so both
+      # statements can land on one backend under transaction pooling too.
+      # A config that looks pooled keeps the advice.
+      :not_detected when config_verdict == :maybe_pooled ->
+        {:warn,
+         "The config looks like a pooler (#{where}), but no transaction pooling was " <>
+           "detected — a direct connection on a non-standard port, session pooling, or " <>
+           "a transaction pooler that reused one backend for the probe (an idle " <>
+           "PgBouncer does). If it is PgBouncer in transaction mode, DDL migrations need " <>
+           "@disable_ddl_transaction true." <> notifier_hint(notifier)}
+
+      :not_detected ->
+        {:pass, "No transaction pooling detected (#{where})."}
+
+      {:inconclusive, reason} ->
+        {:warn,
+         "Could not tell whether a transaction pooler is in the way (#{where}): #{reason}. " <>
+           "If you run PgBouncer in transaction mode, DDL migrations need " <>
+           "@disable_ddl_transaction true." <> notifier_hint(notifier)}
     end
   end
+
+  # Oban's default notifier relies on LISTEN/NOTIFY, which transaction pooling
+  # breaks without an error: jobs still run (local staging keeps going), but
+  # queue start/pause/scale signals and cross-node wake-ups are lost.
+  defp notifier_hint(notifier) when notifier in [nil, Oban.Notifiers.Postgres] do
+    " Oban is using its Postgres notifier, which loses LISTEN/NOTIFY behind a " <>
+      "transaction pooler — silently: jobs still run, but queue pause/scale/start " <>
+      "signals are dropped. Use `notifier: Oban.Notifiers.PG` if your nodes are " <>
+      "Erlang-clustered, or give Oban a Repo that connects past the pooler."
+  end
+
+  defp notifier_hint(_other), do: ""
 
   defp check_migration_state(prefix) do
     repo = get_repo!()
@@ -1805,6 +1862,57 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
 
   # Reports the Oban config snapshotted in run/1 BEFORE cap_repo_pool_size/1
   # zeroed its queues/plugins — reading it live here would always show 0/0.
+  # Queues PhoenixKit and the installed modules declare (`oban_queues/0`)
+  # that this node's Oban config does not run. Jobs sent to such a queue wait
+  # forever without an error, which is why this is worth a line of its own.
+  defp check_declared_queues(oban_config) do
+    {declared, conflicts} = PhoenixKit.ObanQueues.resolve()
+    declared_queues_verdict(oban_config, PhoenixKit.ObanQueues.required(declared), conflicts)
+  end
+
+  @doc false
+  # Pure: the verdict for the declared-queues check.
+  def declared_queues_verdict(oban_config, declared, conflicts) do
+    conflict_text =
+      Enum.map_join(conflicts, " ", &(PhoenixKit.ObanQueues.describe_conflict(&1) <> "."))
+
+    cond do
+      not is_list(oban_config) ->
+        {:pass, "Oban not configured statically; declared queues not checked."}
+
+      # Oban then runs nothing, like `queues: false` — but nobody chose it,
+      # and the updater has no list to add to.
+      not Keyword.has_key?(oban_config, :queues) ->
+        {:warn,
+         "Your Oban config has no queues: list, so this node runs no queues and these " <>
+           "jobs never run: " <>
+           Enum.map_join(declared, ", ", &"#{&1.name}: #{&1.limit}") <>
+           ". Add a queues: list with them, or set `queues: false` on a node that " <>
+           "should run no jobs." <>
+           if(conflict_text == "", do: "", else: " " <> conflict_text)}
+
+      Keyword.get(oban_config, :queues) in [false, []] ->
+        {:pass,
+         "This node runs no queues (queues: false or []). Declared queues must run on your " <>
+           "worker nodes: " <> Enum.map_join(declared, ", ", &"#{&1.name}")}
+
+      (missing = PhoenixKit.ObanQueues.missing(oban_config, declared)) != [] ->
+        {:warn,
+         "Not configured, so their jobs never run: " <>
+           Enum.map_join(missing, ", ", fn spec ->
+             "#{spec.name}: #{spec.limit} (#{PhoenixKit.ObanQueues.owner_label(spec.owner)})"
+           end) <>
+           ". Run `mix phoenix_kit.update`, or add them to your Oban queues." <>
+           if(conflict_text == "", do: "", else: " " <> conflict_text)}
+
+      conflicts != [] ->
+        {:warn, conflict_text}
+
+      true ->
+        {:pass, "All #{length(declared)} declared queues are configured."}
+    end
+  end
+
   defp check_oban_config(nil), do: {:pass, "Oban not configured"}
 
   defp check_oban_config(config) when is_list(config) do
@@ -2441,21 +2549,108 @@ defmodule Mix.Tasks.PhoenixKit.Doctor do
   # Plug.Static runs before the router, host routes declared before
   # `phoenix_kit_routes()` bind first, and PhoenixKit is last. A host that
   # reported "the sitemap 404s" had simply never been told any of that.
-  defp check_sitemap_serving do
-    case {static_sitemap_file(), sitemap_route_owner()} do
-      {path, _} when is_binary(path) ->
-        {:warn,
-         "#{path} exists, and Plug.Static runs before the router — that file is served, " <>
-           "not PhoenixKit's generated sitemap. Delete it to use the generated one."}
+  defp check_sitemap_serving(prefix) do
+    serving =
+      case {static_sitemap_file(), sitemap_route_owner()} do
+        {path, _} when is_binary(path) ->
+          {:warn,
+           "#{path} exists, and Plug.Static runs before the router — that file is served, " <>
+             "not PhoenixKit's generated sitemap. Delete it to use the generated one."}
 
-      {nil, nil} ->
-        {:warn,
-         "No route answers GET /sitemap.xml. PhoenixKit declares one, so either " <>
-           "phoenix_kit_routes() is missing from your router or a host route matched " <>
-           "first and was removed."}
+        {nil, nil} ->
+          {:warn,
+           "No route answers GET /sitemap.xml. PhoenixKit declares one, so either " <>
+             "phoenix_kit_routes() is missing from your router or a host route matched " <>
+             "first and was removed."}
 
-      {nil, owner} ->
-        {:pass, "GET /sitemap.xml is served by #{inspect(owner)}." <> robots_hint()}
+        {nil, owner} ->
+          {:pass, "GET /sitemap.xml is served by #{inspect(owner)}." <> robots_hint()}
+      end
+
+    findings =
+      duplicate_root_route_findings(router_routes()) ++
+        List.wrap(
+          sitemap_base_url_finding(
+            # Not `Settings.get_setting/2`: update_mode (set in run/1)
+            # short-circuits it to the default, so every install read as
+            # "site_url is not set".
+            configured_site_url(prefix) || "",
+            Sitemap.endpoint_base_url()
+          )
+        )
+
+    merge_findings(serving, findings)
+  end
+
+  defp merge_findings(result, []), do: result
+
+  defp merge_findings({_status, message}, findings) do
+    {:warn, Enum.join([message | findings], " ")}
+  end
+
+  defp router_routes do
+    case RouteResolver.get_router() do
+      nil -> []
+      router -> router.__routes__()
+    end
+  rescue
+    _ -> []
+  end
+
+  # The root-level paths PhoenixKit's router macro declares (outside its URL
+  # prefix). 1.7 told hosts to declare the sitemap routes themselves; the kit
+  # took that over, so an upgraded host can declare the same path twice.
+  @kit_root_paths ~w(/llms.txt /sitemap.xml /sitemap.html /sitemaps/:filename /sitemap.xsl)
+
+  @doc false
+  # Pure: one finding per kit root path declared more than once. Phoenix
+  # matches routes in the order they were declared, so the first declaration
+  # answers and every later one is dead code — which of the two is the host's
+  # depends on where the host put `phoenix_kit_routes()`, so both are named.
+  def duplicate_root_route_findings(routes) do
+    routes
+    |> Enum.filter(&(&1.verb == :get and &1.path in @kit_root_paths))
+    |> Enum.group_by(& &1.path)
+    |> Enum.filter(fn {_path, declared} -> length(declared) > 1 end)
+    |> Enum.sort_by(fn {path, _} -> path end)
+    |> Enum.map(fn {path, [winner | dead]} ->
+      "GET #{path} is declared #{length(dead) + 1} times: #{inspect(winner.plug)} " <>
+        "answers it (declared first), and the declaration by " <>
+        "#{Enum.map_join(dead, ", ", &inspect(&1.plug))} never runs. " <>
+        "Delete the one you no longer want — usually a pre-2.0 copy of PhoenixKit's route."
+    end)
+  end
+
+  @doc false
+  # Pure: whether the sitemap is falling back from `site_url`, and to what.
+  def sitemap_base_url_finding(site_url, endpoint_url) do
+    cond do
+      is_binary(site_url) and site_url != "" ->
+        nil
+
+      endpoint_url != "" ->
+        "site_url is not set, so sitemap links use the endpoint URL (#{endpoint_url}). " <>
+          "Set site_url if that is not your public address (behind a proxy, say); a " <>
+          "sitemap generated before this change keeps its old links until it is regenerated." <>
+          loopback_note(endpoint_url)
+
+      true ->
+        "site_url is not set and the endpoint has no public absolute URL (a placeholder " <>
+          "host like example.com never counts; localhost counts only on a development " <>
+          "server), so the sitemap answers 503. Set site_url in the admin settings."
+    end
+  end
+
+  # The doctor usually runs on a development box, where a local endpoint URL
+  # is accepted; say what the same config does in production.
+  defp loopback_note(endpoint_url) do
+    host = URI.parse(endpoint_url).host || ""
+
+    if Sitemap.local_host?(host) do
+      " #{host} counts only on a development server — in production the sitemap " <>
+        "answers 503 until site_url (or the endpoint's url) is set."
+    else
+      ""
     end
   end
 

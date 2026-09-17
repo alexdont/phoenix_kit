@@ -31,6 +31,7 @@ defmodule PhoenixKit.Users.Sessions do
   alias PhoenixKit.Users.ActiveRole
   alias PhoenixKit.Users.Auth.{KnownDevice, User, UserToken}
   alias PhoenixKit.Utils.Date, as: UtilsDate
+  alias PhoenixKit.Utils.IpAddress
   alias PhoenixKit.Utils.TimeZone
 
   @session_validity_in_days 60
@@ -250,7 +251,7 @@ defmodule PhoenixKit.Users.Sessions do
     )
     |> Repo.all()
     |> Enum.map(fn s ->
-      device = Map.get(known, {s.ip_address, s.user_agent_hash})
+      device = Map.get(known, {IpAddress.network(s.ip_address), s.user_agent_hash})
 
       %{
         token_uuid: s.token_uuid,
@@ -581,17 +582,19 @@ defmodule PhoenixKit.Users.Sessions do
     |> Enum.map(fn {name, count} -> {name || "Unknown", count} end)
   end
 
-  # Loads the user's known devices keyed by {ip_address, user_agent_hash}
-  # for O(1) enrichment of each session row.
+  # Loads the user's known devices keyed by {network, user_agent_hash} for
+  # O(1) enrichment of each session row. By network (`IpAddress.network/1`)
+  # because login alerts record one row per IPv6 /64, not per address; where
+  # older rows share a key, the most recently seen one wins.
   #
   # Degrades to no enrichment (empty map) if the known-devices table isn't
   # present yet — a parent app can deploy code carrying this feature before
   # running the V143/V147 migrations, and the sessions list (built from the
   # tokens table) must still render rather than crash the settings page.
   defp known_devices_by_fingerprint(user_uuid) do
-    from(d in KnownDevice, where: d.user_uuid == ^user_uuid)
+    from(d in KnownDevice, where: d.user_uuid == ^user_uuid, order_by: [asc: d.last_seen_at])
     |> Repo.all()
-    |> Map.new(fn d -> {{d.ip_address, d.user_agent_hash}, d} end)
+    |> Map.new(fn d -> {{IpAddress.network(d.ip_address), d.user_agent_hash}, d} end)
   rescue
     error in [Postgrex.Error, DBConnection.ConnectionError] ->
       Logger.warning(

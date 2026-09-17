@@ -103,15 +103,32 @@ With `live_view` set, PhoenixKit:
 
 ### Modifying Default Tabs
 
+**To hide a tab, use config, not a runtime call:**
+
+```elixir
+config :phoenix_kit, hidden_admin_tabs: [:admin_jobs]
+```
+
+It applies at registry init, so it survives a restart — the registry rebuilds
+itself from the defaults, and a runtime `unregister_tab/1` does not come back
+with it.
+
 Update or remove default tabs at runtime:
 
 ```elixir
 # Change a default tab's label or icon
 PhoenixKit.Dashboard.update_tab(:admin_dashboard, %{label: "Home", icon: "hero-home"})
 
-# Remove a default tab
+# Remove a default tab (requires a started registry — see the warning below)
 PhoenixKit.Dashboard.unregister_tab(:admin_jobs)
 ```
+
+> ⚠️ **Runtime registry calls need the registry to be running.** Calling one from
+> your application's own `start/2` — before PhoenixKit's supervisor has started —
+> exits, and no `rescue` catches it. `mix phoenix_kit.update` deliberately boots
+> a reduced supervision tree without the registry, so such a call would abort the
+> update before it migrates; the kit skips registry writes in that mode for
+> exactly this reason. Hide tabs with `:hidden_admin_tabs` instead.
 
 ### Registering Tabs at Runtime
 

@@ -145,6 +145,26 @@ defmodule PhoenixKit.Modules.Storage.File do
     # generator.
     field :system_managed, :boolean, default: false
 
+    # Image editing (V195; `PhoenixKit.Modules.Storage.ImageEditing`). An
+    # edited image keeps this uuid and its original instance holds the edited
+    # bytes; `edits` is always applied to the unedited original, which lives
+    # on as the system-managed child named by `original_file_uuid`.
+    # `edit_state` "pending" or "failed" makes the file serve a placeholder.
+    field :edits, :map
+    field :edit_revision, :integer, default: 0
+    field :edit_state, :string
+
+    belongs_to :original_file, __MODULE__,
+      foreign_key: :original_file_uuid,
+      references: :uuid,
+      type: UUIDv7
+
+    # On a "save as copy" result: the file it was edited from.
+    belongs_to :edited_from, __MODULE__,
+      foreign_key: :edited_from_uuid,
+      references: :uuid,
+      type: UUIDv7
+
     belongs_to :user, PhoenixKit.Users.Auth.User,
       foreign_key: :user_uuid,
       references: :uuid,

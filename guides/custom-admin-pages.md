@@ -161,9 +161,43 @@ end
 |--------|---------|--------|
 | `@flash` | Flash messages for notifications | Phoenix |
 | `@page_title` | Page title for browser/tab | Your LiveView |
-| `@url_path` | Current request path | PhoenixKit on_mount |
+| `@url_path` | Current request path | PhoenixKit on_mount — **do not assign it yourself** |
 | `@phoenix_kit_current_scope` | Auth scope for permissions | PhoenixKit on_mount |
 | `assigns[:current_locale]` | Optional locale for i18n | Your app |
+
+`@url_path` drives the sidebar's active entry and the language switcher. The
+navigation hook sets it on every `handle_params`, so a value your LiveView
+assigns in `mount/3` is overwritten before the page renders — hand-assigning it
+does nothing, and older generated pages that still do can simply drop the line.
+
+### Header actions: `page_action` vs `page_toolbar`
+
+The breadcrumb bar offers two extension points, and they are not
+interchangeable:
+
+| Use | For | Shape |
+|---|---|---|
+| `page_action` | **Navigation** — "New product" going to a form | `%{icon:, label:, navigate:}`, rendered as a real link |
+| `page_toolbar` | **Interaction** — a modal, a `phx-click`, a status select | `{Module, :fun}`, a function component rendered with your LiveView's assigns |
+
+```elixir
+# Navigation: a link, so middle-click and open-in-new-tab keep working
+assign(socket, page_action: %{icon: "hero-plus", label: "New device", navigate: Routes.path("/admin/devices/new")})
+
+# Interaction: events land in this LiveView's handle_event/3
+assign(socket, page_toolbar: {__MODULE__, :header_toolbar})
+
+def header_toolbar(assigns) do
+  ~H"""
+  <button type="button" phx-click="open_new_device" class="btn btn-sm btn-primary">
+    <.icon name="hero-plus" class="w-4 h-4" /> Add device
+  </button>
+  """
+end
+```
+
+`page_action` deliberately has no click option: a button that looks like a link
+but cannot be opened in a new tab is worse than either.
 
 ---
 

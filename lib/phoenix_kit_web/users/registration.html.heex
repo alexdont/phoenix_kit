@@ -1,7 +1,7 @@
 <PhoenixKitWeb.Components.AuthPageWrapper.auth_page_wrapper
   flash={@flash}
   phoenix_kit_current_scope={assigns[:phoenix_kit_current_scope]}
-  page_title={"#{@project_title} - #{gettext("Create account")}"}
+  page_title={@page_title}
   current_path={assigns[:url_path] || "/users/register"}
   dev_mailbox_message={gettext("confirmation emails")}
 >

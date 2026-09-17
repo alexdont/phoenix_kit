@@ -28,7 +28,8 @@ defmodule PhoenixKit.Settings.History do
   read under a row lock inside the write's transaction, so two racing
   writers cannot both record the same old value. A write that leaves the
   value as it was records nothing. A restricted (secret) setting records
-  that a change happened — `restricted: true`, both values withheld.
+  that a change happened — `restricted: true`, both values withheld. So does
+  an integration connection row, whatever its key.
 
   ## Reading it
 
@@ -77,7 +78,7 @@ defmodule PhoenixKit.Settings.History do
       # Either side restricted withholds both values — a key never changes
       # through these writers, but the history must not depend on that.
       restricted? =
-        restricted_key?(written.key) or (before != nil and restricted_key?(before.key))
+        secret_row?(written) or (before != nil and secret_row?(before))
 
       actor_uuid = Keyword.get(opts, :actor_uuid)
 
@@ -150,8 +151,8 @@ defmodule PhoenixKit.Settings.History do
   always been what it is now. A JSON setting is its encoded document, the
   same shape the history holds. A `DateTime` in any zone is the instant it
   names, not its wall clock. A restricted key answers `nil` for every
-  instant: its values are withheld from the history and this must not
-  become the way around that — and a key that WAS restricted when a change
+  instant (so does an integration connection row): its values are withheld
+  from the history and this must not become the way around that — and a key that WAS restricted when a change
   was recorded answers `nil` for that period even after it stops being
   restricted, because the value was never written down.
   """
@@ -163,7 +164,7 @@ defmodule PhoenixKit.Settings.History do
   def value_at(key, %DateTime{} = instant) when is_binary(key) do
     {:ok, utc} = DateTime.shift_zone(instant, "Etc/UTC")
 
-    if restricted_key?(key) do
+    if secret_key_now?(key) do
       nil
     else
       at_or_before =
@@ -210,7 +211,27 @@ defmodule PhoenixKit.Settings.History do
     end
   end
 
-  defp restricted_key?(key), do: key in Settings.restricted_setting_keys()
+  # `value_at/2` has only the key. The row's module decides for integration
+  # rows, whose uuid keys no name rule can recognise.
+  defp secret_key_now?(key) do
+    module =
+      Setting
+      |> where([s], s.key == ^key)
+      |> select([s], s.module)
+      |> RepoHelper.repo().one()
+
+    Settings.secret_setting?(key, module)
+  rescue
+    # Fail closed: an integration row's uuid key is only recognisable by its
+    # module, so a lookup that could not answer must not reveal its body.
+    _ -> true
+  catch
+    :exit, _ -> true
+  end
+
+  # The restricted keys, and every integration connection row — whose key is a
+  # uuid and whose body holds tokens (see `Settings.secret_setting?/2`).
+  defp secret_row?(%Setting{key: key, module: module}), do: Settings.secret_setting?(key, module)
 
   # A setting's value as history sees it: the JSON encoded when the setting
   # is a JSON one (an empty document is a value too — "{}" — not "nothing"),

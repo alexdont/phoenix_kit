@@ -195,7 +195,9 @@ defmodule PhoenixKit.Integrations.Providers do
       smtp(),
       brevo_api(),
       telegram(),
-      github()
+      github(),
+      dataforseo(),
+      serpapi()
     ]
   end
 
@@ -1196,6 +1198,129 @@ defmodule PhoenixKit.Integrations.Providers do
              ), nil},
             {gettext("Paste the token into the form above and press **Test Connection**"), nil}
           ]
+        },
+        # A valid token delivers nothing on its own: Telegram forbids a bot from
+        # messaging first, so every destination has to be linked explicitly.
+        %{
+          title: gettext("Link the chats the bot will message"),
+          steps: [
+            {gettext("Send **/start** to your bot in Telegram, then press **Test Connection**"),
+             nil},
+            {gettext(
+               "For a group: add the bot to the group, send **/start@yourbotname** there, then press **Test Connection** — a bot cannot read ordinary group messages, only commands addressed to it"
+             ), nil},
+            {gettext("A chat id you already know can be typed into **Link a chat by ID**"), nil}
+          ]
+        }
+      ]
+    }
+  end
+
+  # Search-engine results (SERP) providers. Both are billed per search from an
+  # account balance or a monthly quota, so their checks call the free account
+  # endpoint and report what is left — see PhoenixKit.Integrations.Validators.
+  #
+  # DataForSEO authenticates with HTTP Basic: the account's API login (its
+  # e-mail) and a generated API password that is NOT the password used to sign
+  # in to their site. `:key_secret` with both fields required, so
+  # `has_credentials?/1` waits for the pair; `password` is one of
+  # `Encryption.sensitive_fields/0`, the login is not a secret.
+  defp dataforseo do
+    %{
+      key: "dataforseo",
+      scopes: [:system],
+      name: gettext("DataForSEO"),
+      description:
+        gettext("Search engine results, keyword and SEO data — pay as you go per request"),
+      icon: "hero-presentation-chart-line",
+      auth_type: :key_secret,
+      oauth_config: nil,
+      validation: %{strategy: :dataforseo},
+      setup_fields: [
+        %{
+          key: "login",
+          label: gettext("API login"),
+          type: :text,
+          required: true,
+          placeholder: "you@example.com",
+          help: gettext("The e-mail address of your DataForSEO account"),
+          options: nil
+        },
+        %{
+          key: "password",
+          label: gettext("API password"),
+          type: :password,
+          required: true,
+          placeholder: "...",
+          help:
+            gettext("From app.dataforseo.com → API Access. Not the password you sign in with."),
+          options: nil
+        }
+      ],
+      capabilities: [:search_results, :seo_data],
+      instructions: [
+        %{
+          title: gettext("Get your API login and password"),
+          steps: [
+            {gettext(
+               "Create an account at [DataForSEO](https://app.dataforseo.com/register) — new accounts start with a small trial balance"
+             ), nil},
+            {gettext(
+               "Open [API Access](https://app.dataforseo.com/api-access): the API login is your account e-mail, and the API password is shown there"
+             ), nil},
+            {gettext(
+               "The API password is generated for you and differs from your sign-in password. After the first day it is no longer shown — use **Send by e-mail** on the same page to get it"
+             ), nil},
+            {gettext("Paste both into the form above and press **Test Connection**"), nil}
+          ],
+          note:
+            gettext(
+              "Test Connection is free and shows the account balance. Every search is paid from that balance, so top it up on app.dataforseo.com before it runs out."
+            )
+        }
+      ]
+    }
+  end
+
+  # SerpApi takes its key as an `api_key` query parameter rather than a header,
+  # so it declares a strategy instead of the generic header-based check.
+  defp serpapi do
+    %{
+      key: "serpapi",
+      scopes: [:system],
+      name: gettext("SerpApi"),
+      description: gettext("Search engine results — a monthly plan of searches"),
+      icon: "hero-magnifying-glass",
+      auth_type: :api_key,
+      oauth_config: nil,
+      validation: %{strategy: :serpapi},
+      setup_fields: [
+        %{
+          key: "api_key",
+          label: gettext("API Key"),
+          type: :password,
+          required: true,
+          placeholder: "...",
+          help: gettext("From serpapi.com/manage-api-key"),
+          options: nil
+        }
+      ],
+      capabilities: [:search_results],
+      instructions: [
+        %{
+          title: gettext("Get your API key"),
+          steps: [
+            {gettext(
+               "Sign up at [SerpApi](https://serpapi.com) — the free plan includes a number of searches each month"
+             ), nil},
+            {gettext(
+               "Copy the key from [API Key](https://serpapi.com/manage-api-key) and paste it into the form above"
+             ), nil}
+          ],
+          note:
+            gettext(
+              "Test Connection does not use up a search. It shows your plan and how many searches are left."
+            )
         }
       ]
     }

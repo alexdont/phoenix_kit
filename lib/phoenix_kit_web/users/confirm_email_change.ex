@@ -23,6 +23,8 @@ defmodule PhoenixKitWeb.Users.ConfirmEmailChange do
   alias PhoenixKit.Utils.Routes
 
   def mount(%{"token" => token}, _session, socket) do
+    socket = assign(socket, :page_title, gettext("Confirm Email Change"))
+
     case socket.assigns[:phoenix_kit_current_user] do
       nil ->
         {:ok,

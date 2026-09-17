@@ -111,7 +111,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   end
 
   def register(namespace, tabs) when is_atom(namespace) and is_list(tabs) do
-    GenServer.call(__MODULE__, {:register, namespace, tabs})
+    write_call({:register, namespace, tabs})
   end
 
   @doc """
@@ -151,7 +151,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec unregister(atom()) :: :ok
   def unregister(namespace) when is_atom(namespace) do
-    GenServer.call(__MODULE__, {:unregister, namespace})
+    write_call({:unregister, namespace})
   end
 
   @doc """
@@ -159,7 +159,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec unregister_tab(atom()) :: :ok
   def unregister_tab(tab_id) when is_atom(tab_id) do
-    GenServer.call(__MODULE__, {:unregister_tab, tab_id})
+    write_call({:unregister_tab, tab_id})
   end
 
   @doc """
@@ -255,7 +255,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec update_tab(atom(), map()) :: :ok
   def update_tab(tab_id, attrs) when is_atom(tab_id) and is_map(attrs) do
-    GenServer.call(__MODULE__, {:update_tab, tab_id, attrs})
+    write_call({:update_tab, tab_id, attrs})
   end
 
   @doc """
@@ -355,7 +355,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec register_groups([Group.t() | map()]) :: :ok
   def register_groups(groups) when is_list(groups) do
-    GenServer.call(__MODULE__, {:register_groups, groups})
+    write_call({:register_groups, groups})
   end
 
   @doc """
@@ -370,7 +370,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec update_tab_badge(atom(), Badge.t() | map() | nil) :: :ok
   def update_tab_badge(tab_id, badge) do
-    GenServer.call(__MODULE__, {:update_badge, tab_id, badge})
+    write_call({:update_badge, tab_id, badge})
   end
 
   @doc """
@@ -384,7 +384,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   @spec set_tab_attention(atom(), atom()) :: :ok
   def set_tab_attention(tab_id, attention)
       when attention in [nil, :pulse, :bounce, :shake, :glow] do
-    GenServer.call(__MODULE__, {:set_attention, tab_id, attention})
+    write_call({:set_attention, tab_id, attention})
   end
 
   @doc """
@@ -443,6 +443,41 @@ defmodule PhoenixKit.Dashboard.Registry do
       :ok
   end
 
+  # Every write goes through here.
+  #
+  # `mix phoenix_kit.update` boots the host application with a reduced
+  # supervision tree that deliberately leaves this registry out, and then runs
+  # the host's own start code. A host that hides a module's admin tab the way
+  # PhoenixKit 1.7 documented — a `Registry.unregister_tab/1` call at boot —
+  # therefore calls into a process that is not there. That is an exit, which no
+  # `rescue` catches, so the update aborts *before migrating*: the user sees a
+  # crash instead of an upgrade, and the database silently stays behind.
+  #
+  # In update mode, with the registry genuinely absent, a write is meaningless
+  # (nothing renders an admin sidebar during a migration) so it is skipped. In
+  # a normal boot the call still fails loudly, because there the same symptom
+  # means a real ordering bug — the host registering tabs before PhoenixKit's
+  # supervisor has started.
+  #
+  # The supported way to hide a tab is the declarative `:hidden_admin_tabs`
+  # config, which applies at registry init and therefore survives a restart.
+  defp write_call(message) do
+    if update_mode?() and not is_pid(Process.whereis(__MODULE__)) do
+      Logger.debug(
+        "[Registry] skipping #{inspect(elem_or_atom(message))} — update mode, registry not running"
+      )
+
+      :ok
+    else
+      GenServer.call(__MODULE__, message)
+    end
+  end
+
+  defp update_mode?, do: Application.get_env(:phoenix_kit, :update_mode, false)
+
+  defp elem_or_atom(message) when is_tuple(message), do: elem(message, 0)
+  defp elem_or_atom(message), do: message
+
   @doc """
   Checks if the registry has been initialized.
   """
@@ -478,7 +513,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec load_defaults() :: :ok
   def load_defaults do
-    GenServer.call(__MODULE__, :load_defaults)
+    write_call(:load_defaults)
   end
 
   @doc """
@@ -488,7 +523,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec load_from_config() :: :ok
   def load_from_config do
-    GenServer.call(__MODULE__, :load_from_config)
+    write_call(:load_from_config)
   end
 
   @doc """
@@ -498,7 +533,7 @@ defmodule PhoenixKit.Dashboard.Registry do
   """
   @spec load_admin_defaults() :: :ok
   def load_admin_defaults do
-    GenServer.call(__MODULE__, :load_admin_defaults)
+    write_call(:load_admin_defaults)
   end
 
   # GenServer Callbacks
@@ -1066,7 +1101,11 @@ defmodule PhoenixKit.Dashboard.Registry do
         description: Map.get(tab_config, :description),
         gettext_backend: Map.get(tab_config, :gettext_backend),
         gettext_domain: Map.get(tab_config, :gettext_domain),
-        auto_grant_admin: Map.get(tab_config, :auto_grant_admin, true)
+        auto_grant_admin: Map.get(tab_config, :auto_grant_admin, true),
+        # Tabs sharing a permission re-register it once per tab and on every
+        # reload; that is expected, so it does not warn (see
+        # `Permissions.register_custom_key/2`).
+        from_admin_tab: true
       )
     end
 

@@ -808,6 +808,11 @@ defmodule PhoenixKit.Integrations.EncryptionTest do
     setup do
       previous_skb = Application.get_env(:phoenix_kit, :secret_key_base)
       previous_key = Application.get_env(:phoenix_kit, :integrations_encryption_key)
+      # "no key at all" below also clears :parent_module; without restoring it
+      # here the nil leaked into every test that ran afterwards, and anything
+      # resolving the host endpoint (the sitemap's base-URL fallback) failed
+      # depending on test order.
+      previous_parent = Application.get_env(:phoenix_kit, :parent_module)
 
       on_exit(fn ->
         restore = fn key, value ->
@@ -818,6 +823,7 @@ defmodule PhoenixKit.Integrations.EncryptionTest do
 
         restore.(:secret_key_base, previous_skb)
         restore.(:integrations_encryption_key, previous_key)
+        restore.(:parent_module, previous_parent)
       end)
 
       :ok

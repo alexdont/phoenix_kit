@@ -64,6 +64,36 @@ defmodule PhoenixKit.Integration.Languages.DefaultLanguageNoPrefixTest do
     end
   end
 
+  describe "the switcher's session-locale check with the setting ON" do
+    alias PhoenixKitWeb.Components.Core.LanguageSwitcher
+
+    setup do
+      Settings.update_setting("languages_enabled", "true")
+      {:ok, _} = Languages.set_default_language_no_prefix(true)
+      :ok
+    end
+
+    # `Routes.path("/")` for the default language is "/phoenix_kit/" — the
+    # prefixed mount's root with a trailing slash, the same page.
+    test "the default language at a prefixed install's root is not a session-locale page" do
+      refute LanguageSwitcher.session_locale_page?("en", "/phoenix_kit")
+      refute LanguageSwitcher.session_locale_page?("en", "/phoenix_kit/")
+      refute LanguageSwitcher.session_locale_page?("en", "/phoenix_kit/some/page")
+      refute LanguageSwitcher.session_locale_page?("en", "/phoenix_kit?page=2")
+    end
+
+    test "another language at that root still is" do
+      assert LanguageSwitcher.session_locale_page?("fr", "/phoenix_kit")
+    end
+
+    # `Routes.path/2` puts the mount prefix on every built URL, host pages
+    # outside the mount included; the check compares both sides without it.
+    test "a host page outside the mount is judged without the mount prefix" do
+      refute LanguageSwitcher.session_locale_page?("en", "/products")
+      assert LanguageSwitcher.session_locale_page?("fr", "/products")
+    end
+  end
+
   describe "migrate_legacy/0 — backfills from publishing key" do
     test "no-op when neither key is set" do
       assert {:ok, %{default_language_no_prefix: :not_migrated}} =

@@ -42,6 +42,10 @@ defmodule PhoenixKit.Install.JsIntegration do
 
   @bootstrap_marker "<%!-- PhoenixKit theme bootstrap: pre-paint theme stamp --%>"
 
+  # A host that stamps the theme itself writes this in its root layout to tell
+  # `mix phoenix_kit.update` so, and the notice below stops repeating.
+  @host_managed_marker "<%!-- phoenix_kit: theme managed by host --%>"
+
   @doc """
   Copies phoenix_kit.js to the parent app's static vendor directory and
   adds a script tag to the root layout.
@@ -87,6 +91,7 @@ defmodule PhoenixKit.Install.JsIntegration do
 
         case theme_bootstrap_plan(content) do
           :already_present -> igniter
+          :host_managed -> host_managed_notice(igniter, layout_path, content)
           _ -> inject_theme_bootstrap(igniter, layout_path, content)
         end
 
@@ -104,16 +109,56 @@ defmodule PhoenixKit.Install.JsIntegration do
     end
   end
 
-  # Where the bootstrap should land. Public so the two placement rules
-  # (skip if already present; after a stock phx:theme script, not before)
-  # can be asserted without writing a host layout to disk.
+  # Where the bootstrap should land. Public so the placement rules can be
+  # asserted without writing a host layout to disk.
+  #
+  #   * `:already_present` — the kit's marker or the component is there. The
+  #     bare word "ThemeBootstrap" anywhere (a comment included) also counts:
+  #     hosts have used exactly that as a way to opt out, and breaking it would
+  #     re-inject into layouts that deliberately declined.
+  #   * `:host_managed` — the host sets or clears `data-theme` with its own
+  #     script, or has said so with `@host_managed_marker`. Injecting there puts the kit's script after
+  #     the host's, the kit's stamp wins, and the host's own `[data-theme=…]`
+  #     rules stop applying. So nothing is written; the caller explains why.
+  #   * `:before_head_close` — the stock phx.new 1.8 script, which CLEARS
+  #     `data-theme` for "system". The bootstrap must run after it, or the
+  #     configured pair is stamped and then removed.
+  #   * `:top_of_head` — nothing touches the theme.
+  #
+  # Telling the stock script from a host's own: the stock one removes the
+  # attribute (its "system" branch) and reads `phx:theme`; anything else that
+  # touches the attribute is the host's.
   @doc false
   def theme_bootstrap_plan(content) when is_binary(content) do
     cond do
+      String.contains?(content, @bootstrap_marker) -> :already_present
       String.contains?(content, "ThemeBootstrap") -> :already_present
+      String.contains?(content, @host_managed_marker) -> :host_managed
+      stock_theme_script?(content) -> :before_head_close
+      clears_theme?(content) or stamps_theme?(content) -> :host_managed
+      # Reads the key but neither stamps nor clears: placement after it is
+      # the safe choice, as before.
       String.contains?(content, "phx:theme") -> :before_head_close
       true -> :top_of_head
     end
+  end
+
+  # The stock script is recognised by doing both things it does: clearing the
+  # attribute AND reading the `phx:theme` key. A host's own switcher that also
+  # clears the attribute (for "light", say) but uses its own key is the
+  # host's, and injecting after it would silently take its theme over.
+  defp stock_theme_script?(content) do
+    clears_theme?(content) and String.contains?(content, "phx:theme")
+  end
+
+  defp clears_theme?(content) do
+    Regex.match?(~r/removeAttribute\(\s*["']data-theme["']\s*\)/, content)
+  end
+
+  defp stamps_theme?(content) do
+    Regex.match?(~r/setAttribute\(\s*["']data-theme["']/, content) or
+      Regex.match?(~r/dataset\.theme\s*=[^=]/, content) or
+      Regex.match?(~r/<html\b[^>]*\sdata-theme\s*=/i, content)
   end
 
   # Pure half of the write — returns the updated HTML, or the original
@@ -133,8 +178,40 @@ defmodule PhoenixKit.Install.JsIntegration do
       :top_of_head ->
         String.replace(content, ~r{(<head(?:\s[^>]*)?>)}, "\\1\n#{block}", global: false)
 
-      :already_present ->
+      plan when plan in [:already_present, :host_managed] ->
         content
+    end
+  end
+
+  # The host said so explicitly: nothing to report. Otherwise explain once per
+  # run why the layout was left alone, and what to do about either outcome.
+  defp host_managed_notice(igniter, layout_path, content) do
+    if String.contains?(content, @host_managed_marker) do
+      igniter
+    else
+      Igniter.add_notice(
+        igniter,
+        """
+        ℹ️  #{layout_path} already sets data-theme itself, so PhoenixKit did NOT
+        add its theme bootstrap — injecting it would override your script and
+        your own [data-theme=…] styles would stop applying.
+
+        PhoenixKit's admin pages will follow the theme your script sets. So
+        they use the same palettes, point the kit at your theme names:
+
+            config :phoenix_kit, dashboard_themes: ["light", "dark"]
+
+        To let PhoenixKit manage the theme instead, remove your script and add
+        at the end of <head>:
+
+            #{@bootstrap_marker}
+            <PhoenixKitWeb.Components.ThemeBootstrap.theme_bootstrap />
+
+        To keep your script and silence this notice, add to <head>:
+
+            #{@host_managed_marker}
+        """
+      )
     end
   end
 

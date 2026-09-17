@@ -12,6 +12,8 @@ defmodule PhoenixKit.Modules.Storage.ImageProcessor do
 
   require Logger
 
+  alias PhoenixKit.Modules.Storage.ImageEdit
+
   @doc """
   Get the width of an image file using ImageMagick identify.
 
@@ -345,6 +347,73 @@ defmodule PhoenixKit.Modules.Storage.ImageProcessor do
   # uploader's claims; this is the only reading that counts, and it does
   # not depend on the host having configured policy.xml.
   @sanitize_formats ~w(PNG JPEG JPG WEBP GIF)
+
+  @doc """
+  The size of the first frame after EXIF auto-orientation — the frame an
+  edit's percentages refer to — and the number of frames in the file.
+
+  Returns `{:ok, {width, height, frames}}` or `{:error, reason}`.
+  """
+  @spec oriented_info(String.t()) ::
+          {:ok, {pos_integer(), pos_integer(), pos_integer()}} | {:error, String.t()}
+  def oriented_info(file_path) do
+    with {:ok, frames} <- frame_count(file_path),
+         {output, 0} <-
+           System.cmd(
+             "convert",
+             ["#{file_path}[0]", "-auto-orient", "-format", "%w %h", "info:"],
+             stderr_to_stdout: true
+           ),
+         [w, h] <- output |> last_line() |> String.split(),
+         {w, ""} <- Integer.parse(w),
+         {h, ""} <- Integer.parse(h) do
+      {:ok, {w, h, frames}}
+    else
+      {:error, _} = error -> error
+      {output, _status} when is_binary(output) -> {:error, String.trim(output)}
+      _ -> {:error, "could not read the image size"}
+    end
+  end
+
+  defp frame_count(file_path) do
+    case System.cmd("identify", ["-format", "%n\\n", file_path], stderr_to_stdout: true) do
+      {output, 0} ->
+        case output
+             |> String.split("\n", trim: true)
+             |> List.first()
+             |> to_string()
+             |> Integer.parse() do
+          {n, _} when n > 0 -> {:ok, n}
+          _ -> {:error, "could not count frames"}
+        end
+
+      {output, _} ->
+        {:error, String.trim(output)}
+    end
+  end
+
+  # IM7's `convert` prints a deprecation warning before the answer.
+  defp last_line(output),
+    do: output |> String.split("\n", trim: true) |> List.last() |> to_string()
+
+  @doc """
+  Renders an image edit (`PhoenixKit.Modules.Storage.ImageEdit`) of the
+  first frame of `input_path` into `output_path`. `size` is the input's size
+  after auto-orientation (`oriented_info/1`).
+  """
+  @spec render_edit(String.t(), String.t(), map() | nil, {pos_integer(), pos_integer()}) ::
+          :ok | {:error, String.t()}
+  def render_edit(input_path, output_path, edit, size) do
+    args = ImageEdit.magick_args(edit, size, input_path, output_path)
+
+    case System.cmd("convert", args, stderr_to_stdout: true) do
+      {_output, 0} ->
+        if File.exists?(output_path), do: :ok, else: {:error, "no output was written"}
+
+      {output, status} ->
+        {:error, "ImageMagick exited with #{status}: #{String.trim(output)}"}
+    end
+  end
 
   defp detect_format(path) do
     case System.cmd("identify", ["-format", "%m", "#{path}[0]"], stderr_to_stdout: true) do

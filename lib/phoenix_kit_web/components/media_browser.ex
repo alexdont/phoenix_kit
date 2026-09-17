@@ -118,12 +118,15 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
   alias Phoenix.LiveView.JS
   alias PhoenixKit.Modules.Storage
   alias PhoenixKit.Modules.Storage.FileInstance
+  alias PhoenixKit.Modules.Storage.ImageEditing
   alias PhoenixKit.Modules.Storage.URLSigner
   alias PhoenixKit.Settings
   alias PhoenixKit.Users.Auth
+  alias PhoenixKit.Users.Auth.Scope
   alias PhoenixKit.Users.Auth.User
   alias PhoenixKit.Utils.Format
   alias PhoenixKit.Utils.Routes
+  alias PhoenixKit.Utils.UUID, as: UUIDUtils
 
   # Grid/list view preference is persisted per-user in `custom_fields`
   # ("user meta") so the server renders the correct mode on first paint —
@@ -160,6 +163,11 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
     end
 
     {:ok, socket}
+  end
+
+  # The viewer's "Edit image" button.
+  def update(%{open_image_editor: file_uuid}, socket) do
+    {:ok, open_image_editor(socket, file_uuid)}
   end
 
   def update(assigns, socket) do
@@ -214,6 +222,7 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
 
       # Background processing finished (see attach_file_event_forwarding/1).
       Map.has_key?(assigns, :file_processed) ->
+        notify_image_editor(socket, assigns.file_processed)
         {:ok, refresh_processed_file(socket, assigns.file_processed)}
 
       # Annotated thumbnail (re)baked — refresh the grid row only. The open
@@ -610,15 +619,31 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
             # hand-edited link): fetch it directly. Siblings collapse to the
             # file itself, so prev/next bound at it rather than stepping a
             # list the file is not in.
-            case Storage.get_file(uuid) do
+            case fetch_viewable_file(socket, uuid) do
               %Storage.File{} = file ->
                 enriched = enrich_files([file]) |> List.first()
                 open_viewer(socket, enriched, [enriched])
 
-              _ ->
+              nil ->
                 socket
             end
         end
+    end
+  end
+
+  # The URL is user-editable, so a `file` that missed the loaded listing
+  # gets the same gates the listing itself applies: a well-formed uuid (a
+  # malformed one raises in the cast and crash-loops the mount), the
+  # browser's scope folder, never a system-managed tile chunk, and the
+  # `only_file_type` lock. Anything else leaves the viewer closed.
+  defp fetch_viewable_file(socket, uuid) do
+    with true <- UUIDUtils.valid?(uuid),
+         %Storage.File{system_managed: false} = file <- Storage.get_file(uuid),
+         true <- Storage.within_scope?(file.folder_uuid, scope_folder_id(socket)),
+         true <- socket.assigns[:only_file_type] in [nil, file.file_type] do
+      file
+    else
+      _ -> nil
     end
   end
 
@@ -943,7 +968,9 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
   # instance. Encodes the dims + variant count so a processing-completion
   # refresh remounts with the real canvas (see the heex comment).
   def viewer_component_id(f) do
-    "media-canvas-viewer-#{f.file_uuid}-#{f.width || 0}x#{f.height || 0}-#{map_size(f.urls)}"
+    # The original's URL carries its version, so an edit remounts too.
+    "media-canvas-viewer-#{f.file_uuid}-#{f.width || 0}x#{f.height || 0}-#{map_size(f.urls)}-" <>
+      Integer.to_string(:erlang.phash2(f.urls["original"]))
   end
 
   @doc false
@@ -1886,6 +1913,14 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
 
   def handle_event("close_viewer", _params, socket) do
     {:noreply, open_viewer(socket, nil) |> notify_viewer_nav()}
+  end
+
+  def handle_event("open_image_editor", %{"file-uuid" => file_uuid}, socket) do
+    {:noreply, open_image_editor(socket, file_uuid)}
+  end
+
+  def handle_event("close_image_editor", _params, socket) do
+    {:noreply, assign(socket, :image_editor_file, nil)}
   end
 
   # Single keydown router so we can handle multiple keys without stacking
@@ -3044,6 +3079,17 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
         <%!-- Rotate the saved orientation ±90 (images only). Persists like
               the viewer; the thumbnail reorients live. --%>
         <.table_row_menu_button
+          :if={
+            @file.file_type == "image" and not @filter_trash and
+              ImageEditing.editable_mime?(@file.mime_type)
+          }
+          phx-click="open_image_editor"
+          phx-target={@myself}
+          phx-value-file-uuid={@file.file_uuid}
+          icon="hero-adjustments-horizontal"
+          label={gettext("Edit image")}
+        />
+        <.table_row_menu_button
           :if={@file.file_type == "image"}
           phx-click="rotate_file"
           phx-target={@myself}
@@ -3371,6 +3417,46 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
   end
 
   defp scope_folder_id(socket), do: socket.assigns[:scope_folder_id]
+
+  # The image editor, in a modal over the browser. Editing is authorized the
+  # way rotating and deleting are here: the file's home is in this browser's
+  # scope (the host decided who sees the browser). The uuid arrives from the
+  # client, so it gets the viewer's gates first (well-formed uuid, never
+  # system-managed, the `only_file_type` lock).
+  #
+  # The editor's scope is built here, once: `Scope.for_user/1` reads roles and
+  # permissions, and a template attribute would repeat that on every render.
+  defp open_image_editor(socket, file_uuid) do
+    with %Storage.File{} = file <- fetch_viewable_file(socket, file_uuid),
+         true <- ImageEditing.editable?(file) do
+      socket
+      |> open_viewer(nil)
+      |> notify_viewer_nav()
+      |> assign(:image_editor_scope, editor_scope(socket.assigns[:phoenix_kit_current_user]))
+      |> assign(:image_editor_file, file)
+    else
+      _ -> socket
+    end
+  end
+
+  @doc false
+  def image_editor_id(browser_id, file_uuid), do: "#{browser_id}-image-editor-#{file_uuid}"
+
+  defp notify_image_editor(socket, file_uuid) do
+    case socket.assigns[:image_editor_file] do
+      %{uuid: ^file_uuid} ->
+        send_update(PhoenixKitWeb.Components.ImageEditor,
+          id: image_editor_id(socket.assigns.id, file_uuid),
+          file_processed: file_uuid
+        )
+
+      _ ->
+        :ok
+    end
+  end
+
+  defp editor_scope(%User{} = user), do: Scope.for_user(user)
+  defp editor_scope(_user), do: nil
 
   # The scope for the Trash view + badge: the folder you're currently in (its
   # whole subtree), falling back to the embedded browser scope at the root.
@@ -3701,23 +3787,17 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
     |> Enum.reject(fn instance ->
       instance.variant_name == "thumbnail_annotated" and not annotated_enabled?
     end)
+    # The signed URL is content-independent (a capability token); `version:`
+    # adds the variant's checksum, so a re-baked `thumbnail_annotated` or an
+    # edited image gets a new URL instead of a stale cached one.
     |> Enum.reduce(%{}, fn instance, acc ->
-      url = URLSigner.signed_url(file_uuid, instance.variant_name)
-      Map.put(acc, instance.variant_name, annotated_cache_bust(url, instance))
+      url = URLSigner.signed_url(file_uuid, instance.variant_name, version: instance)
+      Map.put(acc, instance.variant_name, url)
     end)
-    |> URLSigner.put_dzi_url(file_uuid, mime_type)
+    |> URLSigner.put_dzi_url(file_uuid, mime_type, version: original_instance(instances))
   end
 
-  # The signed URL is content-independent (a capability token), so an
-  # overwritten `thumbnail_annotated` would serve stale from cache. Append a
-  # `?v=` derived from the variant's checksum so a re-bake busts the cache.
-  defp annotated_cache_bust(url, %{variant_name: "thumbnail_annotated", checksum: checksum})
-       when is_binary(checksum) and checksum != "" do
-    sep = if String.contains?(url, "?"), do: "&", else: "?"
-    "#{url}#{sep}v=#{String.slice(checksum, 0, 8)}"
-  end
-
-  defp annotated_cache_bust(url, _instance), do: url
+  defp original_instance(instances), do: Enum.find(instances, &(&1.variant_name == "original"))
 
   # Builds a parallel map of `%{variant_name => width}` from the same
   # FileInstance rows that produce the URLs. Used downstream by

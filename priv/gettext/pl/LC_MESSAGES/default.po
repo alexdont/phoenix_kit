@@ -361,7 +361,7 @@ msgstr "Standardowy poziom dostępu"
 msgid "Role System"
 msgstr "System ról"
 
-#: lib/phoenix_kit/integrations/providers.ex:1067
+#: lib/phoenix_kit/integrations/providers.ex:1069
 #: lib/phoenix_kit_web/components/core/dashboard_overview.ex:468
 #, elixir-autogen
 msgid "Authentication"
@@ -475,7 +475,7 @@ msgstr "O uprawnieniach"
 msgid "Accept All"
 msgstr "Akceptuj wszystkie"
 
-#: lib/phoenix_kit/integrations/integrations.ex:1179
+#: lib/phoenix_kit/integrations/integrations.ex:1185
 #: lib/phoenix_kit/integrations/validators.ex:779
 #: lib/phoenix_kit_web/live/activity/index.ex:68
 #: lib/phoenix_kit_web/live/activity/show.ex:56
@@ -624,12 +624,14 @@ msgstr "Lista wypunktowana"
 #: lib/phoenix_kit_web/components/core/form_actions.ex:118
 #: lib/phoenix_kit_web/components/core/modal.ex:299
 #: lib/phoenix_kit_web/components/core/reorder_modal.ex:92
+#: lib/phoenix_kit_web/components/image_editor.ex:1002
+#: lib/phoenix_kit_web/components/image_editor.ex:1026
 #: lib/phoenix_kit_web/components/media_browser.html.heex:69
 #: lib/phoenix_kit_web/components/media_browser.html.heex:852
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1123
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1357
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2392
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2440
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2427
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2475
 #: lib/phoenix_kit_web/components/user_dashboard_nav.ex:352
 #: lib/phoenix_kit_web/live/components/media_selector_modal.html.heex:66
 #: lib/phoenix_kit_web/live/components/user_settings.ex:1183
@@ -699,6 +701,7 @@ msgstr "Kliknij ikonę znacznika lub krzyżyka, aby przełączyć uprawnienie dl
 #: lib/modules/sitemap/web/settings.html.heex:850
 #: lib/phoenix_kit/mentions/live.ex:269
 #: lib/phoenix_kit_web/components/core/column_settings.ex:144
+#: lib/phoenix_kit_web/components/image_editor.ex:628
 #: lib/phoenix_kit_web/components/media_browser.html.heex:387
 #: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:36
 #: lib/phoenix_kit_web/components/media_viewer.html.heex:36
@@ -891,10 +894,11 @@ msgstr "Kontakt do IOD zapisany"
 #: lib/modules/storage/web/dimensions.html.heex:475
 #: lib/modules/storage/web/settings.html.heex:284
 #: lib/phoenix_kit_web/components/core/bulk_select.ex:196
+#: lib/phoenix_kit_web/components/image_editor.ex:978
 #: lib/phoenix_kit_web/components/media_browser.html.heex:831
 #: lib/phoenix_kit_web/components/media_browser.html.heex:838
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1491
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2119
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2137
 #: lib/phoenix_kit_web/live/integrations/my_integration_form.ex:558
 #: lib/phoenix_kit_web/live/settings/integration_form.html.heex:487
 #: lib/phoenix_kit_web/live/settings/send_profiles.html.heex:114
@@ -922,7 +926,7 @@ msgid "Describe what this role can do (optional)"
 msgstr "Opisz, co może ta rola (opcjonalnie)"
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:432
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1826
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1844
 #: lib/phoenix_kit_web/live/users/roles.html.heex:29
 #: lib/phoenix_kit_web/live/users/roles.html.heex:63
 #: lib/phoenix_kit_web/live/users/roles.html.heex:96
@@ -1002,7 +1006,7 @@ msgid "Edit in General"
 msgstr "Edytuj w sekcji Ogólne"
 
 #: lib/phoenix_kit_web/live/users/profile_settings.ex:49
-#: lib/phoenix_kit_web/users/confirm_email_change.ex:58
+#: lib/phoenix_kit_web/users/confirm_email_change.ex:60
 #, elixir-autogen, elixir-format
 msgid "Email change link is invalid or it has expired."
 msgstr "Link zmiany adresu e-mail jest nieprawidłowy lub wygasł."
@@ -1142,6 +1146,7 @@ msgstr "Obserwujący"
 msgid "Following"
 msgstr "Obserwowani"
 
+#: lib/phoenix_kit_web/users/forgot_password.ex:16
 #: lib/phoenix_kit_web/users/forgot_password.html.heex:8
 #: lib/phoenix_kit_web/users/login.html.heex:70
 #, elixir-autogen, elixir-format
@@ -1278,6 +1283,7 @@ msgstr "Podział wiersza"
 #: lib/phoenix_kit_web/users/confirmation.html.heex:33
 #: lib/phoenix_kit_web/users/confirmation_instructions.html.heex:138
 #: lib/phoenix_kit_web/users/forgot_password.html.heex:32
+#: lib/phoenix_kit_web/users/login.ex:20
 #: lib/phoenix_kit_web/users/login.html.heex:79
 #: lib/phoenix_kit_web/users/reset_password.html.heex:52
 #, elixir-autogen, elixir-format
@@ -1369,7 +1375,7 @@ msgstr "Noindex/nofollow wyłączone. Witryna może być ponownie indeksowana."
 msgid "Noindex/nofollow enabled. Search engines will not index this site."
 msgstr "Noindex/nofollow włączone. Wyszukiwarki nie będą indeksować tej witryny."
 
-#: lib/phoenix_kit/users/permissions.ex:1408
+#: lib/phoenix_kit/users/permissions.ex:1451
 #, elixir-autogen, elixir-format
 msgid "Not authenticated"
 msgstr "Nieuwierzytelniony"
@@ -1421,7 +1427,7 @@ msgstr "Lista numerowana"
 msgid "OK"
 msgstr "OK"
 
-#: lib/phoenix_kit/users/permissions.ex:1417
+#: lib/phoenix_kit/users/permissions.ex:1460
 #, elixir-autogen, elixir-format
 msgid "Only the Owner can edit Admin permissions"
 msgstr "Tylko właściciel może edytować uprawnienia administratora"
@@ -1458,7 +1464,7 @@ msgstr "Informacje o organizacji zapisane"
 msgid "Overview of role permissions across all modules"
 msgstr "Przegląd uprawnień ról we wszystkich modułach"
 
-#: lib/phoenix_kit/users/permissions.ex:1411
+#: lib/phoenix_kit/users/permissions.ex:1454
 #, elixir-autogen, elixir-format
 msgid "Owner role always has full access and cannot be modified"
 msgstr "Rola Właściciel ma zawsze pełny dostęp i nie można jej zmienić"
@@ -1473,7 +1479,7 @@ msgstr "Strona została wygenerowana pomyślnie"
 msgid "Page published successfully"
 msgstr "Strona została opublikowana pomyślnie"
 
-#: lib/phoenix_kit/integrations/providers.ex:1032
+#: lib/phoenix_kit/integrations/providers.ex:1034
 #: lib/phoenix_kit_web/components/user_dashboard_nav.ex:342
 #: lib/phoenix_kit_web/live/settings/website_access.html.heex:74
 #: lib/phoenix_kit_web/users/login.html.heex:39
@@ -1493,7 +1499,7 @@ msgstr "Hasło zostało zmienione."
 msgid "Pending"
 msgstr "Oczekujące"
 
-#: lib/phoenix_kit/users/permissions.ex:1420
+#: lib/phoenix_kit/users/permissions.ex:1463
 #, elixir-autogen, elixir-format
 msgid "Permission denied"
 msgstr "Brak uprawnień"
@@ -1731,6 +1737,7 @@ msgstr "SWIFT/BIC"
 #: lib/phoenix_kit_web/comments_gettext_manifest.ex:67
 #: lib/phoenix_kit_web/components/core/markdown_editor.ex:356
 #: lib/phoenix_kit_web/components/core/markdown_editor.ex:440
+#: lib/phoenix_kit_web/components/image_editor.ex:920
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1349
 #: lib/phoenix_kit_web/live/components/user_settings.ex:1623
 #: lib/phoenix_kit_web/live/notifications/settings.ex:436
@@ -1769,7 +1776,7 @@ msgstr "Zapisz ustawienia"
 #: lib/phoenix_kit_web/components/core/markdown_editor.ex:340
 #: lib/phoenix_kit_web/components/core/markdown_editor.ex:424
 #: lib/phoenix_kit_web/live/integrations/my_integration_form.ex:189
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:599
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:603
 #, elixir-autogen, elixir-format
 msgid "Saved"
 msgstr "Zapisano"
@@ -1827,7 +1834,6 @@ msgstr "Ustawienia"
 msgid "Shared across modules"
 msgstr "Wspólne dla modułów"
 
-#: lib/phoenix_kit_web/users/login.html.heex:4
 #: lib/phoenix_kit_web/users/registration.html.heex:234
 #, elixir-autogen, elixir-format
 msgid "Sign in"
@@ -1969,7 +1975,7 @@ msgstr "Łącznie ról"
 
 #: lib/modules/storage/web/health.html.heex:196
 #: lib/modules/storage/web/health.html.heex:219
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1827
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1845
 #: lib/phoenix_kit_web/live/activity/index.html.heex:240
 #: lib/phoenix_kit_web/live/activity/show.html.heex:113
 #: lib/phoenix_kit_web/live/settings/users.html.heex:550
@@ -2045,7 +2051,7 @@ msgstr "Nie znaleziono użytkownika"
 msgid "User-defined roles"
 msgstr "Role zdefiniowane przez użytkownika"
 
-#: lib/phoenix_kit/integrations/providers.ex:1020
+#: lib/phoenix_kit/integrations/providers.ex:1022
 #: lib/phoenix_kit_web/live/users/user_details.html.heex:268
 #: lib/phoenix_kit_web/users/magic_link_registration.html.heex:30
 #: lib/phoenix_kit_web/users/registration.html.heex:69
@@ -2111,7 +2117,7 @@ msgstr "Możesz zarządzać tylko uprawnieniami, które posiadasz"
 msgid "You cannot edit permissions for this role"
 msgstr "Nie możesz edytować uprawnień tej roli"
 
-#: lib/phoenix_kit/users/permissions.ex:1414
+#: lib/phoenix_kit/users/permissions.ex:1457
 #, elixir-autogen, elixir-format
 msgid "You cannot edit permissions for your own role"
 msgstr "Nie możesz edytować uprawnień własnej roli"
@@ -2288,7 +2294,7 @@ msgstr "Ustaw jako domyślne"
 
 #: lib/modules/storage/web/dimensions.html.heex:108
 #: lib/modules/storage/web/dimensions.html.heex:146
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1828
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1846
 #, elixir-autogen, elixir-format
 msgid "Size"
 msgstr "Rozmiar"
@@ -2375,8 +2381,8 @@ msgid "Access Credentials"
 msgstr "Dane dostępowe"
 
 #: lib/modules/storage/web/bucket_form.html.heex:230
-#: lib/phoenix_kit/integrations/providers.ex:847
-#: lib/phoenix_kit/integrations/providers.ex:931
+#: lib/phoenix_kit/integrations/providers.ex:849
+#: lib/phoenix_kit/integrations/providers.ex:933
 #, elixir-autogen, elixir-format
 msgid "Access Key ID"
 msgstr "Identyfikator klucza dostępu"
@@ -2477,13 +2483,13 @@ msgstr "Sekret aplikacji"
 msgid "Application name display"
 msgstr "Wyświetlanie nazwy aplikacji"
 
-#: lib/modules/storage/web/settings.html.heex:470
+#: lib/modules/storage/web/settings.html.heex:517
 #: lib/phoenix_kit_web/live/users/users.html.heex:1180
 #, elixir-autogen, elixir-format
 msgid "Apply Changes"
 msgstr "Zastosuj zmiany"
 
-#: lib/modules/storage/web/settings.html.heex:467
+#: lib/modules/storage/web/settings.html.heex:514
 #, elixir-autogen, elixir-format
 msgid "Applying..."
 msgstr "Stosowanie…"
@@ -2581,7 +2587,7 @@ msgstr "Kolor lub gradient CSS tła strony uwierzytelniania. Ignorowany, gdy ust
 msgid "Callback URL"
 msgstr "Adres URL wywołania zwrotnego"
 
-#: lib/modules/storage/web/settings.html.heex:476
+#: lib/modules/storage/web/settings.html.heex:523
 #, elixir-autogen, elixir-format
 msgid "Changes will be saved immediately"
 msgstr "Zmiany zostaną zapisane natychmiast"
@@ -2594,7 +2600,7 @@ msgstr "Zmiany zostaną zapisane natychmiast"
 msgid "Click"
 msgstr "Kliknij"
 
-#: lib/phoenix_kit/integrations/providers.ex:220
+#: lib/phoenix_kit/integrations/providers.ex:222
 #: lib/phoenix_kit/users/oauth_config.ex:274
 #: lib/phoenix_kit/users/oauth_config.ex:280
 #: lib/phoenix_kit_web/live/settings/authorization.html.heex:388
@@ -2603,8 +2609,8 @@ msgstr "Kliknij"
 msgid "Client ID"
 msgstr "Identyfikator klienta"
 
-#: lib/phoenix_kit/integrations/providers.ex:229
-#: lib/phoenix_kit/integrations/providers.ex:1245
+#: lib/phoenix_kit/integrations/providers.ex:231
+#: lib/phoenix_kit/integrations/providers.ex:1357
 #: lib/phoenix_kit/users/oauth_config.ex:275
 #: lib/phoenix_kit/users/oauth_config.ex:281
 #: lib/phoenix_kit_web/live/settings/authorization.html.heex:398
@@ -2768,7 +2774,7 @@ msgid "Enable OAuth (Master Switch)"
 msgstr "Włącz OAuth (przełącznik główny)"
 
 #: lib/modules/storage/web/bucket_form.html.heex:197
-#: lib/phoenix_kit/integrations/providers.ex:961
+#: lib/phoenix_kit/integrations/providers.ex:963
 #, elixir-autogen, elixir-format
 msgid "Endpoint"
 msgstr "Punkt końcowy"
@@ -2974,7 +2980,7 @@ msgstr "Magiczny link"
 msgid "Maintain Aspect Ratio"
 msgstr "Zachowaj proporcje"
 
-#: lib/modules/storage/web/settings.html.heex:509
+#: lib/modules/storage/web/settings.html.heex:556
 #, elixir-autogen, elixir-format
 msgid "Manage Dimensions"
 msgstr "Zarządzaj wymiarami"
@@ -3003,7 +3009,7 @@ msgstr "Maksymalnie %{count} kopii na podstawie %{buckets} aktywnych zasobników
 #: lib/modules/storage/web/dimensions.html.heex:342
 #: lib/modules/storage/web/settings.html.heex:153
 #: lib/phoenix_kit_web/components/media_browser.html.heex:413
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1824
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1842
 #: lib/phoenix_kit_web/live/integrations/my_integrations.ex:171
 #: lib/phoenix_kit_web/live/integrations/my_integrations.ex:203
 #: lib/phoenix_kit_web/live/settings/email_sending.html.heex:149
@@ -3041,7 +3047,7 @@ msgstr "Brak aktywnych zasobników. Włącz zasobniki, aby skonfigurować nadmia
 msgid "No active sessions found."
 msgstr "Nie znaleziono aktywnych sesji."
 
-#: lib/modules/storage/web/settings.html.heex:474
+#: lib/modules/storage/web/settings.html.heex:521
 #, elixir-autogen, elixir-format
 msgid "No changes to apply"
 msgstr "Brak zmian do zastosowania"
@@ -3235,8 +3241,8 @@ msgid "Search engines are instructed to skip this environment. Remove this befor
 msgstr "Wyszukiwarki mają pomijać to środowisko. Usuń to przed uruchomieniem."
 
 #: lib/modules/storage/web/bucket_form.html.heex:244
-#: lib/phoenix_kit/integrations/providers.ex:856
-#: lib/phoenix_kit/integrations/providers.ex:940
+#: lib/phoenix_kit/integrations/providers.ex:858
+#: lib/phoenix_kit/integrations/providers.ex:942
 #, elixir-autogen, elixir-format
 msgid "Secret Access Key"
 msgstr "Tajny klucz dostępu"
@@ -3282,7 +3288,7 @@ msgstr "Akcje sesji"
 msgid "Set"
 msgstr "Ustaw"
 
-#: lib/phoenix_kit_web/components/core/integrations_ui.ex:355
+#: lib/phoenix_kit_web/components/core/integrations_ui.ex:366
 #: lib/phoenix_kit_web/live/settings/authorization.ex:378
 #: lib/phoenix_kit_web/live/settings/integration_form.html.heex:386
 #, elixir-autogen, elixir-format
@@ -3299,7 +3305,7 @@ msgstr "Pokaż pole nazwy użytkownika przy rejestracji"
 msgid "Site Address (URL)"
 msgstr "Adres witryny (URL)"
 
-#: lib/modules/storage/web/settings.html.heex:521
+#: lib/modules/storage/web/settings.html.heex:568
 #, elixir-autogen, elixir-format
 msgid "Soon"
 msgstr "Wkrótce"
@@ -3325,7 +3331,7 @@ msgstr "Sukces!"
 msgid "Switch app from"
 msgstr "Przełącz aplikację z"
 
-#: lib/modules/storage/web/settings.html.heex:539
+#: lib/modules/storage/web/settings.html.heex:586
 #, elixir-autogen, elixir-format
 msgid "Sync Files"
 msgstr "Synchronizuj pliki"
@@ -3365,7 +3371,7 @@ msgstr "Migracja tworzy 8 domyślnych wymiarów: 4 rozmiary obrazów (thumbnail,
 msgid "The storage path"
 msgstr "Ścieżka magazynu"
 
-#: lib/modules/storage/web/settings.html.heex:574
+#: lib/modules/storage/web/settings.html.heex:621
 #, elixir-autogen, elixir-format
 msgid "This will reset dimensions and settings to defaults, and create a local bucket if none exist. Your uploaded files will NOT be deleted. Continue?"
 msgstr "Spowoduje to przywrócenie domyślnych wymiarów i ustawień oraz utworzenie lokalnego zasobnika, jeśli żaden nie istnieje. Przesłane pliki NIE zostaną usunięte. Kontynuować?"
@@ -3467,7 +3473,7 @@ msgstr "Odwiedź"
 msgid "Week Start On"
 msgstr "Początek tygodnia"
 
-#: lib/modules/storage/web/settings.html.heex:603
+#: lib/modules/storage/web/settings.html.heex:650
 #, elixir-autogen, elixir-format
 msgid "When a file is requested, the system automatically tries each location until it successfully retrieves the file."
 msgstr "Gdy plik jest żądany, system automatycznie sprawdza każdą lokalizację, aż go pobierze."
@@ -3555,7 +3561,7 @@ msgid "e.g., thumbnail, medium, 720p"
 msgstr "np. thumbnail, medium, 720p"
 
 #: lib/modules/storage/web/settings.html.heex:202
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1751
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1769
 #, elixir-autogen, elixir-format
 msgid "files"
 msgstr "pliki"
@@ -3738,7 +3744,7 @@ msgstr "Przyjazna nazwa identyfikująca tę lokalizację magazynu"
 msgid "A unique name to identify this dimension preset"
 msgstr "Unikalna nazwa identyfikująca ten szablon wymiarów"
 
-#: lib/phoenix_kit/integrations/providers.ex:393
+#: lib/phoenix_kit/integrations/providers.ex:395
 #, elixir-autogen, elixir-format
 msgid "AI model access via OpenRouter (100+ models)"
 msgstr "Dostęp do modeli AI przez OpenRouter (ponad 100 modeli)"
@@ -3748,13 +3754,14 @@ msgstr "Dostęp do modeli AI przez OpenRouter (ponad 100 modeli)"
 msgid "API Credentials"
 msgstr "Dane dostępowe API"
 
-#: lib/phoenix_kit/integrations/providers.ex:337
-#: lib/phoenix_kit/integrations/providers.ex:407
-#: lib/phoenix_kit/integrations/providers.ex:465
-#: lib/phoenix_kit/integrations/providers.ex:528
-#: lib/phoenix_kit/integrations/providers.ex:591
-#: lib/phoenix_kit/integrations/providers.ex:658
-#: lib/phoenix_kit/integrations/providers.ex:1141
+#: lib/phoenix_kit/integrations/providers.ex:339
+#: lib/phoenix_kit/integrations/providers.ex:409
+#: lib/phoenix_kit/integrations/providers.ex:467
+#: lib/phoenix_kit/integrations/providers.ex:530
+#: lib/phoenix_kit/integrations/providers.ex:593
+#: lib/phoenix_kit/integrations/providers.ex:660
+#: lib/phoenix_kit/integrations/providers.ex:1143
+#: lib/phoenix_kit/integrations/providers.ex:1287
 #, elixir-autogen, elixir-format
 msgid "API Key"
 msgstr "Klucz API"
@@ -3794,7 +3801,7 @@ msgstr "Konto"
 msgid "Account Type"
 msgstr "Typ konta"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:215
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:219
 #, elixir-autogen, elixir-format
 msgid "Account disconnected"
 msgstr "Konto odłączone"
@@ -3810,7 +3817,7 @@ msgstr "Konto odłączone"
 msgid "Add Integration"
 msgstr "Dodaj integrację"
 
-#: lib/phoenix_kit/integrations/providers.ex:436
+#: lib/phoenix_kit/integrations/providers.ex:438
 #, elixir-autogen, elixir-format
 msgid "Add credits (optional)"
 msgstr "Dodaj kredyty (opcjonalnie)"
@@ -3845,7 +3852,7 @@ msgstr "Wszystkie pliki spełniają docelową nadmiarowość %{n} kopii."
 msgid "Alternative Formats"
 msgstr "Formaty alternatywne"
 
-#: lib/phoenix_kit/integrations/providers.ex:290
+#: lib/phoenix_kit/integrations/providers.ex:292
 #, elixir-autogen, elixir-format
 msgid "Application type: **Web application** (do not select \"Desktop app\" — it won't support redirect URIs)"
 msgstr "Typ aplikacji: **aplikacja internetowa** (nie wybieraj „aplikacja desktopowa” — nie obsługuje adresów URI przekierowania)"
@@ -3865,7 +3872,7 @@ msgstr "Czy na pewno chcesz odłączyć?"
 msgid "Are you sure you want to remove this member?"
 msgstr "Czy na pewno chcesz usunąć tego członka?"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:114
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:118
 #, elixir-autogen, elixir-format
 msgid "Authorization failed: %{reason}"
 msgstr "Autoryzacja nie powiodła się: %{reason}"
@@ -3947,18 +3954,18 @@ msgstr "Wybierz inną usługę"
 msgid "Choose a service to connect"
 msgstr "Wybierz usługę do połączenia"
 
-#: lib/phoenix_kit/integrations/providers.ex:289
+#: lib/phoenix_kit/integrations/providers.ex:291
 #, elixir-autogen, elixir-format
 msgid "Click **Create Credentials → OAuth client ID**"
 msgstr "Kliknij **Utwórz dane logowania → Identyfikator klienta OAuth**"
 
-#: lib/phoenix_kit/integrations/providers.ex:430
+#: lib/phoenix_kit/integrations/providers.ex:432
 #, elixir-autogen, elixir-format
 msgid "Click **Create Key**"
 msgstr "Kliknij **Utwórz klucz**"
 
-#: lib/phoenix_kit/integrations/providers.ex:300
-#: lib/phoenix_kit/integrations/providers.ex:1324
+#: lib/phoenix_kit/integrations/providers.ex:302
+#: lib/phoenix_kit/integrations/providers.ex:1436
 #, elixir-autogen, elixir-format
 msgid "Click **Save**, then **Connect Account**"
 msgstr "Kliknij **Zapisz**, a następnie **Połącz konto**"
@@ -4008,8 +4015,8 @@ msgstr "Połącz konto %{provider}"
 msgid "Connect Account"
 msgstr "Połącz konto"
 
-#: lib/phoenix_kit/integrations/providers.ex:298
-#: lib/phoenix_kit/integrations/providers.ex:1322
+#: lib/phoenix_kit/integrations/providers.ex:300
+#: lib/phoenix_kit/integrations/providers.ex:1434
 #, elixir-autogen, elixir-format
 msgid "Connect and authorize"
 msgstr "Połącz i autoryzuj"
@@ -4051,7 +4058,7 @@ msgid "Connection failed"
 msgstr "Połączenie nie udało się"
 
 #: lib/phoenix_kit_web/live/integrations/my_integrations.ex:70
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:296
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:300
 #: lib/phoenix_kit_web/live/settings/integrations.ex:74
 #, elixir-autogen, elixir-format
 msgid "Connection removed"
@@ -4062,61 +4069,61 @@ msgstr "Połączenie usunięte"
 msgid "Connection successful"
 msgstr "Połączenie udane"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:353
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:362
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:470
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:477
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:357
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:366
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:474
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:481
 #, elixir-autogen, elixir-format
 msgid "Connection verified"
 msgstr "Połączenie zweryfikowane"
 
-#: lib/phoenix_kit/integrations/providers.ex:294
+#: lib/phoenix_kit/integrations/providers.ex:296
 #, elixir-autogen, elixir-format
 msgid "Copy the **Client ID** and **Client Secret** into the form above"
 msgstr "Skopiuj **identyfikator klienta** i **sekret klienta** do formularza powyżej"
 
-#: lib/phoenix_kit/integrations/providers.ex:432
+#: lib/phoenix_kit/integrations/providers.ex:434
 #, elixir-autogen, elixir-format
 msgid "Copy the key and paste it into the form above"
 msgstr "Skopiuj klucz i wklej go do formularza powyżej"
 
-#: lib/phoenix_kit/integrations/integrations.ex:1181
+#: lib/phoenix_kit/integrations/integrations.ex:1187
 #: lib/phoenix_kit/integrations/probe.ex:111
 #, elixir-autogen, elixir-format
 msgid "Could not reach the service"
 msgstr "Nie udało się połączyć z usługą"
 
-#: lib/phoenix_kit/integrations/providers.ex:240
+#: lib/phoenix_kit/integrations/providers.ex:242
 #, elixir-autogen, elixir-format
 msgid "Create a Google Cloud project"
 msgstr "Utwórz projekt Google Cloud"
 
-#: lib/phoenix_kit/integrations/providers.ex:243
+#: lib/phoenix_kit/integrations/providers.ex:245
 #, elixir-autogen, elixir-format
 msgid "Create a new project or select an existing one"
 msgstr "Utwórz nowy projekt lub wybierz istniejący"
 
-#: lib/phoenix_kit/integrations/providers.ex:373
-#: lib/phoenix_kit/integrations/providers.ex:428
-#: lib/phoenix_kit/integrations/providers.ex:498
-#: lib/phoenix_kit/integrations/providers.ex:558
-#: lib/phoenix_kit/integrations/providers.ex:624
-#: lib/phoenix_kit/integrations/providers.ex:675
+#: lib/phoenix_kit/integrations/providers.ex:375
+#: lib/phoenix_kit/integrations/providers.ex:430
+#: lib/phoenix_kit/integrations/providers.ex:500
+#: lib/phoenix_kit/integrations/providers.ex:560
+#: lib/phoenix_kit/integrations/providers.ex:626
+#: lib/phoenix_kit/integrations/providers.ex:677
 #, elixir-autogen, elixir-format
 msgid "Create an API key"
 msgstr "Utwórz klucz API"
 
-#: lib/phoenix_kit/integrations/providers.ex:284
+#: lib/phoenix_kit/integrations/providers.ex:286
 #, elixir-autogen, elixir-format
 msgid "Create an OAuth Client"
 msgstr "Utwórz klienta OAuth"
 
-#: lib/phoenix_kit/integrations/providers.ex:421
+#: lib/phoenix_kit/integrations/providers.ex:423
 #, elixir-autogen, elixir-format
 msgid "Create an OpenRouter account"
 msgstr "Utwórz konto OpenRouter"
 
-#: lib/modules/storage/web/settings.html.heex:450
+#: lib/modules/storage/web/settings.html.heex:496
 #, elixir-autogen, elixir-format
 msgid "Current limit: %{size} MB"
 msgstr "Obecny limit: %{size} MB"
@@ -4165,7 +4172,7 @@ msgstr "Odłączyć?"
 msgid "Disconnected"
 msgstr "Odłączone"
 
-#: lib/phoenix_kit/integrations/providers.ex:258
+#: lib/phoenix_kit/integrations/providers.ex:260
 #, elixir-autogen, elixir-format
 msgid "Drive API handles file listing, creation, copying, and PDF export. Docs API is used for reading document content and substituting template variables."
 msgstr "API Drive obsługuje listowanie, tworzenie, kopiowanie i eksport plików do PDF. API Docs służy do odczytu treści dokumentów i podstawiania zmiennych szablonu."
@@ -4195,7 +4202,7 @@ msgstr "Włącz zasobnik"
 msgid "Enable organization accounts"
 msgstr "Włącz konta organizacji"
 
-#: lib/phoenix_kit/integrations/providers.ex:247
+#: lib/phoenix_kit/integrations/providers.ex:249
 #, elixir-autogen, elixir-format
 msgid "Enable required APIs"
 msgstr "Włącz wymagane API"
@@ -4225,7 +4232,7 @@ msgstr "Nie udało się przyjąć zaproszenia. Spróbuj ponownie."
 msgid "Failed to add member"
 msgstr "Nie udało się dodać członka"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:242
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:246
 #, elixir-autogen, elixir-format
 msgid "Failed to build authorization URL"
 msgstr "Nie udało się zbudować adresu URL autoryzacji"
@@ -4235,7 +4242,7 @@ msgstr "Nie udało się zbudować adresu URL autoryzacji"
 msgid "Failed to cancel invitation"
 msgstr "Nie udało się anulować zaproszenia"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:428
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:432
 #, elixir-autogen, elixir-format
 msgid "Failed to connect. Please try again."
 msgstr "Nie udało się połączyć. Spróbuj ponownie."
@@ -4257,8 +4264,8 @@ msgstr "Nie udało się usunąć połączenia"
 msgid "Failed to remove member"
 msgstr "Nie udało się usunąć członka"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:547
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:565
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:551
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:569
 #, elixir-autogen, elixir-format
 msgid "Failed to save"
 msgstr "Nie udało się zapisać"
@@ -4283,7 +4290,7 @@ msgstr "Nie udało się zaktualizować awatara"
 msgid "File"
 msgstr "Plik"
 
-#: lib/modules/storage/web/settings.html.heex:600
+#: lib/modules/storage/web/settings.html.heex:647
 #, elixir-autogen, elixir-format
 msgid "Files are tracked in PostgreSQL with support for multiple media locations (local, S3, remote servers)."
 msgstr "Pliki są rejestrowane w PostgreSQL z obsługą wielu lokalizacji mediów (lokalne, S3, serwery zdalne)."
@@ -4293,12 +4300,12 @@ msgstr "Pliki są rejestrowane w PostgreSQL z obsługą wielu lokalizacji medió
 msgid "Files with completed variants"
 msgstr "Pliki z ukończonymi wariantami"
 
-#: lib/phoenix_kit/integrations/providers.ex:224
+#: lib/phoenix_kit/integrations/providers.ex:226
 #, elixir-autogen, elixir-format
 msgid "From Google Cloud Console → APIs & Services → Credentials"
 msgstr "Z Google Cloud Console → Interfejsy API i usługi → Dane logowania"
 
-#: lib/phoenix_kit/integrations/providers.ex:411
+#: lib/phoenix_kit/integrations/providers.ex:413
 #, elixir-autogen, elixir-format
 msgid "From openrouter.ai/keys"
 msgstr "Z openrouter.ai/keys"
@@ -4308,72 +4315,72 @@ msgstr "Z openrouter.ai/keys"
 msgid "Generate additional format variants alongside the primary format. Modern formats like WebP and AVIF offer better compression."
 msgstr "Generuj dodatkowe warianty formatu obok formatu głównego. Nowoczesne formaty jak WebP i AVIF zapewniają lepszą kompresję."
 
-#: lib/phoenix_kit/integrations/providers.ex:431
+#: lib/phoenix_kit/integrations/providers.ex:433
 #, elixir-autogen, elixir-format
 msgid "Give it a name (e.g., your app name)"
 msgstr "Nadaj mu nazwę (np. nazwę Twojej aplikacji)"
 
-#: lib/phoenix_kit/integrations/providers.ex:253
+#: lib/phoenix_kit/integrations/providers.ex:255
 #, elixir-autogen, elixir-format
 msgid "Go back to the Library and search for **Google Docs API**, click it, then click **Enable**"
 msgstr "Wróć do biblioteki, wyszukaj **Google Docs API**, kliknij ją, a następnie kliknij **Włącz**"
 
-#: lib/phoenix_kit/integrations/providers.ex:286
+#: lib/phoenix_kit/integrations/providers.ex:288
 #, elixir-autogen, elixir-format
 msgid "Go to [APIs & Services → Credentials](https://console.cloud.google.com/apis/credentials)"
 msgstr "Przejdź do [Interfejsy API i usługi → Dane logowania](https://console.cloud.google.com/apis/credentials)"
 
-#: lib/phoenix_kit/integrations/providers.ex:249
+#: lib/phoenix_kit/integrations/providers.ex:251
 #, elixir-autogen, elixir-format
 msgid "Go to [APIs & Services → Library](https://console.cloud.google.com/apis/library)"
 msgstr "Przejdź do [Interfejsy API i usługi → Biblioteka](https://console.cloud.google.com/apis/library)"
 
-#: lib/phoenix_kit/integrations/providers.ex:268
+#: lib/phoenix_kit/integrations/providers.ex:270
 #, elixir-autogen, elixir-format
 msgid "Go to [Audience](https://console.cloud.google.com/auth/audience) — set user type to **External** (or Internal for Google Workspace)"
 msgstr "Przejdź do [Odbiorcy](https://console.cloud.google.com/auth/audience) — ustaw typ użytkownika na **Zewnętrzny** (lub Wewnętrzny dla Google Workspace)"
 
-#: lib/phoenix_kit/integrations/providers.ex:265
+#: lib/phoenix_kit/integrations/providers.ex:267
 #, elixir-autogen, elixir-format
 msgid "Go to [Branding](https://console.cloud.google.com/auth/branding) in the sidebar — fill in the **App name** and **User support email**, then save"
 msgstr "Przejdź do [Branding](https://console.cloud.google.com/auth/branding) na pasku bocznym — wypełnij **nazwę aplikacji** i **e-mail wsparcia**, a następnie zapisz"
 
-#: lib/phoenix_kit/integrations/providers.ex:439
+#: lib/phoenix_kit/integrations/providers.ex:441
 #, elixir-autogen, elixir-format
 msgid "Go to [Credits](https://openrouter.ai/credits) to add funds"
 msgstr "Przejdź do [Credits](https://openrouter.ai/credits), aby dodać środki"
 
-#: lib/phoenix_kit/integrations/providers.ex:274
+#: lib/phoenix_kit/integrations/providers.ex:276
 #, elixir-autogen, elixir-format
 msgid "Go to [Data Access](https://console.cloud.google.com/auth/scopes) — click **Add or Remove Scopes** and add the Drive and Docs scopes. This step may not be required — the app requests the needed scopes at connect time regardless."
 msgstr "Przejdź do [Dostęp do danych](https://console.cloud.google.com/auth/scopes) — kliknij **Dodaj lub usuń zakresy** i dodaj zakresy Drive i Docs. Ten krok może nie być konieczny — aplikacja i tak żąda potrzebnych zakresów przy łączeniu."
 
-#: lib/phoenix_kit/integrations/providers.ex:423
+#: lib/phoenix_kit/integrations/providers.ex:425
 #, elixir-autogen, elixir-format
 msgid "Go to [openrouter.ai](https://openrouter.ai) and sign up or log in"
 msgstr "Przejdź na [openrouter.ai](https://openrouter.ai) i zarejestruj się lub zaloguj"
 
-#: lib/phoenix_kit/integrations/providers.ex:242
+#: lib/phoenix_kit/integrations/providers.ex:244
 #, elixir-autogen, elixir-format
 msgid "Go to the [Google Cloud Console](https://console.cloud.google.com)"
 msgstr "Przejdź do [Google Cloud Console](https://console.cloud.google.com)"
 
-#: lib/phoenix_kit/integrations/providers.ex:205
+#: lib/phoenix_kit/integrations/providers.ex:207
 #, elixir-autogen, elixir-format
 msgid "Google"
 msgstr "Google"
 
-#: lib/phoenix_kit/integrations/providers.ex:206
+#: lib/phoenix_kit/integrations/providers.ex:208
 #, elixir-autogen, elixir-format
 msgid "Google Docs, Drive, Calendar, Sheets, Gmail"
 msgstr "Google Docs, Drive, Kalendarz, Arkusze, Gmail"
 
-#: lib/phoenix_kit/integrations/providers.ex:301
+#: lib/phoenix_kit/integrations/providers.ex:303
 #, elixir-autogen, elixir-format
 msgid "Google will show an \"unverified app\" warning — click **Advanced → Go to (app name)** to proceed"
 msgstr "Google wyświetli ostrzeżenie o „niezweryfikowanej aplikacji” — kliknij **Zaawansowane → Przejdź do (nazwa aplikacji)**, aby kontynuować"
 
-#: lib/phoenix_kit/integrations/providers.ex:304
+#: lib/phoenix_kit/integrations/providers.ex:306
 #, elixir-autogen, elixir-format
 msgid "Grant access to Google Docs and Google Drive"
 msgstr "Udziel dostępu do Google Docs i Google Drive"
@@ -4404,7 +4411,7 @@ msgstr "Integracja usunięta"
 msgid "Integrations"
 msgstr "Integracje"
 
-#: lib/phoenix_kit/integrations/integrations.ex:1178
+#: lib/phoenix_kit/integrations/integrations.ex:1184
 #: lib/phoenix_kit/integrations/validators.ex:208
 #: lib/phoenix_kit/integrations/validators.ex:378
 #: lib/phoenix_kit/integrations/validators.ex:412
@@ -4414,7 +4421,7 @@ msgstr "Integracje"
 msgid "Invalid credentials"
 msgstr "Nieprawidłowe dane logowania"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:134
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:138
 #, elixir-autogen, elixir-format
 msgid "Invalid integration URL"
 msgstr "Nieprawidłowy adres URL integracji"
@@ -4481,12 +4488,12 @@ msgstr "Konserwacja nie jest aktywna — to podgląd strony."
 msgid "Manage your account settings and preferences"
 msgstr "Zarządzaj ustawieniami i preferencjami konta"
 
-#: lib/modules/storage/web/settings.html.heex:438
+#: lib/modules/storage/web/settings.html.heex:484
 #, elixir-autogen, elixir-format
 msgid "Max Upload Size (MB)"
 msgstr "Maksymalny rozmiar przesyłania (MB)"
 
-#: lib/modules/storage/web/settings.html.heex:440
+#: lib/modules/storage/web/settings.html.heex:486
 #, elixir-autogen, elixir-format
 msgid "Maximum file size allowed per upload"
 msgstr "Maksymalny rozmiar pliku na jedno przesłanie"
@@ -4501,12 +4508,12 @@ msgstr "Zasobniki mediów"
 msgid "Media Configuration"
 msgstr "Konfiguracja mediów"
 
-#: lib/modules/storage/web/settings.html.heex:520
+#: lib/modules/storage/web/settings.html.heex:567
 #, elixir-autogen, elixir-format
 msgid "Media Stats"
 msgstr "Statystyki mediów"
 
-#: lib/modules/storage/web/settings.html.heex:595
+#: lib/modules/storage/web/settings.html.heex:642
 #, elixir-autogen, elixir-format
 msgid "Media System Architecture"
 msgstr "Architektura systemu mediów"
@@ -4542,12 +4549,12 @@ msgstr "Brakuje %{n}"
 msgid "Missing %{n} copies"
 msgstr "Brakuje %{n} kopii"
 
-#: lib/phoenix_kit/integrations/providers.ex:424
+#: lib/phoenix_kit/integrations/providers.ex:426
 #, elixir-autogen, elixir-format
 msgid "Navigate to [Keys](https://openrouter.ai/keys)"
 msgstr "Przejdź do [Keys](https://openrouter.ai/keys)"
 
-#: lib/phoenix_kit/integrations/providers.ex:279
+#: lib/phoenix_kit/integrations/providers.ex:281
 #, elixir-autogen, elixir-format
 msgid "Navigate to the OAuth section using the search bar or the hamburger menu: search for \"OAuth\", or go to the sidebar: **APIs & Services → OAuth consent screen**. This opens a different section with its own sidebar."
 msgstr "Przejdź do sekcji OAuth za pomocą paska wyszukiwania lub menu hamburger: wyszukaj „OAuth” albo wybierz na pasku bocznym **Interfejsy API i usługi → Ekran zgody OAuth**. Otworzy się inna sekcja z własnym paskiem bocznym."
@@ -4568,9 +4575,11 @@ msgstr "Brak tokenu dostępu"
 msgid "No copies"
 msgstr "Brak kopii"
 
-#: lib/phoenix_kit/integrations/integrations.ex:1151
+#: lib/phoenix_kit/integrations/integrations.ex:1157
 #: lib/phoenix_kit/integrations/validators.ex:170
 #: lib/phoenix_kit/integrations/validators.ex:758
+#: lib/phoenix_kit/integrations/validators.ex:916
+#: lib/phoenix_kit/integrations/validators.ex:1074
 #, elixir-autogen, elixir-format
 msgid "No credentials configured"
 msgstr "Brak skonfigurowanych danych logowania"
@@ -4645,7 +4654,7 @@ msgstr "Tylko włączone zasobniki otrzymują nowe przesłania"
 msgid "Only width is used, height is calculated automatically"
 msgstr "Używana jest tylko szerokość, wysokość jest obliczana automatycznie"
 
-#: lib/phoenix_kit/integrations/providers.ex:392
+#: lib/phoenix_kit/integrations/providers.ex:394
 #, elixir-autogen, elixir-format
 msgid "OpenRouter"
 msgstr "OpenRouter"
@@ -4712,12 +4721,12 @@ msgstr "Osoba prywatna"
 msgid "Pick which notification types you want to receive. Unchecked types are muted — activities still record in the audit log but no bell notification is created for you."
 msgstr "Wybierz, jakie typy powiadomień chcesz otrzymywać. Niezaznaczone typy są wyciszone — aktywności nadal są zapisywane w dzienniku audytu, ale powiadomienie w dzwonku nie jest tworzone."
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:176
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:180
 #, elixir-autogen, elixir-format
 msgid "Please enter a connection name."
 msgstr "Wpisz nazwę połączenia."
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:239
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:243
 #, elixir-autogen, elixir-format
 msgid "Please save your Client ID first"
 msgstr "Najpierw zapisz identyfikator klienta"
@@ -4768,7 +4777,7 @@ msgstr "Usuń z organizacji"
 msgid "Remove this member from the organization?"
 msgstr "Usunąć tego członka z organizacji?"
 
-#: lib/modules/storage/web/settings.html.heex:580
+#: lib/modules/storage/web/settings.html.heex:627
 #, elixir-autogen, elixir-format
 msgid "Repair Media Module"
 msgstr "Napraw moduł mediów"
@@ -4794,7 +4803,7 @@ msgstr "Zapisz ustawienia podatkowe"
 msgid "Save preferences"
 msgstr "Zapisz preferencje"
 
-#: lib/phoenix_kit/integrations/providers.ex:252
+#: lib/phoenix_kit/integrations/providers.ex:254
 #, elixir-autogen, elixir-format
 msgid "Search for **Google Drive API**, click it, then click **Enable**"
 msgstr "Wyszukaj **Google Drive API**, kliknij ją, a następnie kliknij **Włącz**"
@@ -4804,7 +4813,7 @@ msgstr "Wyszukaj **Google Drive API**, kliknij ją, a następnie kliknij **Włą
 msgid "Search integrations..."
 msgstr "Szukaj integracji…"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:436
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:440
 #, elixir-autogen, elixir-format
 msgid "Security check failed. Please try connecting again."
 msgstr "Kontrola bezpieczeństwa nie powiodła się. Spróbuj połączyć się ponownie."
@@ -4821,12 +4830,12 @@ msgstr "Wybierz użytkownika do dodania…"
 msgid "Service"
 msgstr "Usługa"
 
-#: lib/phoenix_kit/integrations/integrations.ex:1180
+#: lib/phoenix_kit/integrations/integrations.ex:1186
 #, elixir-autogen, elixir-format
 msgid "Service error %{status}"
 msgstr "Błąd usługi %{status}"
 
-#: lib/phoenix_kit/integrations/providers.ex:263
+#: lib/phoenix_kit/integrations/providers.ex:265
 #, elixir-autogen, elixir-format
 msgid "Set up OAuth consent"
 msgstr "Skonfiguruj zgodę OAuth"
@@ -4836,7 +4845,7 @@ msgstr "Skonfiguruj zgodę OAuth"
 msgid "Size Configuration"
 msgstr "Konfiguracja rozmiarów"
 
-#: lib/phoenix_kit/integrations/providers.ex:438
+#: lib/phoenix_kit/integrations/providers.ex:440
 #, elixir-autogen, elixir-format
 msgid "Some models are free, but most require credits"
 msgstr "Niektóre modele są darmowe, ale większość wymaga kredytów"
@@ -4856,7 +4865,7 @@ msgstr "Krok 1"
 msgid "Step 2"
 msgstr "Krok 2"
 
-#: lib/phoenix_kit/integrations/providers.ex:271
+#: lib/phoenix_kit/integrations/providers.ex:273
 #, elixir-autogen, elixir-format
 msgid "Still on Audience — while the app is in **Testing** status, add the Google account you will connect as a **Test user** (this must be the same account whose Drive will store your files)"
 msgstr "Nadal w sekcji Odbiorcy — dopóki aplikacja ma status **Testowanie**, dodaj konto Google, które podłączysz, jako **użytkownika testowego** (musi to być to samo konto, na którego Dysku będą przechowywane pliki)"
@@ -4929,8 +4938,8 @@ msgstr "Ustawienia podatkowe zapisane"
 msgid "Test Connection"
 msgstr "Testuj połączenie"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:380
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:493
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:384
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:497
 #, elixir-autogen, elixir-format
 msgid "Test failed"
 msgstr "Test nie powiódł się"
@@ -4946,7 +4955,7 @@ msgstr "Test nie powiódł się"
 msgid "Testing..."
 msgstr "Testowanie…"
 
-#: lib/modules/storage/web/settings.html.heex:597
+#: lib/modules/storage/web/settings.html.heex:644
 #, elixir-autogen, elixir-format
 msgid "The media system is designed for distributed file management with automatic redundancy."
 msgstr "System mediów jest zaprojektowany do rozproszonego zarządzania plikami z automatyczną nadmiarowością."
@@ -4987,7 +4996,7 @@ msgstr "Region Tigris"
 msgid "Total Files"
 msgstr "Łącznie plików"
 
-#: lib/phoenix_kit/integrations/providers.ex:293
+#: lib/phoenix_kit/integrations/providers.ex:295
 #, elixir-autogen, elixir-format
 msgid "Under **Authorized redirect URIs**, add: `{redirect_uri}`"
 msgstr "W sekcji **Autoryzowane adresy URI przekierowania** dodaj: `{redirect_uri}`"
@@ -5039,8 +5048,8 @@ msgstr "Dołączyłeś do organizacji!"
 msgid "You need to create at least one media bucket before files can be uploaded."
 msgstr "Musisz utworzyć co najmniej jeden zasobnik mediów, aby móc przesyłać pliki."
 
-#: lib/phoenix_kit/integrations/providers.ex:305
-#: lib/phoenix_kit/integrations/providers.ex:1328
+#: lib/phoenix_kit/integrations/providers.ex:307
+#: lib/phoenix_kit/integrations/providers.ex:1440
 #, elixir-autogen, elixir-format
 msgid "You'll be redirected back here once connected"
 msgstr "Po połączeniu wrócisz tutaj"
@@ -5072,74 +5081,74 @@ msgid "roles"
 msgstr "role"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:66
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:774
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:778
 #, elixir-autogen, elixir-format
 msgid "%{n} days ago"
 msgstr "%{n} dni temu"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:63
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:771
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:775
 #, elixir-autogen, elixir-format
 msgid "%{n} hours ago"
 msgstr "%{n} godz. temu"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:60
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:768
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:772
 #, elixir-autogen, elixir-format
 msgid "%{n} minutes ago"
 msgstr "%{n} min temu"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:65
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:773
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:777
 #, elixir-autogen, elixir-format
 msgid "1 day ago"
 msgstr "1 dzień temu"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:62
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:770
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:774
 #, elixir-autogen, elixir-format
 msgid "1 hour ago"
 msgstr "1 godzinę temu"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:59
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:767
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:771
 #, elixir-autogen, elixir-format
 msgid "1 minute ago"
 msgstr "1 minutę temu"
 
-#: lib/phoenix_kit/integrations/providers.ex:514
+#: lib/phoenix_kit/integrations/providers.ex:516
 #, elixir-autogen, elixir-format
 msgid "AI model access via DeepSeek (deepseek-chat, deepseek-reasoner)"
 msgstr "Dostęp do modeli AI przez DeepSeek (deepseek-chat, deepseek-reasoner)"
 
-#: lib/phoenix_kit/integrations/providers.ex:451
+#: lib/phoenix_kit/integrations/providers.ex:453
 #, elixir-autogen, elixir-format
 msgid "AI model access via Mistral AI (Mistral Large, Codestral, Pixtral)"
 msgstr "Dostęp do modeli AI przez Mistral AI (Mistral Large, Codestral, Pixtral)"
 
-#: lib/phoenix_kit/integrations/providers.ex:1294
+#: lib/phoenix_kit/integrations/providers.ex:1406
 #, elixir-autogen, elixir-format
 msgid "Add a client secret"
 msgstr "Dodaj sekret klienta"
 
-#: lib/phoenix_kit/integrations/providers.ex:485
+#: lib/phoenix_kit/integrations/providers.ex:487
 #, elixir-autogen, elixir-format
 msgid "Add a payment method (required)"
 msgstr "Dodaj metodę płatności (wymagane)"
 
-#: lib/phoenix_kit/integrations/providers.ex:362
-#: lib/phoenix_kit/integrations/providers.ex:547
-#: lib/phoenix_kit/integrations/providers.ex:616
+#: lib/phoenix_kit/integrations/providers.ex:364
+#: lib/phoenix_kit/integrations/providers.ex:549
+#: lib/phoenix_kit/integrations/providers.ex:618
 #, elixir-autogen, elixir-format
 msgid "Add credits"
 msgstr "Dodaj kredyty"
 
-#: lib/phoenix_kit/integrations/providers.ex:1309
+#: lib/phoenix_kit/integrations/providers.ex:1421
 #, elixir-autogen, elixir-format
 msgid "Add the permissions your integration needs: `User.Read` is included by default; add `Mail.Read`, `Files.Read.All`, `Calendars.Read`, etc. as required"
 msgstr "Dodaj uprawnienia potrzebne integracji: `User.Read` jest domyślnie uwzględnione; w razie potrzeby dodaj `Mail.Read`, `Files.Read.All`, `Calendars.Read` itd."
 
-#: lib/phoenix_kit/integrations/providers.ex:1236
+#: lib/phoenix_kit/integrations/providers.ex:1348
 #, elixir-autogen, elixir-format
 msgid "Application (client) ID"
 msgstr "Identyfikator aplikacji (klienta)"
@@ -5149,28 +5158,28 @@ msgstr "Identyfikator aplikacji (klienta)"
 msgid "Clears the OAuth tokens. Credentials and the connection itself stay so you can reconnect with one click."
 msgstr "Usuwa tokeny OAuth. Dane logowania i samo połączenie pozostają, więc możesz połączyć się ponownie jednym kliknięciem."
 
-#: lib/phoenix_kit/integrations/providers.ex:561
-#: lib/phoenix_kit/integrations/providers.ex:627
+#: lib/phoenix_kit/integrations/providers.ex:563
+#: lib/phoenix_kit/integrations/providers.ex:629
 #, elixir-autogen, elixir-format
 msgid "Click **Create API key**, give it a name"
 msgstr "Kliknij **Utwórz klucz API** i nadaj mu nazwę"
 
-#: lib/phoenix_kit/integrations/providers.ex:501
+#: lib/phoenix_kit/integrations/providers.ex:503
 #, elixir-autogen, elixir-format
 msgid "Click **Create new key**, give it a name, set an expiry if desired"
 msgstr "Kliknij **Utwórz nowy klucz**, nadaj mu nazwę i w razie potrzeby ustaw datę wygaśnięcia"
 
-#: lib/phoenix_kit/integrations/providers.ex:1281
+#: lib/phoenix_kit/integrations/providers.ex:1393
 #, elixir-autogen, elixir-format
 msgid "Click **New registration**, give the app a name"
 msgstr "Kliknij **Nowa rejestracja** i nadaj aplikacji nazwę"
 
-#: lib/phoenix_kit/integrations/providers.ex:1286
+#: lib/phoenix_kit/integrations/providers.ex:1398
 #, elixir-autogen, elixir-format
 msgid "Click **Register**"
 msgstr "Kliknij **Zarejestruj**"
 
-#: lib/phoenix_kit/integrations/providers.ex:1304
+#: lib/phoenix_kit/integrations/providers.ex:1416
 #, elixir-autogen, elixir-format
 msgid "Configure API permissions"
 msgstr "Skonfiguruj uprawnienia API"
@@ -5180,27 +5189,27 @@ msgstr "Skonfiguruj uprawnienia API"
 msgid "Connect external services like %{providers}."
 msgstr "Połącz usługi zewnętrzne, np. %{providers}."
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:325
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:518
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:329
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:522
 #, elixir-autogen, elixir-format
 msgid "Connection name can't be blank."
 msgstr "Nazwa połączenia nie może być pusta."
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:319
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:323
 #, elixir-autogen, elixir-format
 msgid "Connection renamed"
 msgstr "Połączenie zmieniło nazwę"
 
-#: lib/phoenix_kit/integrations/providers.ex:1298
+#: lib/phoenix_kit/integrations/providers.ex:1410
 #, elixir-autogen, elixir-format
 msgid "Copy the **Value** column (not the Secret ID) into the form above — the value is shown ONCE and disappears on page refresh"
 msgstr "Skopiuj kolumnę **Wartość** (nie identyfikator sekretu) do formularza powyżej — wartość jest pokazywana TYLKO RAZ i znika po odświeżeniu strony"
 
-#: lib/phoenix_kit/integrations/providers.ex:377
-#: lib/phoenix_kit/integrations/providers.ex:502
-#: lib/phoenix_kit/integrations/providers.ex:562
-#: lib/phoenix_kit/integrations/providers.ex:628
-#: lib/phoenix_kit/integrations/providers.ex:680
+#: lib/phoenix_kit/integrations/providers.ex:379
+#: lib/phoenix_kit/integrations/providers.ex:504
+#: lib/phoenix_kit/integrations/providers.ex:564
+#: lib/phoenix_kit/integrations/providers.ex:630
+#: lib/phoenix_kit/integrations/providers.ex:682
 #, elixir-autogen, elixir-format
 msgid "Copy the key (shown once) and paste it into the form above"
 msgstr "Skopiuj klucz (pokazywany raz) i wklej go do formularza powyżej"
@@ -5211,12 +5220,12 @@ msgstr "Skopiuj klucz (pokazywany raz) i wklej go do formularza powyżej"
 msgid "Create Connection"
 msgstr "Utwórz połączenie"
 
-#: lib/phoenix_kit/integrations/providers.ex:539
+#: lib/phoenix_kit/integrations/providers.ex:541
 #, elixir-autogen, elixir-format
 msgid "Create a DeepSeek account"
 msgstr "Utwórz konto DeepSeek"
 
-#: lib/phoenix_kit/integrations/providers.ex:476
+#: lib/phoenix_kit/integrations/providers.ex:478
 #, elixir-autogen, elixir-format
 msgid "Create a Mistral account"
 msgstr "Utwórz konto Mistral"
@@ -5227,12 +5236,12 @@ msgstr "Utwórz konto Mistral"
 msgid "Danger Zone"
 msgstr "Strefa zagrożenia"
 
-#: lib/phoenix_kit/integrations/providers.ex:513
+#: lib/phoenix_kit/integrations/providers.ex:515
 #, elixir-autogen, elixir-format
 msgid "DeepSeek"
 msgstr "DeepSeek"
 
-#: lib/phoenix_kit/integrations/providers.ex:552
+#: lib/phoenix_kit/integrations/providers.ex:554
 #, elixir-autogen, elixir-format
 msgid "DeepSeek requires a positive balance before you can call the chat or reasoner endpoints, even on cheap models"
 msgstr "DeepSeek wymaga dodatniego salda, aby móc wywołać punkty końcowe chat lub reasoner, nawet dla tanich modeli"
@@ -5256,99 +5265,99 @@ msgstr "Odłącz konto"
 msgid "Drag to reorder"
 msgstr "Przeciągnij, aby zmienić kolejność"
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:300
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:304
 #, elixir-autogen, elixir-format
 msgid "Failed to remove connection."
 msgstr "Nie udało się usunąć połączenia."
 
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:328
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:524
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:332
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:528
 #, elixir-autogen, elixir-format
 msgid "Failed to rename connection."
 msgstr "Nie udało się zmienić nazwy połączenia."
 
-#: lib/phoenix_kit/integrations/providers.ex:490
+#: lib/phoenix_kit/integrations/providers.ex:492
 #, elixir-autogen, elixir-format
 msgid "Free models still require a billing-enabled workspace"
 msgstr "Darmowe modele również wymagają obszaru roboczego z włączonymi rozliczeniami"
 
-#: lib/phoenix_kit/integrations/providers.ex:1240
+#: lib/phoenix_kit/integrations/providers.ex:1352
 #, elixir-autogen, elixir-format
 msgid "From Azure Portal → App registrations → your app → Overview"
 msgstr "Z portalu Azure → Rejestracje aplikacji → Twoja aplikacja → Przegląd"
 
-#: lib/phoenix_kit/integrations/providers.ex:469
+#: lib/phoenix_kit/integrations/providers.ex:471
 #, elixir-autogen, elixir-format
 msgid "From console.mistral.ai/api-keys"
 msgstr "Z console.mistral.ai/api-keys"
 
-#: lib/phoenix_kit/integrations/providers.ex:532
+#: lib/phoenix_kit/integrations/providers.ex:534
 #, elixir-autogen, elixir-format
 msgid "From platform.deepseek.com/api_keys"
 msgstr "Z platform.deepseek.com/api_keys"
 
-#: lib/phoenix_kit/integrations/providers.ex:1250
+#: lib/phoenix_kit/integrations/providers.ex:1362
 #, elixir-autogen, elixir-format
 msgid "From your app → Certificates & secrets → New client secret. Copy the *Value*, not the Secret ID."
 msgstr "Z Twojej aplikacji → Certyfikaty i wpisy tajne → Nowy sekret klienta. Skopiuj *Wartość*, nie identyfikator sekretu."
 
-#: lib/phoenix_kit/integrations/providers.ex:1306
+#: lib/phoenix_kit/integrations/providers.ex:1418
 #, elixir-autogen, elixir-format
 msgid "Go to **API permissions → Add a permission → Microsoft Graph → Delegated permissions**"
 msgstr "Przejdź do **Uprawnienia interfejsu API → Dodaj uprawnienie → Microsoft Graph → Uprawnienia delegowane**"
 
-#: lib/phoenix_kit/integrations/providers.ex:1296
+#: lib/phoenix_kit/integrations/providers.ex:1408
 #, elixir-autogen, elixir-format
 msgid "Go to **Certificates & secrets → New client secret**"
 msgstr "Przejdź do **Certyfikaty i wpisy tajne → Nowy sekret klienta**"
 
-#: lib/phoenix_kit/integrations/providers.ex:500
+#: lib/phoenix_kit/integrations/providers.ex:502
 #, elixir-autogen, elixir-format
 msgid "Go to [API Keys](https://console.mistral.ai/api-keys)"
 msgstr "Przejdź do [API Keys](https://console.mistral.ai/api-keys)"
 
-#: lib/phoenix_kit/integrations/providers.ex:560
+#: lib/phoenix_kit/integrations/providers.ex:562
 #, elixir-autogen, elixir-format
 msgid "Go to [API Keys](https://platform.deepseek.com/api_keys)"
 msgstr "Przejdź do [API Keys](https://platform.deepseek.com/api_keys)"
 
-#: lib/phoenix_kit/integrations/providers.ex:549
+#: lib/phoenix_kit/integrations/providers.ex:551
 #, elixir-autogen, elixir-format
 msgid "Go to [Top up](https://platform.deepseek.com/top_up) and add at least the minimum amount"
 msgstr "Przejdź do [Top up](https://platform.deepseek.com/top_up) i wpłać co najmniej minimalną kwotę"
 
-#: lib/phoenix_kit/integrations/providers.ex:487
+#: lib/phoenix_kit/integrations/providers.ex:489
 #, elixir-autogen, elixir-format
 msgid "Go to [Workspace → Billing](https://console.mistral.ai/billing/plans) and choose **Experiment** (pay-as-you-go) or a paid tier"
 msgstr "Przejdź do [Workspace → Billing](https://console.mistral.ai/billing/plans) i wybierz **Experiment** (płatność za użycie) lub plan płatny"
 
-#: lib/phoenix_kit/integrations/providers.ex:478
+#: lib/phoenix_kit/integrations/providers.ex:480
 #, elixir-autogen, elixir-format
 msgid "Go to [console.mistral.ai](https://console.mistral.ai) and sign up or log in"
 msgstr "Przejdź na [console.mistral.ai](https://console.mistral.ai) i zarejestruj się lub zaloguj"
 
-#: lib/phoenix_kit/integrations/providers.ex:541
+#: lib/phoenix_kit/integrations/providers.ex:543
 #, elixir-autogen, elixir-format
 msgid "Go to [platform.deepseek.com](https://platform.deepseek.com) and sign up or log in"
 msgstr "Przejdź na [platform.deepseek.com](https://platform.deepseek.com) i zarejestruj się lub zaloguj"
 
-#: lib/phoenix_kit/integrations/providers.ex:1278
+#: lib/phoenix_kit/integrations/providers.ex:1390
 #, elixir-autogen, elixir-format
 msgid "Go to the [Azure Portal](https://portal.azure.com) and search for **App registrations**"
 msgstr "Przejdź do [portalu Azure](https://portal.azure.com) i wyszukaj **Rejestracje aplikacji**"
 
-#: lib/phoenix_kit/integrations/providers.ex:1289
+#: lib/phoenix_kit/integrations/providers.ex:1401
 #, elixir-autogen, elixir-format
 msgid "If you picked a single-tenant audience, fill in **Tenant ID** above with your Directory (tenant) ID GUID — leaving it as `common` only works for multi-tenant + personal apps."
 msgstr "Jeśli wybrano odbiorców jednodostępowych, wpisz powyżej w **Tenant ID** identyfikator GUID katalogu (dzierżawcy) — wartość `common` działa tylko dla aplikacji wielodostępowych i osobistych."
 
-#: lib/phoenix_kit/integrations/providers.ex:1312
+#: lib/phoenix_kit/integrations/providers.ex:1424
 #, elixir-autogen, elixir-format
 msgid "If your tenant requires admin consent, click **Grant admin consent for <tenant>** before the connect flow will work"
 msgstr "Jeśli Twój dzierżawca wymaga zgody administratora, kliknij **Udziel zgody administratora dla <tenant>**, aby proces łączenia działał"
 
 #: lib/phoenix_kit_web/live/integrations/my_integration_form.ex:97
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:127
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:131
 #, elixir-autogen, elixir-format
 msgid "Integration not found"
 msgstr "Nie znaleziono integracji"
@@ -5359,32 +5368,32 @@ msgstr "Nie znaleziono integracji"
 msgid "Last tested"
 msgstr "Ostatni test"
 
-#: lib/phoenix_kit/integrations/providers.ex:1262
+#: lib/phoenix_kit/integrations/providers.ex:1374
 #, elixir-autogen, elixir-format
 msgid "Leave as `common` for multi-tenant + personal accounts. For single-tenant apps, paste your Directory (tenant) ID GUID. Use `consumers` for personal-only or `organizations` for any work-or-school account."
 msgstr "Pozostaw `common` dla kont wielodostępowych i osobistych. Dla aplikacji jednodostępowych wklej identyfikator GUID katalogu (dzierżawcy). Użyj `consumers` tylko dla kont osobistych lub `organizations` dla kont służbowych i szkolnych."
 
-#: lib/phoenix_kit/integrations/providers.ex:1207
+#: lib/phoenix_kit/integrations/providers.ex:1319
 #, elixir-autogen, elixir-format
 msgid "Microsoft 365"
 msgstr "Microsoft 365"
 
-#: lib/phoenix_kit/integrations/providers.ex:1208
+#: lib/phoenix_kit/integrations/providers.ex:1320
 #, elixir-autogen, elixir-format
 msgid "Microsoft Graph — Outlook, OneDrive, Teams, Calendar, SharePoint"
 msgstr "Microsoft Graph — Outlook, OneDrive, Teams, Kalendarz, SharePoint"
 
-#: lib/phoenix_kit/integrations/providers.ex:1325
+#: lib/phoenix_kit/integrations/providers.ex:1437
 #, elixir-autogen, elixir-format
 msgid "Microsoft will show the consent screen — click **Accept** to grant the requested permissions"
 msgstr "Microsoft wyświetli ekran zgody — kliknij **Akceptuj**, aby przyznać żądane uprawnienia"
 
-#: lib/phoenix_kit/integrations/providers.ex:450
+#: lib/phoenix_kit/integrations/providers.ex:452
 #, elixir-autogen, elixir-format
 msgid "Mistral"
 msgstr "Mistral"
 
-#: lib/phoenix_kit/integrations/providers.ex:493
+#: lib/phoenix_kit/integrations/providers.ex:495
 #, elixir-autogen, elixir-format
 msgid "Mistral does not offer credits without billing setup; this is a hard requirement before keys can be created."
 msgstr "Mistral nie oferuje kredytów bez skonfigurowanych rozliczeń; to bezwzględny wymóg przed utworzeniem kluczy."
@@ -5395,7 +5404,7 @@ msgstr "Mistral nie oferuje kredytów bez skonfigurowanych rozliczeń; to bezwzg
 msgid "Permanently delete this connection? This cannot be undone."
 msgstr "Trwale usunąć to połączenie? Tej operacji nie można cofnąć."
 
-#: lib/phoenix_kit/integrations/providers.ex:1276
+#: lib/phoenix_kit/integrations/providers.ex:1388
 #, elixir-autogen, elixir-format
 msgid "Register an application in Microsoft Entra ID (Azure AD)"
 msgstr "Zarejestruj aplikację w Microsoft Entra ID (Azure AD)"
@@ -5411,39 +5420,39 @@ msgstr "Trwale usuwa integrację. Każdy moduł przypisany do tego połączenia 
 msgid "Search..."
 msgstr "Szukaj…"
 
-#: lib/phoenix_kit/integrations/providers.ex:1297
+#: lib/phoenix_kit/integrations/providers.ex:1409
 #, elixir-autogen, elixir-format
 msgid "Set an expiration (24 months is common; renew before it lapses)"
 msgstr "Ustaw datę wygaśnięcia (typowo 24 miesiące; odnów przed jej upływem)"
 
-#: lib/phoenix_kit/integrations/providers.ex:1257
+#: lib/phoenix_kit/integrations/providers.ex:1369
 #, elixir-autogen, elixir-format
 msgid "Tenant ID"
 msgstr "Identyfikator dzierżawcy"
 
-#: lib/phoenix_kit/integrations/providers.ex:1317
+#: lib/phoenix_kit/integrations/providers.ex:1429
 #, elixir-autogen, elixir-format
 msgid "The `default_scopes` in the provider definition request `openid email profile offline_access User.Read` — extra scopes can be added per-connect by passing `extra_scopes` to `authorization_url/5`."
 msgstr "`default_scopes` w definicji dostawcy żądają `openid email profile offline_access User.Read` — dodatkowe zakresy można dodać przy każdym łączeniu, przekazując `extra_scopes` do `authorization_url/5`."
 
-#: lib/phoenix_kit/integrations/providers.ex:1285
+#: lib/phoenix_kit/integrations/providers.ex:1397
 #, elixir-autogen, elixir-format
 msgid "Under **Redirect URI**, choose **Web** and enter: `{redirect_uri}`"
 msgstr "W sekcji **Identyfikator URI przekierowania** wybierz **Web** i wpisz: `{redirect_uri}`"
 
-#: lib/phoenix_kit/integrations/providers.ex:1282
+#: lib/phoenix_kit/integrations/providers.ex:1394
 #, elixir-autogen, elixir-format
 msgid "Under **Supported account types**, choose the audience: *Personal Microsoft accounts only*, *Accounts in any organizational directory*, or *Accounts in this organizational directory only* depending on who should sign in"
 msgstr "W sekcji **Obsługiwane typy kont** wybierz odbiorców: *Tylko osobiste konta Microsoft*, *Konta w dowolnym katalogu organizacyjnym* lub *Tylko konta w tym katalogu organizacyjnym*, zależnie od tego, kto ma się logować"
 
-#: lib/phoenix_kit/integrations/providers.ex:481
+#: lib/phoenix_kit/integrations/providers.ex:483
 #, elixir-autogen, elixir-format
 msgid "You may need to verify your phone number before creating API keys"
 msgstr "Może być konieczne potwierdzenie numeru telefonu przed utworzeniem kluczy API"
 
 #: lib/phoenix_kit_web/components/core/integrations_ui.ex:47
 #: lib/phoenix_kit_web/live/notifications/inbox.ex:164
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:755
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:759
 #, elixir-autogen, elixir-format
 msgid "just now"
 msgstr "właśnie teraz"
@@ -5475,9 +5484,9 @@ msgid "Body Saved"
 msgstr "Treść zapisana"
 
 #: lib/phoenix_kit/users/auth.ex:3163
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:433
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:453
 #: lib/phoenix_kit_web/live/modules.ex:124
-#: lib/phoenix_kit_web/live/users/media_detail.html.heex:296
+#: lib/phoenix_kit_web/live/users/media_detail.html.heex:343
 #, elixir-autogen, elixir-format
 msgid "Comments"
 msgstr "Komentarze"
@@ -5652,7 +5661,7 @@ msgstr "wymaga"
 #: lib/modules/storage/web/dimension_form.html.heex:8
 #: lib/modules/storage/web/dimensions.html.heex:8
 #: lib/modules/storage/web/health.html.heex:8
-#: lib/modules/storage/web/settings.ex:63
+#: lib/modules/storage/web/settings.ex:66
 #: lib/modules/storage/web/settings.html.heex:4
 #: lib/phoenix_kit/dashboard/admin_tabs.ex:160
 #: lib/phoenix_kit/dashboard/admin_tabs.ex:317
@@ -6120,7 +6129,7 @@ msgstr "Źródło mapy witryny"
 msgid "Open in Browser"
 msgstr "Otwórz w przeglądarce"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2260
+#: lib/phoenix_kit_web/components/media_browser.ex:2381
 #, elixir-autogen, elixir-format
 msgid "%{count} file permanently deleted"
 msgid_plural "%{count} files permanently deleted"
@@ -6128,7 +6137,7 @@ msgstr[0] "%{count} plik trwale usunięty"
 msgstr[1] "%{count} pliki trwale usunięte"
 msgstr[2] "%{count} plików trwale usuniętych"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1981
+#: lib/phoenix_kit_web/components/media_browser.ex:2102
 #, elixir-autogen, elixir-format
 msgid "%{count} item moved"
 msgid_plural "%{count} items moved"
@@ -6136,7 +6145,7 @@ msgstr[0] "%{count} element przeniesiony"
 msgstr[1] "%{count} elementy przeniesione"
 msgstr[2] "%{count} elementów przeniesionych"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2317
+#: lib/phoenix_kit_web/components/media_browser.ex:2438
 #, elixir-autogen, elixir-format
 msgid "%{count} orphaned file queued for deletion"
 msgid_plural "%{count} orphaned files queued for deletion"
@@ -6166,7 +6175,7 @@ msgstr "%{mb} MB na plik"
 msgid "Add Media"
 msgstr "Dodaj media"
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:263
+#: lib/phoenix_kit_web/components/folder_explorer.ex:266
 #: lib/phoenix_kit_web/components/media_browser.html.heex:681
 #: lib/phoenix_kit_web/live/components/media_selector_modal.html.heex:256
 #: lib/phoenix_kit_web/live/users/media_selector.html.heex:110
@@ -6186,7 +6195,7 @@ msgstr "Wszystkie media"
 msgid "All file types supported"
 msgstr "Obsługiwane są wszystkie typy plików"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3519
+#: lib/phoenix_kit_web/components/media_browser.ex:3718
 #, elixir-autogen, elixir-format
 msgid "Already have %{count} duplicate file. No new files were added."
 msgid_plural "Already have %{count} duplicate files. No new files were added."
@@ -6194,28 +6203,28 @@ msgstr[0] "Jest już %{count} zduplikowany plik. Nie dodano nowych plików."
 msgstr[1] "Są już %{count} zduplikowane pliki. Nie dodano nowych plików."
 msgstr[2] "Jest już %{count} zduplikowanych plików. Nie dodano nowych plików."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1729
+#: lib/phoenix_kit_web/components/media_browser.ex:1842
 #, elixir-autogen, elixir-format
 msgid "Cannot change folder outside the allowed scope"
 msgstr "Nie można zmienić folderu poza dozwolonym zakresem"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1031
+#: lib/phoenix_kit_web/components/media_browser.ex:1144
 #, elixir-autogen, elixir-format
 msgid "Cannot create folder outside the allowed scope"
 msgstr "Nie można utworzyć folderu poza dozwolonym zakresem"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1070
+#: lib/phoenix_kit_web/components/media_browser.ex:1183
 #, elixir-autogen, elixir-format
 msgid "Cannot delete folder outside the allowed scope"
 msgstr "Nie można usunąć folderu poza dozwolonym zakresem"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1103
-#: lib/phoenix_kit_web/components/media_browser.ex:1167
+#: lib/phoenix_kit_web/components/media_browser.ex:1216
+#: lib/phoenix_kit_web/components/media_browser.ex:1280
 #, elixir-autogen, elixir-format
 msgid "Cannot move file outside the allowed scope"
 msgstr "Nie można przenieść pliku poza dozwolony zakres"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1511
+#: lib/phoenix_kit_web/components/media_browser.ex:1624
 #, elixir-autogen, elixir-format
 msgid "Cannot rename folder outside the allowed scope"
 msgstr "Nie można zmienić nazwy folderu poza dozwolonym zakresem"
@@ -6228,13 +6237,13 @@ msgstr "Nie można zmienić nazwy folderu poza dozwolonym zakresem"
 msgid "Clear"
 msgstr "Wyczyść"
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:243
+#: lib/phoenix_kit_web/components/folder_explorer.ex:246
 #, elixir-autogen, elixir-format
 msgid "Collapse sidebar"
 msgstr "Zwiń pasek boczny"
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1442
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2069
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2087
 #, elixir-autogen, elixir-format
 msgid "Color"
 msgstr "Kolor"
@@ -6245,7 +6254,7 @@ msgstr "Kolor"
 msgid "Configure Storage Buckets"
 msgstr "Skonfiguruj zasobniki magazynu"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1829
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1847
 #: lib/phoenix_kit_web/live/activity/index.html.heex:57
 #: lib/phoenix_kit_web/live/activity/index.html.heex:316
 #, elixir-autogen, elixir-format
@@ -6276,12 +6285,13 @@ msgstr "Usuń trwale"
 msgid "Deleted files will appear here"
 msgstr "Usunięte pliki pojawią się tutaj"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2929
+#: lib/phoenix_kit_web/components/image_editor.ex:955
+#: lib/phoenix_kit_web/components/media_browser.ex:3077
 #: lib/phoenix_kit_web/components/media_browser.html.heex:811
 #: lib/phoenix_kit_web/components/media_browser.html.heex:814
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1603
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2233
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:379
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1610
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2257
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:387
 #, elixir-autogen, elixir-format
 msgid "Download"
 msgstr "Pobierz"
@@ -6296,55 +6306,55 @@ msgstr "Przeciągnij pliki tutaj lub kliknij „Dodaj media”, aby je przesła�
 msgid "Empty Trash"
 msgstr "Opróżnij kosz"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1732
+#: lib/phoenix_kit_web/components/media_browser.ex:1845
 #, elixir-autogen, elixir-format
 msgid "Failed to change color"
 msgstr "Nie udało się zmienić koloru"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1034
+#: lib/phoenix_kit_web/components/media_browser.ex:1147
 #, elixir-autogen, elixir-format
 msgid "Failed to create folder"
 msgstr "Nie udało się utworzyć folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1106
-#: lib/phoenix_kit_web/components/media_browser.ex:2712
+#: lib/phoenix_kit_web/components/media_browser.ex:1219
+#: lib/phoenix_kit_web/components/media_browser.ex:2860
 #, elixir-autogen, elixir-format
 msgid "Failed to move file"
 msgstr "Nie udało się przenieść pliku"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1514
+#: lib/phoenix_kit_web/components/media_browser.ex:1627
 #, elixir-autogen, elixir-format
 msgid "Failed to rename folder"
 msgstr "Nie udało się zmienić nazwy folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1099
+#: lib/phoenix_kit_web/components/media_browser.ex:1212
 #, elixir-autogen, elixir-format
 msgid "File moved"
 msgstr "Plik przeniesiony"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:614
+#: lib/phoenix_kit_web/components/media_browser.ex:725
 #, elixir-autogen, elixir-format
 msgid "Folder not accessible — showing root"
 msgstr "Folder niedostępny — wyświetlany katalog główny"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1080
-#: lib/phoenix_kit_web/components/media_browser.ex:1125
-#: lib/phoenix_kit_web/components/media_browser.ex:1188
+#: lib/phoenix_kit_web/components/media_browser.ex:1193
+#: lib/phoenix_kit_web/components/media_browser.ex:1238
+#: lib/phoenix_kit_web/components/media_browser.ex:1301
 #, elixir-autogen, elixir-format
 msgid "Folder not found"
 msgstr "Nie znaleziono folderu"
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:227
+#: lib/phoenix_kit_web/components/folder_explorer.ex:231
 #, elixir-autogen, elixir-format
 msgid "Folders"
 msgstr "Foldery"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1546
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1553
 #, elixir-autogen, elixir-format
 msgid "Image Missing"
 msgstr "Brak obrazu"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:401
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:421
 #, elixir-autogen, elixir-format
 msgid "MIME:"
 msgstr "MIME:"
@@ -6360,18 +6370,18 @@ msgstr "Zarządzaj mediami i przesłanymi plikami użytkowników"
 msgid "More actions"
 msgstr "Więcej akcji"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2956
+#: lib/phoenix_kit_web/components/media_browser.ex:3115
 #: lib/phoenix_kit_web/components/media_browser.html.heex:801
 #: lib/phoenix_kit_web/components/media_browser.html.heex:804
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1472
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1631
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2099
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2261
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1649
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2117
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2296
 #, elixir-autogen, elixir-format
 msgid "Move"
 msgstr "Przenieś"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3745
+#: lib/phoenix_kit_web/components/media_browser.ex:3938
 #, elixir-autogen, elixir-format
 msgid "Move %{count} file to trash?"
 msgid_plural "Move %{count} files to trash?"
@@ -6379,15 +6389,15 @@ msgstr[0] "Przenieść %{count} plik do kosza?"
 msgstr[1] "Przenieść %{count} pliki do kosza?"
 msgstr[2] "Przenieść %{count} plików do kosza?"
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:235
+#: lib/phoenix_kit_web/components/folder_explorer.ex:239
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1189
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1695
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2408
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1713
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2443
 #, elixir-autogen, elixir-format
 msgid "New folder"
 msgstr "Nowy folder"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2318
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2353
 #, elixir-autogen, elixir-format
 msgid "Next"
 msgstr "Dalej"
@@ -6418,12 +6428,12 @@ msgstr "Nie przesłano jeszcze mediów. Prześlij pierwszy plik powyżej!"
 msgid "Orphaned Files"
 msgstr "Osierocone pliki"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1825
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1843
 #, elixir-autogen, elixir-format
 msgid "Path"
 msgstr "Ścieżka"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3721
+#: lib/phoenix_kit_web/components/media_browser.ex:3914
 #, elixir-autogen, elixir-format
 msgid "Permanently delete %{count} file? This cannot be undone."
 msgid_plural "Permanently delete %{count} files? This cannot be undone."
@@ -6439,7 +6449,7 @@ msgstr[0] "Trwale usunąć %{count} plik z kosza?"
 msgstr[1] "Trwale usunąć wszystkie %{count} pliki z kosza?"
 msgstr[2] "Trwale usunąć wszystkie %{count} plików z kosza?"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2305
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2340
 #, elixir-autogen, elixir-format
 msgid "Prev"
 msgstr "Wstecz"
@@ -6449,9 +6459,9 @@ msgstr "Wstecz"
 msgid "Previous (←)"
 msgstr "Wstecz (←)"
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:613
+#: lib/phoenix_kit_web/components/folder_explorer.ex:630
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1426
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2053
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2071
 #, elixir-autogen, elixir-format
 msgid "Rename"
 msgstr "Zmień nazwę"
@@ -6473,12 +6483,12 @@ msgstr "Szukaj plików…"
 msgid "Select all"
 msgstr "Zaznacz wszystko"
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:214
+#: lib/phoenix_kit_web/components/folder_explorer.ex:217
 #, elixir-autogen, elixir-format
 msgid "Show folders"
 msgstr "Pokaż foldery"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:405
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:425
 #, elixir-autogen, elixir-format
 msgid "Size:"
 msgstr "Rozmiar:"
@@ -6493,7 +6503,7 @@ msgstr "Skonfigurowany folder zakresu już nie istnieje. Przeglądarka mediów j
 msgid "This folder is empty."
 msgstr "Ten folder jest pusty."
 
-#: lib/phoenix_kit_web/components/folder_explorer.ex:333
+#: lib/phoenix_kit_web/components/folder_explorer.ex:336
 #: lib/phoenix_kit_web/components/media_browser.html.heex:677
 #, elixir-autogen, elixir-format
 msgid "Trash"
@@ -6504,7 +6514,7 @@ msgstr "Kosz"
 msgid "Trash is empty."
 msgstr "Kosz jest pusty."
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:395
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:415
 #, elixir-autogen, elixir-format
 msgid "Type:"
 msgstr "Typ:"
@@ -6519,18 +6529,18 @@ msgstr "Prześlij media"
 msgid "Upload Media Files"
 msgstr "Prześlij pliki multimedialne"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3500
+#: lib/phoenix_kit_web/components/media_browser.ex:3699
 #: lib/phoenix_kit_web/live/components/media_selector_modal.ex:593
 #, elixir-autogen, elixir-format
 msgid "Upload failed: No storage buckets configured. Please configure at least one storage bucket before uploading files."
 msgstr "Przesyłanie nie udało się: brak skonfigurowanych zasobników magazynu. Skonfiguruj co najmniej jeden zasobnik przed przesyłaniem plików."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3486
+#: lib/phoenix_kit_web/components/media_browser.ex:3685
 #, elixir-autogen, elixir-format
 msgid "Upload processed"
 msgstr "Przesyłanie przetworzone"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3528
+#: lib/phoenix_kit_web/components/media_browser.ex:3727
 #, elixir-autogen, elixir-format
 msgid "Upload successful! %{count} new file processed"
 msgid_plural "Upload successful! %{count} new files processed"
@@ -6538,17 +6548,17 @@ msgstr[0] "Przesyłanie udane! Przetworzono %{count} nowy plik"
 msgstr[1] "Przesyłanie udane! Przetworzono %{count} nowe pliki"
 msgstr[2] "Przesyłanie udane! Przetworzono %{count} nowych plików"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:409
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:429
 #, elixir-autogen, elixir-format
 msgid "Uploaded:"
 msgstr "Przesłano:"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:188
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:190
 #, elixir-autogen, elixir-format
 msgid "Your browser does not support the video tag."
 msgstr "Twoja przeglądarka nie obsługuje elementu wideo."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3507
+#: lib/phoenix_kit_web/components/media_browser.ex:3706
 #, elixir-autogen, elixir-format
 msgid "%{count} failed"
 msgid_plural "%{count} failed"
@@ -6556,8 +6566,8 @@ msgstr[0] "%{count} nieudany"
 msgstr[1] "%{count} nieudane"
 msgstr[2] "%{count} nieudanych"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3704
-#: lib/phoenix_kit_web/components/media_browser.ex:3728
+#: lib/phoenix_kit_web/components/media_browser.ex:3897
+#: lib/phoenix_kit_web/components/media_browser.ex:3921
 #: lib/phoenix_kit_web/components/media_browser.html.heex:753
 #, elixir-autogen, elixir-format
 msgid "%{count} file"
@@ -6566,7 +6576,7 @@ msgstr[0] "%{count} plik"
 msgstr[1] "%{count} pliki"
 msgstr[2] "%{count} plików"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3506
+#: lib/phoenix_kit_web/components/media_browser.ex:3705
 #, elixir-autogen, elixir-format
 msgid "%{count} file uploaded"
 msgid_plural "%{count} files uploaded"
@@ -6574,7 +6584,7 @@ msgstr[0] "przesłano %{count} plik"
 msgstr[1] "przesłano %{count} pliki"
 msgstr[2] "przesłano %{count} plików"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3539
+#: lib/phoenix_kit_web/components/media_browser.ex:3738
 #, elixir-autogen, elixir-format
 msgid "%{count} file was already uploaded"
 msgid_plural "%{count} files were already uploaded"
@@ -6582,8 +6592,8 @@ msgstr[0] "%{count} plik był już przesłany"
 msgstr[1] "%{count} pliki były już przesłane"
 msgstr[2] "%{count} plików było już przesłanych"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3705
-#: lib/phoenix_kit_web/components/media_browser.ex:3729
+#: lib/phoenix_kit_web/components/media_browser.ex:3898
+#: lib/phoenix_kit_web/components/media_browser.ex:3922
 #, elixir-autogen, elixir-format
 msgid "%{count} folder"
 msgid_plural "%{count} folders"
@@ -6591,7 +6601,7 @@ msgstr[0] "%{count} folder"
 msgstr[1] "%{count} foldery"
 msgstr[2] "%{count} folderów"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3536
+#: lib/phoenix_kit_web/components/media_browser.ex:3735
 #, elixir-autogen, elixir-format
 msgid "%{count} new file added"
 msgid_plural "%{count} new files added"
@@ -6599,18 +6609,18 @@ msgstr[0] "dodano %{count} nowy plik"
 msgstr[1] "dodano %{count} nowe pliki"
 msgstr[2] "dodano %{count} nowych plików"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:244
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:397
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:246
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:417
 #, elixir-autogen, elixir-format
 msgid "FILE"
 msgstr "PLIK"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3510
+#: lib/phoenix_kit_web/components/media_browser.ex:3709
 #, elixir-autogen, elixir-format
 msgid "Partially successful: %{uploaded}, %{failed} due to missing storage buckets."
 msgstr "Częściowo udane: %{uploaded}, %{failed} z powodu braku zasobników magazynu."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3546
+#: lib/phoenix_kit_web/components/media_browser.ex:3745
 #, elixir-autogen, elixir-format
 msgid "Upload successful! %{added}. %{duplicates}."
 msgstr "Przesyłanie udane! %{added}. %{duplicates}."
@@ -6817,13 +6827,13 @@ msgstr "Odpowiedz"
 msgid "Are you sure you want to delete this comment?"
 msgstr "Czy na pewno chcesz usunąć ten komentarz?"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.ex:1453
-#: lib/phoenix_kit_web/components/media_canvas_viewer.ex:1454
+#: lib/phoenix_kit_web/components/media_canvas_viewer.ex:1536
+#: lib/phoenix_kit_web/components/media_canvas_viewer.ex:1537
 #, elixir-autogen, elixir-format
 msgid "%b %d, %Y"
 msgstr "%d %b %Y"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2245
+#: lib/phoenix_kit_web/components/media_browser.ex:2366
 #, elixir-autogen, elixir-format
 msgid "%{count} item restored"
 msgid_plural "%{count} items restored"
@@ -6851,24 +6861,24 @@ msgstr "Załączniki są wyłączone"
 msgid "Auth failed"
 msgstr "Uwierzytelnianie nie powiodło się"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3666
+#: lib/phoenix_kit_web/components/media_browser.ex:3859
 #, elixir-autogen, elixir-format
 msgid "Cannot create folders in the all-files view"
 msgstr "Nie można tworzyć folderów w widoku wszystkich plików"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3663
+#: lib/phoenix_kit_web/components/media_browser.ex:3856
 #, elixir-autogen, elixir-format
 msgid "Cannot create folders in trash"
 msgstr "Nie można tworzyć folderów w koszu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1142
+#: lib/phoenix_kit_web/components/media_browser.ex:1255
 #, elixir-autogen, elixir-format
 msgid "Cannot move a folder into its own descendant"
 msgstr "Nie można przenieść folderu do jego własnego podfolderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1138
-#: lib/phoenix_kit_web/components/media_browser.ex:1192
-#: lib/phoenix_kit_web/components/media_browser.ex:1205
+#: lib/phoenix_kit_web/components/media_browser.ex:1251
+#: lib/phoenix_kit_web/components/media_browser.ex:1305
+#: lib/phoenix_kit_web/components/media_browser.ex:1318
 #, elixir-autogen, elixir-format
 msgid "Cannot move folder outside the allowed scope"
 msgstr "Nie można przenieść folderu poza dozwolony zakres"
@@ -6884,9 +6894,9 @@ msgstr "Nie udało się opublikować komentarza"
 msgid "Deep Zoom Tile Generation"
 msgstr "Generowanie kafelków Deep Zoom"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2972
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1648
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2278
+#: lib/phoenix_kit_web/components/media_browser.ex:3131
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1666
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2313
 #, elixir-autogen, elixir-format
 msgid "Delete Permanently"
 msgstr "Usuń trwale"
@@ -6902,12 +6912,12 @@ msgstr "Usuwanie…"
 msgid "Disconnecting…"
 msgstr "Odłączanie…"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1145
+#: lib/phoenix_kit_web/components/media_browser.ex:1258
 #, elixir-autogen, elixir-format
 msgid "Failed to move folder"
 msgstr "Nie udało się przenieść folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1208
+#: lib/phoenix_kit_web/components/media_browser.ex:1321
 #, elixir-autogen, elixir-format
 msgid "Failed to move folder to trash"
 msgstr "Nie udało się przenieść folderu do kosza"
@@ -6917,23 +6927,23 @@ msgstr "Nie udało się przenieść folderu do kosza"
 msgid "File / Image"
 msgstr "Plik / obraz"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2710
+#: lib/phoenix_kit_web/components/media_browser.ex:2858
 #, elixir-autogen, elixir-format
 msgid "File moved to trash"
 msgstr "Plik przeniesiony do kosza"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2711
+#: lib/phoenix_kit_web/components/media_browser.ex:2859
 #, elixir-autogen, elixir-format
 msgid "File removed from this folder"
 msgstr "Plik usunięto z tego folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1163
+#: lib/phoenix_kit_web/components/media_browser.ex:1276
 #: lib/phoenix_kit_web/components/media_viewer.html.heex:41
 #, elixir-autogen, elixir-format
 msgid "File not found"
 msgstr "Nie znaleziono pliku"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2124
+#: lib/phoenix_kit_web/components/media_browser.ex:2245
 #, elixir-autogen, elixir-format
 msgid "File permanently deleted"
 msgstr "Plik trwale usunięty"
@@ -6948,29 +6958,29 @@ msgstr "Plik jest zbyt duży"
 msgid "File type not allowed"
 msgstr "Niedozwolony typ pliku"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2011
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2039
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2029
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2057
 #, elixir-autogen, elixir-format
 msgid "Folder"
 msgstr "Folder"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1027
+#: lib/phoenix_kit_web/components/media_browser.ex:1140
 #, elixir-autogen, elixir-format
 msgid "Folder \"%{name}\" created"
 msgstr "Folder „%{name}” został utworzony"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1132
+#: lib/phoenix_kit_web/components/media_browser.ex:1245
 #, elixir-autogen, elixir-format
 msgid "Folder moved"
 msgstr "Folder przeniesiony"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1065
-#: lib/phoenix_kit_web/components/media_browser.ex:1199
+#: lib/phoenix_kit_web/components/media_browser.ex:1178
+#: lib/phoenix_kit_web/components/media_browser.ex:1312
 #, elixir-autogen, elixir-format
 msgid "Folder moved to trash"
 msgstr "Folder przeniesiony do kosza"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1064
+#: lib/phoenix_kit_web/components/media_browser.ex:1177
 #, elixir-autogen, elixir-format
 msgid "Folder permanently deleted"
 msgstr "Folder trwale usunięty"
@@ -6985,7 +6995,7 @@ msgstr "Wyszukiwanie w Giphy nie powiodło się"
 msgid "Lazily generate DZI tile pyramids when users zoom deeply into images. With this off the MediaBrowser still swaps between medium/large variants while zooming, but never generates tiles or hits the lazy tile endpoint. ImageMagick is required when enabled."
 msgstr "Generuje piramidy kafelków DZI na żądanie, gdy użytkownicy mocno przybliżają obrazy. Gdy wyłączone, przeglądarka mediów nadal przełącza się między wariantami średnim i dużym przy powiększaniu, ale nigdy nie generuje kafelków ani nie odwołuje się do punktu końcowego. Po włączeniu wymagany jest ImageMagick."
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2340
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2375
 #, elixir-autogen, elixir-format
 msgid "Move %{count} item to folder"
 msgid_plural "Move %{count} items to folder"
@@ -6993,16 +7003,16 @@ msgstr[0] "Przenieś %{count} element do folderu"
 msgstr[1] "Przenieś %{count} elementy do folderu"
 msgstr[2] "Przenieś %{count} elementów do folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2973
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1649
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2279
+#: lib/phoenix_kit_web/components/media_browser.ex:3132
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1667
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2314
 #, elixir-autogen, elixir-format
 msgid "Move to Trash"
 msgstr "Przenieś do kosza"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2965
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1640
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2270
+#: lib/phoenix_kit_web/components/media_browser.ex:3124
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1658
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2305
 #, elixir-autogen, elixir-format
 msgid "Permanently delete '%{name}'? This cannot be undone."
 msgstr "Trwale usunąć „%{name}”? Tej operacji nie można cofnąć."
@@ -7074,7 +7084,7 @@ msgstr "Napisz notatkę o tej adnotacji…"
 msgid "e.g. Main, Personal, My Company Drive"
 msgstr "np. Główny, Osobisty, Dysk firmowy"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3674
+#: lib/phoenix_kit_web/components/media_browser.ex:3867
 #, elixir-autogen, elixir-format
 msgid "untitled"
 msgstr "bez nazwy"
@@ -7274,7 +7284,6 @@ msgstr "Zakończ rejestrację"
 msgid "Complete your profile"
 msgstr "Uzupełnij profil"
 
-#: lib/phoenix_kit_web/users/confirmation.html.heex:4
 #: lib/phoenix_kit_web/users/confirmation.html.heex:7
 #, elixir-autogen, elixir-format
 msgid "Confirm Account"
@@ -7296,7 +7305,6 @@ msgstr "Potwierdź nowe hasło"
 msgid "Confirming..."
 msgstr "Potwierdzanie…"
 
-#: lib/phoenix_kit_web/users/registration.html.heex:4
 #: lib/phoenix_kit_web/users/registration.html.heex:8
 #: lib/phoenix_kit_web/users/registration.html.heex:186
 #, elixir-autogen, elixir-format
@@ -7338,11 +7346,6 @@ msgstr "Podaj swój e-mail, aby otrzymać link rejestracyjny. Hasło nie jest po
 #, elixir-autogen, elixir-format
 msgid "Enter your email to receive a secure login link"
 msgstr "Podaj swój e-mail, aby otrzymać bezpieczny link do logowania"
-
-#: lib/phoenix_kit_web/users/forgot_password.html.heex:4
-#, elixir-autogen, elixir-format
-msgid "Forgot Password"
-msgstr "Nie pamiętam hasła"
 
 #: lib/phoenix_kit_web/users/magic_link.html.heex:22
 #, elixir-autogen, elixir-format
@@ -7402,11 +7405,13 @@ msgstr "Kod polecający"
 
 #: lib/phoenix_kit_web/users/confirmation.html.heex:26
 #: lib/phoenix_kit_web/users/confirmation_instructions.html.heex:131
+#: lib/phoenix_kit_web/users/registration.ex:24
 #: lib/phoenix_kit_web/users/reset_password.html.heex:45
 #, elixir-autogen, elixir-format
 msgid "Register"
 msgstr "Zarejestruj się"
 
+#: lib/phoenix_kit_web/users/magic_link_registration_request.ex:37
 #: lib/phoenix_kit_web/users/magic_link_registration_request.html.heex:7
 #, elixir-autogen, elixir-format
 msgid "Register via Magic Link"
@@ -7437,13 +7442,13 @@ msgstr "Wyślij potwierdzenie ponownie"
 msgid "Resend Link"
 msgstr "Wyślij link ponownie"
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.html.heex:4
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:50
 #, elixir-autogen, elixir-format
 msgid "Resend confirmation"
 msgstr "Wyślij potwierdzenie ponownie"
 
 #: lib/phoenix_kit_web/users/forgot_password.html.heex:14
-#: lib/phoenix_kit_web/users/reset_password.html.heex:4
+#: lib/phoenix_kit_web/users/reset_password.ex:14
 #: lib/phoenix_kit_web/users/reset_password.html.heex:7
 #: lib/phoenix_kit_web/users/reset_password.html.heex:15
 #: lib/phoenix_kit_web/users/reset_password.html.heex:36
@@ -7600,7 +7605,7 @@ msgstr "Wyczyść filtry"
 msgid "Date & Time"
 msgstr "Data i godzina"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:389
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:409
 #: lib/phoenix_kit_web/live/activity/index.html.heex:310
 #, elixir-autogen, elixir-format
 msgid "Details"
@@ -8183,7 +8188,7 @@ msgstr "Zarządzaj kontami użytkowników i rolami"
 msgid "Monitor and manage active user sessions"
 msgstr "Monitoruj aktywne sesje użytkowników i zarządzaj nimi"
 
-#: lib/phoenix_kit/integrations/providers.ex:1078
+#: lib/phoenix_kit/integrations/providers.ex:1080
 #: lib/phoenix_kit_web/live/users/users.ex:998
 #: lib/phoenix_kit_web/live/users/users.html.heex:653
 #, elixir-autogen, elixir-format
@@ -8451,14 +8456,14 @@ msgid "Enable the multi-account switcher in the header"
 msgstr "Włącz przełącznik wielu kont w nagłówku"
 
 #: lib/phoenix_kit_web/components/core/pagination.ex:407
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1762
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1780
 #: lib/phoenix_kit_web/live/notifications/inbox.ex:381
 #, elixir-autogen, elixir-format
 msgid "Load more"
 msgstr "Wczytaj więcej"
 
 #: lib/phoenix_kit_web/components/core/pagination.ex:404
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1759
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1777
 #, elixir-autogen, elixir-format
 msgid "Loading…"
 msgstr "Wczytywanie…"
@@ -8499,7 +8504,7 @@ msgid "Reorder the 1 selected %{noun} (other rows stay in place)."
 msgstr "Zmień kolejność 1 wybranego %{noun} (pozostałe wiersze zostają na miejscu)."
 
 #: lib/phoenix_kit_web/components/core/pagination.ex:393
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1748
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1766
 #, elixir-autogen, elixir-format
 msgid "Showing %{loaded} of %{total} %{noun}"
 msgstr "Wyświetlanie %{loaded} z %{total} %{noun}"
@@ -8566,19 +8571,19 @@ msgstr "lub przeciągnij i upuść"
 msgid "Manage available languages for your application"
 msgstr "Zarządzaj dostępnymi językami aplikacji"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:332
+#: lib/phoenix_kit_web/components/media_browser.ex:369
 #: lib/phoenix_kit_web/live/components/media_selector_modal.ex:353
 #, elixir-autogen, elixir-format
 msgid "Only image files can be added here."
 msgstr "Tutaj można dodawać tylko pliki obrazów."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:333
+#: lib/phoenix_kit_web/components/media_browser.ex:370
 #: lib/phoenix_kit_web/live/components/media_selector_modal.ex:354
 #, elixir-autogen, elixir-format
 msgid "Only video files can be added here."
 msgstr "Tutaj można dodawać tylko pliki wideo."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:335
+#: lib/phoenix_kit_web/components/media_browser.ex:372
 #: lib/phoenix_kit_web/live/components/media_selector_modal.ex:356
 #, elixir-autogen, elixir-format
 msgid "Only the allowed file types can be added here."
@@ -8589,7 +8594,7 @@ msgstr "Tutaj można dodawać tylko dozwolone typy plików."
 msgid "View background job status and history"
 msgstr "Wyświetl status i historię zadań w tle"
 
-#: lib/phoenix_kit/integrations/providers.ex:317
+#: lib/phoenix_kit/integrations/providers.ex:319
 #, elixir-autogen, elixir-format
 msgid "AI models via OpenAI (GPT, embeddings, images, audio)"
 msgstr "Modele AI przez OpenAI (GPT, embeddingi, obrazy, audio)"
@@ -8611,7 +8616,7 @@ msgid "Action"
 msgstr "Akcja"
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1435
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2062
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2080
 #, elixir-autogen, elixir-format
 msgid "Add description"
 msgstr "Dodaj opis"
@@ -8654,13 +8659,13 @@ msgstr "Obraz tła"
 msgid "Bake Etcher annotation shapes (rectangles, marker strokes, etc.) into a file's grid thumbnail, regenerated in the background when annotations change. With this off the grid shows the plain thumbnail and no annotated variant is generated. ImageMagick is required when enabled."
 msgstr "Wtapia kształty adnotacji Etchera (prostokąty, pociągnięcia markera itd.) w miniaturę pliku w siatce i generuje ją ponownie w tle, gdy adnotacje się zmienią. Gdy wyłączone, siatka pokazuje zwykłą miniaturę i wariant z adnotacjami nie jest tworzony. Po włączeniu wymagany jest ImageMagick."
 
-#: lib/modules/storage/web/settings.html.heex:548
+#: lib/modules/storage/web/settings.html.heex:595
 #, elixir-autogen, elixir-format
 msgid "Browse files no longer attached to any record (orphaned media) so you can review or delete them."
 msgstr "Przeglądaj pliki, które nie są już powiązane z żadnym rekordem (osierocone media), aby je sprawdzić lub usunąć."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1587
-#: lib/phoenix_kit_web/components/media_browser.ex:3175
+#: lib/phoenix_kit_web/components/media_browser.ex:1700
+#: lib/phoenix_kit_web/components/media_browser.ex:3334
 #, elixir-autogen, elixir-format
 msgid "Cannot edit a folder outside the allowed scope"
 msgstr "Nie można edytować folderu poza dozwolonym zakresem"
@@ -8675,12 +8680,12 @@ msgstr "Zmień"
 msgid "Choose"
 msgstr "Wybierz"
 
-#: lib/phoenix_kit/integrations/providers.ex:679
+#: lib/phoenix_kit/integrations/providers.ex:681
 #, elixir-autogen, elixir-format
 msgid "Click **Create API Key**, give it a name"
 msgstr "Kliknij **Utwórz klucz API** i nadaj mu nazwę"
 
-#: lib/phoenix_kit/integrations/providers.ex:376
+#: lib/phoenix_kit/integrations/providers.ex:378
 #, elixir-autogen, elixir-format
 msgid "Click **Create new secret key**, give it a name"
 msgstr "Kliknij **Create new secret key** i nadaj mu nazwę"
@@ -8691,22 +8696,22 @@ msgstr "Kliknij **Create new secret key** i nadaj mu nazwę"
 msgid "Close search"
 msgstr "Zamknij wyszukiwanie"
 
-#: lib/phoenix_kit/integrations/providers.ex:669
+#: lib/phoenix_kit/integrations/providers.ex:671
 #, elixir-autogen, elixir-format
 msgid "Create an ElevenLabs account"
 msgstr "Utwórz konto ElevenLabs"
 
-#: lib/phoenix_kit/integrations/providers.ex:354
+#: lib/phoenix_kit/integrations/providers.ex:356
 #, elixir-autogen, elixir-format
 msgid "Create an OpenAI account"
 msgstr "Utwórz konto OpenAI"
 
-#: lib/modules/storage/web/settings.html.heex:500
+#: lib/modules/storage/web/settings.html.heex:547
 #, elixir-autogen, elixir-format
 msgid "Create and edit the image/video size presets used to generate variants of uploaded media."
 msgstr "Twórz i edytuj szablony rozmiarów obrazów i wideo używane do generowania wariantów przesłanych mediów."
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2444
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2479
 #, elixir-autogen, elixir-format
 msgid "Create folder"
 msgstr "Utwórz folder"
@@ -8722,7 +8727,7 @@ msgid "Default notification link"
 msgstr "Domyślny link powiadomienia"
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:439
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1876
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1894
 #, elixir-autogen, elixir-format
 msgid "Describe what this folder is for..."
 msgstr "Opisz, do czego służy ten folder…"
@@ -8742,13 +8747,13 @@ msgstr "Odrzucone"
 msgid "Documents"
 msgstr "Dokumenty"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1782
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1800
 #, elixir-autogen, elixir-format
 msgid "Drop media here to remove it from a folder"
 msgstr "Upuść media tutaj, aby usunąć je z folderu"
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1436
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2063
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2081
 #, elixir-autogen, elixir-format
 msgid "Edit description"
 msgstr "Edytuj opis"
@@ -8759,7 +8764,7 @@ msgstr "Edytuj opis"
 msgid "Edit header"
 msgstr "Edytuj nagłówek"
 
-#: lib/phoenix_kit/integrations/providers.ex:639
+#: lib/phoenix_kit/integrations/providers.ex:641
 #, elixir-autogen, elixir-format
 msgid "ElevenLabs"
 msgstr "ElevenLabs"
@@ -8769,7 +8774,7 @@ msgstr "ElevenLabs"
 msgid "Enable JavaScript to use the toolbar and media insertion."
 msgstr "Włącz JavaScript, aby korzystać z paska narzędzi i wstawiania mediów."
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1779
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1797
 #, elixir-autogen, elixir-format
 msgid "Everything else"
 msgstr "Wszystko inne"
@@ -8779,22 +8784,22 @@ msgstr "Wszystko inne"
 msgid "Exit selection"
 msgstr "Zakończ wybieranie"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1591
+#: lib/phoenix_kit_web/components/media_browser.ex:1704
 #, elixir-autogen, elixir-format
 msgid "Failed to save folder description"
 msgstr "Nie udało się zapisać opisu folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3178
+#: lib/phoenix_kit_web/components/media_browser.ex:3337
 #, elixir-autogen, elixir-format
 msgid "Failed to save folder header"
 msgstr "Nie udało się zapisać nagłówka folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:486
+#: lib/phoenix_kit_web/components/media_browser.ex:523
 #, elixir-autogen, elixir-format
 msgid "Failed to set the image"
 msgstr "Nie udało się ustawić obrazu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:526
+#: lib/phoenix_kit_web/components/media_browser.ex:563
 #, elixir-autogen, elixir-format
 msgid "Failed to update the header"
 msgstr "Nie udało się zaktualizować nagłówka"
@@ -8804,7 +8809,7 @@ msgstr "Nie udało się zaktualizować nagłówka"
 msgid "Filter"
 msgstr "Filtr"
 
-#: lib/modules/storage/web/settings.html.heex:557
+#: lib/modules/storage/web/settings.html.heex:604
 #, elixir-autogen, elixir-format
 msgid "Find Orphaned Files"
 msgstr "Znajdź osierocone pliki"
@@ -8814,7 +8819,7 @@ msgstr "Znajdź osierocone pliki"
 msgid "Folder name"
 msgstr "Nazwa folderu"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:1701
+#: lib/phoenix_kit_web/components/media_browser.ex:1814
 #, elixir-autogen, elixir-format
 msgid "Folder name can't be blank"
 msgstr "Nazwa folderu nie może być pusta"
@@ -8824,37 +8829,37 @@ msgstr "Nazwa folderu nie może być pusta"
 msgid "Forgot password"
 msgstr "Nie pamiętam hasła"
 
-#: lib/phoenix_kit/integrations/providers.ex:662
+#: lib/phoenix_kit/integrations/providers.ex:664
 #, elixir-autogen, elixir-format
 msgid "From elevenlabs.io → Settings → API Keys"
 msgstr "Z elevenlabs.io → Ustawienia → API Keys"
 
-#: lib/phoenix_kit/integrations/providers.ex:341
+#: lib/phoenix_kit/integrations/providers.ex:343
 #, elixir-autogen, elixir-format
 msgid "From platform.openai.com/api-keys"
 msgstr "Z platform.openai.com/api-keys"
 
-#: lib/phoenix_kit/integrations/providers.ex:375
+#: lib/phoenix_kit/integrations/providers.ex:377
 #, elixir-autogen, elixir-format
 msgid "Go to [API Keys](https://platform.openai.com/api-keys)"
 msgstr "Przejdź do [API Keys](https://platform.openai.com/api-keys)"
 
-#: lib/phoenix_kit/integrations/providers.ex:364
+#: lib/phoenix_kit/integrations/providers.ex:366
 #, elixir-autogen, elixir-format
 msgid "Go to [Billing](https://platform.openai.com/account/billing/overview) and add a payment method or credits"
 msgstr "Przejdź do [Billing](https://platform.openai.com/account/billing/overview) i dodaj metodę płatności lub kredyty"
 
-#: lib/phoenix_kit/integrations/providers.ex:677
+#: lib/phoenix_kit/integrations/providers.ex:679
 #, elixir-autogen, elixir-format
 msgid "Go to [Settings → API Keys](https://elevenlabs.io/app/settings/api-keys)"
 msgstr "Przejdź do [Settings → API Keys](https://elevenlabs.io/app/settings/api-keys)"
 
-#: lib/phoenix_kit/integrations/providers.ex:671
+#: lib/phoenix_kit/integrations/providers.ex:673
 #, elixir-autogen, elixir-format
 msgid "Go to [elevenlabs.io](https://elevenlabs.io) and sign up or log in"
 msgstr "Przejdź na [elevenlabs.io](https://elevenlabs.io) i zarejestruj się lub zaloguj"
 
-#: lib/phoenix_kit/integrations/providers.ex:356
+#: lib/phoenix_kit/integrations/providers.ex:358
 #, elixir-autogen, elixir-format
 msgid "Go to [platform.openai.com](https://platform.openai.com) and sign up or log in"
 msgstr "Przejdź na [platform.openai.com](https://platform.openai.com) i zarejestruj się lub zaloguj"
@@ -8883,7 +8888,7 @@ msgstr "Nagłówek %{level}"
 msgid "Icon"
 msgstr "Ikona"
 
-#: lib/phoenix_kit/integrations/providers.ex:380
+#: lib/phoenix_kit/integrations/providers.ex:382
 #, elixir-autogen, elixir-format
 msgid "If your account belongs to multiple organizations, keys are scoped to the org selected when the key was created."
 msgstr "Jeśli Twoje konto należy do wielu organizacji, klucze są ograniczone do organizacji wybranej przy ich tworzeniu."
@@ -8932,7 +8937,7 @@ msgstr "Nazwa A–Z"
 msgid "Name Z–A"
 msgstr "Nazwa Z–A"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2411
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2446
 #, elixir-autogen, elixir-format
 msgid "Name your folder, or leave it blank to use the default."
 msgstr "Nadaj folderowi nazwę lub pozostaw puste, aby użyć domyślnej."
@@ -8952,13 +8957,13 @@ msgstr "Brak tła"
 msgid "No description — add one"
 msgstr "Brak opisu — dodaj go"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2780
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1724
+#: lib/phoenix_kit_web/components/media_browser.ex:2928
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1742
 #, elixir-autogen, elixir-format
 msgid "No images"
 msgstr "Brak obrazów"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1802
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1820
 #, elixir-autogen, elixir-format
 msgid "No media yet."
 msgstr "Brak mediów."
@@ -8973,17 +8978,17 @@ msgstr "Nie zalogowano"
 msgid "Oldest first"
 msgstr "Najstarsze najpierw"
 
-#: lib/modules/storage/web/settings.html.heex:530
+#: lib/modules/storage/web/settings.html.heex:577
 #, elixir-autogen, elixir-format
 msgid "Open the media health dashboard to check file redundancy and re-sync files across storage locations."
 msgstr "Otwórz panel stanu mediów, aby sprawdzić nadmiarowość plików i ponownie zsynchronizować je między lokalizacjami magazynu."
 
-#: lib/phoenix_kit/integrations/providers.ex:316
+#: lib/phoenix_kit/integrations/providers.ex:318
 #, elixir-autogen, elixir-format
 msgid "OpenAI"
 msgstr "OpenAI"
 
-#: lib/phoenix_kit/integrations/providers.ex:367
+#: lib/phoenix_kit/integrations/providers.ex:369
 #, elixir-autogen, elixir-format
 msgid "OpenAI requires a positive balance before the API will return completions, even on cheaper models"
 msgstr "OpenAI wymaga dodatniego salda, aby API zwracało uzupełnienia, nawet dla tańszych modeli"
@@ -8998,7 +9003,7 @@ msgstr "Inne"
 msgid "Pick or upload a small icon image."
 msgstr "Wybierz lub prześlij mały obraz ikony."
 
-#: lib/modules/storage/web/settings.html.heex:566
+#: lib/modules/storage/web/settings.html.heex:613
 #, elixir-autogen, elixir-format
 msgid "Reset dimensions and settings to defaults and create a local bucket if none exist. Does not delete uploaded files."
 msgstr "Przywraca domyślne wymiary i ustawienia oraz tworzy lokalny zasobnik, jeśli żaden nie istnieje. Nie usuwa przesłanych plików."
@@ -9068,12 +9073,12 @@ msgstr "Sortowanie"
 msgid "Stacks"
 msgstr "Stosy"
 
-#: lib/phoenix_kit/integrations/providers.ex:640
+#: lib/phoenix_kit/integrations/providers.ex:642
 #, elixir-autogen, elixir-format
 msgid "Text-to-speech and voice generation via ElevenLabs"
 msgstr "Zamiana tekstu na mowę i generowanie głosu przez ElevenLabs"
 
-#: lib/phoenix_kit/integrations/providers.ex:683
+#: lib/phoenix_kit/integrations/providers.ex:685
 #, elixir-autogen, elixir-format
 msgid "The free tier includes a monthly character quota; paid plans raise the quota and unlock commercial use and additional voices."
 msgstr "Plan darmowy obejmuje miesięczny limit znaków; plany płatne zwiększają limit oraz udostępniają użycie komercyjne i dodatkowe głosy."
@@ -9083,7 +9088,7 @@ msgstr "Plan darmowy obejmuje miesięczny limit znaków; plany płatne zwiększa
 msgid "Unread"
 msgstr "Nieprzeczytane"
 
-#: lib/modules/storage/web/settings.html.heex:517
+#: lib/modules/storage/web/settings.html.heex:564
 #, elixir-autogen, elixir-format
 msgid "View storage usage and media statistics. Coming soon."
 msgstr "Wyświetl użycie magazynu i statystyki mediów. Wkrótce."
@@ -9243,7 +9248,7 @@ msgstr "Phoenix ciemny"
 msgid "Phoenix Light"
 msgstr "Phoenix jasny"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:219
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:221
 #, elixir-autogen, elixir-format
 msgid "Play / Pause"
 msgstr "Odtwórz / Wstrzymaj"
@@ -9283,7 +9288,7 @@ msgstr "Zima"
 msgid "Wireframe"
 msgstr "Wireframe"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:237
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:239
 #, elixir-autogen, elixir-format
 msgid "Your browser does not support the audio tag."
 msgstr "Twoja przeglądarka nie obsługuje elementu audio."
@@ -9528,38 +9533,38 @@ msgstr "zapisano:"
 msgid "New User Defaults"
 msgstr "Wartości domyślne nowych użytkowników"
 
-#: lib/modules/storage/web/settings.ex:316
+#: lib/modules/storage/web/settings.ex:331
 #, elixir-autogen, elixir-format
 msgid "Auto-variant generation disabled"
 msgstr "Automatyczne generowanie wariantów wyłączone"
 
-#: lib/modules/storage/web/settings.ex:315
+#: lib/modules/storage/web/settings.ex:330
 #, elixir-autogen, elixir-format
 msgid "Auto-variant generation enabled"
 msgstr "Automatyczne generowanie wariantów włączone"
 
-#: lib/modules/storage/web/settings.ex:385
+#: lib/modules/storage/web/settings.ex:400
 #, elixir-autogen, elixir-format
 msgid "Bucket deleted successfully"
 msgstr "Zasobnik został usunięty"
 
-#: lib/modules/storage/web/settings.ex:359
+#: lib/modules/storage/web/settings.ex:374
 #, elixir-autogen, elixir-format
 msgid "Bucket disabled successfully"
 msgstr "Zasobnik został wyłączony"
 
-#: lib/modules/storage/web/settings.ex:358
+#: lib/modules/storage/web/settings.ex:373
 #, elixir-autogen, elixir-format
 msgid "Bucket enabled successfully"
 msgstr "Zasobnik został włączony"
 
-#: lib/modules/storage/web/settings.ex:349
+#: lib/modules/storage/web/settings.ex:364
 #, elixir-autogen, elixir-format
 msgid "Bucket not found"
 msgstr "Nie znaleziono zasobnika"
 
-#: lib/modules/storage/web/settings.ex:100
-#: lib/modules/storage/web/settings.ex:233
+#: lib/modules/storage/web/settings.ex:105
+#: lib/modules/storage/web/settings.ex:244
 #, elixir-autogen, elixir-format
 msgid "Cannot set redundancy to %{count} copies. Only %{max} active bucket(s) available."
 msgstr "Nie można ustawić nadmiarowości na %{count} kopii. Dostępnych jest tylko %{max} aktywnych zasobników."
@@ -9569,49 +9574,49 @@ msgstr "Nie można ustawić nadmiarowości na %{count} kopii. Dostępnych jest t
 msgid "Current setting (%{count} copies) exceeds available buckets (%{max})."
 msgstr "Bieżące ustawienie (%{count} kopii) przekracza liczbę dostępnych zasobników (%{max})."
 
-#: lib/modules/storage/web/settings.ex:336
+#: lib/modules/storage/web/settings.ex:351
 #, elixir-autogen, elixir-format
 msgid "Default bucket updated"
 msgstr "Domyślny zasobnik zaktualizowany"
 
-#: lib/modules/storage/web/settings.ex:390
+#: lib/modules/storage/web/settings.ex:405
 #, elixir-autogen, elixir-format
 msgid "Failed to delete bucket"
 msgstr "Nie udało się usunąć zasobnika"
 
-#: lib/modules/storage/web/settings.ex:415
+#: lib/modules/storage/web/settings.ex:430
 #, elixir-autogen, elixir-format
 msgid "Failed to repair: %{reason}"
 msgstr "Nie udało się naprawić: %{reason}"
 
-#: lib/modules/storage/web/settings.ex:365
+#: lib/modules/storage/web/settings.ex:380
 #, elixir-autogen, elixir-format
 msgid "Failed to update bucket"
 msgstr "Nie udało się zaktualizować zasobnika"
 
-#: lib/modules/storage/web/settings.ex:341
+#: lib/modules/storage/web/settings.ex:356
 #, elixir-autogen, elixir-format
 msgid "Failed to update default bucket"
 msgstr "Nie udało się zaktualizować domyślnego zasobnika"
 
-#: lib/modules/storage/web/settings.ex:127
-#: lib/modules/storage/web/settings.ex:289
+#: lib/modules/storage/web/settings.ex:132
+#: lib/modules/storage/web/settings.ex:304
 #, elixir-autogen, elixir-format
 msgid "Failed to update redundancy settings"
 msgstr "Nie udało się zaktualizować ustawień nadmiarowości"
 
-#: lib/modules/storage/web/settings.ex:297
+#: lib/modules/storage/web/settings.ex:312
 #, elixir-autogen, elixir-format
 msgid "Failed to update storage settings"
 msgstr "Nie udało się zaktualizować ustawień magazynu"
 
-#: lib/modules/storage/web/settings.ex:293
-#: lib/modules/storage/web/settings.ex:323
+#: lib/modules/storage/web/settings.ex:308
+#: lib/modules/storage/web/settings.ex:338
 #, elixir-autogen, elixir-format
 msgid "Failed to update variant settings"
 msgstr "Nie udało się zaktualizować ustawień wariantów"
 
-#: lib/modules/storage/web/settings.ex:117
+#: lib/modules/storage/web/settings.ex:122
 #, elixir-autogen, elixir-format
 msgid "Redundancy settings updated to %{count} copy"
 msgid_plural "Redundancy settings updated to %{count} copies"
@@ -9619,12 +9624,12 @@ msgstr[0] "Ustawienia nadmiarowości zaktualizowane: %{count} kopia"
 msgstr[1] "Ustawienia nadmiarowości zaktualizowane: %{count} kopie"
 msgstr[2] "Ustawienia nadmiarowości zaktualizowane: %{count} kopii"
 
-#: lib/modules/storage/web/settings.ex:405
+#: lib/modules/storage/web/settings.ex:420
 #, elixir-autogen, elixir-format
 msgid "Storage module repaired: %{summary}"
 msgstr "Moduł pamięci naprawiony: %{summary}"
 
-#: lib/modules/storage/web/settings.ex:284
+#: lib/modules/storage/web/settings.ex:299
 #, elixir-autogen, elixir-format
 msgid "Storage settings updated successfully"
 msgstr "Ustawienia magazynu zostały zaktualizowane"
@@ -9700,7 +9705,7 @@ msgstr "Zatwierdź logowanie"
 msgid "Approve this sign-in?"
 msgstr "Zatwierdzić to logowanie?"
 
-#: lib/phoenix_kit_web/users/qr_login.ex:168
+#: lib/phoenix_kit_web/users/qr_login.ex:170
 #, elixir-autogen, elixir-format
 msgid "Approved — signing you in…"
 msgstr "Zatwierdzono — logowanie…"
@@ -9797,7 +9802,7 @@ msgstr "Przygotowywanie kodu…"
 msgid "QR Code"
 msgstr "Kod QR"
 
-#: lib/phoenix_kit_web/users/qr_login.ex:45
+#: lib/phoenix_kit_web/users/qr_login.ex:47
 #: lib/phoenix_kit_web/users/qr_login_confirm.ex:56
 #: lib/phoenix_kit_web/users/qr_login_confirm.ex:136
 #, elixir-autogen, elixir-format
@@ -9814,18 +9819,18 @@ msgstr "Żądanie odrzucone."
 msgid "Requested"
 msgstr "Zażądano"
 
-#: lib/phoenix_kit_web/users/qr_login.ex:165
+#: lib/phoenix_kit_web/users/qr_login.ex:167
 #, elixir-autogen, elixir-format
 msgid "Scan this code with your phone's camera, then approve the sign-in on your phone."
 msgstr "Zeskanuj ten kod kamerą telefonu, a następnie zatwierdź logowanie na telefonie."
 
-#: lib/phoenix_kit_web/users/qr_login.ex:171
+#: lib/phoenix_kit_web/users/qr_login.ex:173
 #, elixir-autogen, elixir-format
 msgid "Show a new code"
 msgstr "Pokaż nowy kod"
 
 #: lib/phoenix_kit_web/users/login.html.heex:118
-#: lib/phoenix_kit_web/users/qr_login.html.heex:4
+#: lib/phoenix_kit_web/users/qr_login.ex:30
 #: lib/phoenix_kit_web/users/qr_login.html.heex:7
 #, elixir-autogen, elixir-format
 msgid "Sign in with QR code"
@@ -9846,7 +9851,7 @@ msgstr "Zalogowano kodem QR."
 msgid "Tap Approve on your phone to finish signing in here."
 msgstr "Naciśnij „Zatwierdź” na telefonie, aby zakończyć logowanie tutaj."
 
-#: lib/phoenix_kit_web/users/qr_login.ex:169
+#: lib/phoenix_kit_web/users/qr_login.ex:171
 #, elixir-autogen, elixir-format
 msgid "The sign-in request was denied."
 msgstr "Żądanie logowania zostało odrzucone."
@@ -9857,7 +9862,7 @@ msgstr "Żądanie logowania zostało odrzucone."
 msgid "This QR sign-in link is invalid or has expired."
 msgstr "Ten link do logowania kodem QR jest nieprawidłowy lub wygasł."
 
-#: lib/phoenix_kit_web/users/qr_login.ex:170
+#: lib/phoenix_kit_web/users/qr_login.ex:172
 #, elixir-autogen, elixir-format
 msgid "This code expired."
 msgstr "Ten kod wygasł."
@@ -9946,33 +9951,33 @@ msgstr "Wyloguj się ze wszystkich kont"
 msgid "Or add via"
 msgstr "Lub dodaj przez"
 
-#: lib/phoenix_kit_web/users/qr_login.ex:64
+#: lib/phoenix_kit_web/users/qr_login.ex:66
 #: lib/phoenix_kit_web/users/referral_gate.ex:88
 #, elixir-autogen, elixir-format
 msgid "Too many attempts. Please try again shortly."
 msgstr "Zbyt wiele prób. Spróbuj ponownie za chwilę."
 
-#: lib/phoenix_kit/integrations/providers.ex:574
+#: lib/phoenix_kit/integrations/providers.ex:576
 #, elixir-autogen, elixir-format
 msgid "AI model access via xAI (Grok models)"
 msgstr "Dostęp do modeli AI przez xAI (modele Grok)"
 
-#: lib/phoenix_kit/integrations/providers.ex:832
+#: lib/phoenix_kit/integrations/providers.ex:834
 #, elixir-autogen, elixir-format
 msgid "AWS Simple Email Service (SMTP credentials via SES API)"
 msgstr "AWS Simple Email Service (dane SMTP przez API SES)"
 
-#: lib/phoenix_kit/integrations/providers.ex:831
+#: lib/phoenix_kit/integrations/providers.ex:833
 #, elixir-autogen, elixir-format
 msgid "Amazon SES"
 msgstr "Amazon SES"
 
-#: lib/phoenix_kit/integrations/providers.ex:1126
+#: lib/phoenix_kit/integrations/providers.ex:1128
 #, elixir-autogen, elixir-format
 msgid "Brevo API"
 msgstr "API Brevo"
 
-#: lib/phoenix_kit/integrations/providers.ex:610
+#: lib/phoenix_kit/integrations/providers.ex:612
 #, elixir-autogen, elixir-format
 msgid "Create an xAI account"
 msgstr "Utwórz konto xAI"
@@ -9982,37 +9987,37 @@ msgstr "Utwórz konto xAI"
 msgid "Email users when their account is signed in from a new device"
 msgstr "Wysyłaj e-mail do użytkowników, gdy ich konto zaloguje się z nowego urządzenia"
 
-#: lib/phoenix_kit/integrations/providers.ex:1037
+#: lib/phoenix_kit/integrations/providers.ex:1039
 #, elixir-autogen, elixir-format
 msgid "For Brevo: the SMTP key starting with xsmtpsib- (SMTP & API → SMTP tab) — not the API key (xkeysib-)."
 msgstr "Dla Brevo: klucz SMTP zaczynający się od xsmtpsib- (SMTP & API → zakładka SMTP), a nie klucz API (xkeysib-)."
 
-#: lib/phoenix_kit/integrations/providers.ex:1025
+#: lib/phoenix_kit/integrations/providers.ex:1027
 #, elixir-autogen, elixir-format
 msgid "For Brevo: your account's SMTP login, shown as <subaccount>@smtp-brevo.com under SMTP & API → SMTP."
 msgstr "Dla Brevo: login SMTP Twojego konta, pokazywany jako <subaccount>@smtp-brevo.com w SMTP & API → SMTP."
 
-#: lib/phoenix_kit/integrations/providers.ex:1146
+#: lib/phoenix_kit/integrations/providers.ex:1148
 #, elixir-autogen, elixir-format
 msgid "From Brevo → SMTP & API → API Keys. Starts with xkeysib- — not the SMTP key (xsmtpsib-)."
 msgstr "Z Brevo → SMTP & API → API Keys. Zaczyna się od xkeysib-, a nie klucz SMTP (xsmtpsib-)."
 
-#: lib/phoenix_kit/integrations/providers.ex:595
+#: lib/phoenix_kit/integrations/providers.ex:597
 #, elixir-autogen, elixir-format
 msgid "From console.x.ai/team/default/api-keys"
 msgstr "Z console.x.ai/team/default/api-keys"
 
-#: lib/phoenix_kit/integrations/providers.ex:626
+#: lib/phoenix_kit/integrations/providers.ex:628
 #, elixir-autogen, elixir-format
 msgid "Go to [API Keys](https://console.x.ai/team/default/api-keys)"
 msgstr "Przejdź do [API Keys](https://console.x.ai/team/default/api-keys)"
 
-#: lib/phoenix_kit/integrations/providers.ex:612
+#: lib/phoenix_kit/integrations/providers.ex:614
 #, elixir-autogen, elixir-format
 msgid "Go to [accounts.x.ai](https://accounts.x.ai) and sign up or log in"
 msgstr "Przejdź na [accounts.x.ai](https://accounts.x.ai) i zarejestruj się lub zaloguj"
 
-#: lib/phoenix_kit/integrations/providers.ex:618
+#: lib/phoenix_kit/integrations/providers.ex:620
 #, elixir-autogen, elixir-format
 msgid "Go to [console.x.ai](https://console.x.ai) → Billing and add credits"
 msgstr "Przejdź do [console.x.ai](https://console.x.ai) → Billing i dodaj kredyty"
@@ -10022,44 +10027,44 @@ msgstr "Przejdź do [console.x.ai](https://console.x.ai) → Billing i dodaj kre
 msgid "Login Notifications"
 msgstr "Powiadomienia o logowaniu"
 
-#: lib/phoenix_kit/integrations/providers.ex:1003
+#: lib/phoenix_kit/integrations/providers.ex:1005
 #, elixir-autogen, elixir-format
 msgid "Port"
 msgstr "Port"
 
-#: lib/phoenix_kit/integrations/providers.ex:725
-#: lib/phoenix_kit/integrations/providers.ex:865
-#: lib/phoenix_kit/integrations/providers.ex:949
+#: lib/phoenix_kit/integrations/providers.ex:727
+#: lib/phoenix_kit/integrations/providers.ex:867
+#: lib/phoenix_kit/integrations/providers.ex:951
 #, elixir-autogen, elixir-format
 msgid "Region"
 msgstr "Region"
 
-#: lib/phoenix_kit/integrations/providers.ex:980
+#: lib/phoenix_kit/integrations/providers.ex:982
 #, elixir-autogen, elixir-format
 msgid "SMTP"
 msgstr "SMTP"
 
-#: lib/phoenix_kit/integrations/providers.ex:994
+#: lib/phoenix_kit/integrations/providers.ex:996
 #, elixir-autogen, elixir-format
 msgid "SMTP Host"
 msgstr "Host SMTP"
 
-#: lib/phoenix_kit/integrations/providers.ex:1127
+#: lib/phoenix_kit/integrations/providers.ex:1129
 #, elixir-autogen, elixir-format
 msgid "Send email via the Brevo transactional email API"
 msgstr "Wysyłaj e-maile przez API e-maili transakcyjnych Brevo"
 
-#: lib/phoenix_kit/integrations/providers.ex:982
+#: lib/phoenix_kit/integrations/providers.ex:984
 #, elixir-autogen, elixir-format
 msgid "Universal SMTP relay — works with any vendor (Brevo, Mailgun, SendGrid, a self-hosted mail server, etc). Add one named connection per relay/account."
 msgstr "Uniwersalny przekaźnik SMTP — działa z każdym dostawcą (Brevo, Mailgun, SendGrid, własny serwer poczty itd.). Dodaj jedno nazwane połączenie na przekaźnik lub konto."
 
-#: lib/phoenix_kit/integrations/providers.ex:573
+#: lib/phoenix_kit/integrations/providers.ex:575
 #, elixir-autogen, elixir-format
 msgid "xAI"
 msgstr "xAI"
 
-#: lib/phoenix_kit/integrations/providers.ex:620
+#: lib/phoenix_kit/integrations/providers.ex:622
 #, elixir-autogen, elixir-format
 msgid "xAI requires a funded account before the API will return completions"
 msgstr "xAI wymaga zasilonego konta, aby API zwracało uzupełnienia"
@@ -10074,12 +10079,12 @@ msgstr "Aktywny teraz"
 msgid "Devices currently signed in to your account. If you don't recognize one, sign it out."
 msgstr "Urządzenia obecnie zalogowane na Twoje konto. Jeśli któregoś nie rozpoznajesz, wyloguj je."
 
-#: lib/phoenix_kit/users/login_alerts.ex:198
+#: lib/phoenix_kit/users/login_alerts.ex:229
 #, elixir-autogen, elixir-format
 msgid "New sign-in to your account from %{details}."
 msgstr "Nowe logowanie na Twoje konto z %{details}."
 
-#: lib/phoenix_kit/users/login_alerts.ex:197
+#: lib/phoenix_kit/users/login_alerts.ex:228
 #, elixir-autogen, elixir-format
 msgid "New sign-in to your account."
 msgstr "Nowe logowanie na Twoje konto."
@@ -10150,31 +10155,31 @@ msgstr "Według przeglądarki"
 msgid "By operating system"
 msgstr "Według systemu operacyjnego"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:299
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:301
 #, elixir-autogen, elixir-format
 msgid "Failed to save rotation"
 msgstr "Nie udało się zapisać obrotu"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:267
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:270
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:351
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:352
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:269
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:272
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:354
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:355
 #, elixir-autogen, elixir-format
 msgid "Hide details"
 msgstr "Ukryj szczegóły"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:298
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:300
 #, elixir-autogen, elixir-format
 msgid "Rotation saved"
 msgstr "Obrót zapisany"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:267
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:270
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:269
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:272
 #, elixir-autogen, elixir-format
 msgid "Show details"
 msgstr "Pokaż szczegóły"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3738
+#: lib/phoenix_kit_web/components/media_browser.ex:3931
 #, elixir-autogen, elixir-format
 msgid "Move %{count} folder and all its contents to trash?"
 msgid_plural "Move %{count} folders and all their contents to trash?"
@@ -10182,18 +10187,18 @@ msgstr[0] "Przenieść %{count} folder wraz z całą zawartością do kosza?"
 msgstr[1] "Przenieść %{count} foldery wraz z całą zawartością do kosza?"
 msgstr[2] "Przenieść %{count} folderów wraz z całą zawartością do kosza?"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3731
+#: lib/phoenix_kit_web/components/media_browser.ex:3924
 #, elixir-autogen, elixir-format
 msgid "Move %{files} and %{folders} (including all folder contents) to trash?"
 msgstr "Przenieść %{files} i %{folders} (wraz z całą zawartością folderów) do kosza?"
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1486
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2113
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2131
 #, elixir-autogen, elixir-format
 msgid "Move '%{name}' and all its contents to trash?"
 msgstr "Przenieść „%{name}” wraz z całą zawartością do kosza?"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3714
+#: lib/phoenix_kit_web/components/media_browser.ex:3907
 #, elixir-autogen, elixir-format
 msgid "Permanently delete %{count} folder and all its contents? This cannot be undone."
 msgid_plural "Permanently delete %{count} folders and all their contents? This cannot be undone."
@@ -10201,13 +10206,13 @@ msgstr[0] "Trwale usunąć %{count} folder wraz z całą zawartością? Tej oper
 msgstr[1] "Trwale usunąć %{count} foldery wraz z całą zawartością? Tej operacji nie można cofnąć."
 msgstr[2] "Trwale usunąć %{count} folderów wraz z całą zawartością? Tej operacji nie można cofnąć."
 
-#: lib/phoenix_kit_web/components/media_browser.ex:3707
+#: lib/phoenix_kit_web/components/media_browser.ex:3900
 #, elixir-autogen, elixir-format
 msgid "Permanently delete %{files} and %{folders} (including all folder contents)? This cannot be undone."
 msgstr "Trwale usunąć %{files} i %{folders} (wraz z całą zawartością folderów)? Tej operacji nie można cofnąć."
 
 #: lib/phoenix_kit_web/components/media_browser.html.heex:1481
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2108
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2126
 #, elixir-autogen, elixir-format
 msgid "Permanently delete '%{name}' and all its contents? This cannot be undone."
 msgstr "Trwale usunąć „%{name}” wraz z całą zawartością? Tej operacji nie można cofnąć."
@@ -10393,7 +10398,7 @@ msgstr "Cała wychodząca poczta systemowa — uwierzytelnianie, powiadomienia �
 msgid "Allow \"Keep me logged in\" (persistent sessions)"
 msgstr "Zezwól na „Nie wylogowuj mnie” (sesje trwałe)"
 
-#: lib/phoenix_kit/integrations/providers.ex:1077
+#: lib/phoenix_kit/integrations/providers.ex:1079
 #, elixir-autogen, elixir-format
 msgid "Always"
 msgstr "Zawsze"
@@ -10408,12 +10413,12 @@ msgstr "Nie można użyć konta właściciela."
 msgid "Applies site-wide wherever the rich-text editor is rendered (posts, comments). Users can still switch modes inside the editor."
 msgstr "Obowiązuje w całej witrynie wszędzie, gdzie wyświetlany jest edytor tekstu sformatowanego (wpisy, komentarze). Użytkownicy nadal mogą zmieniać tryb w edytorze."
 
-#: lib/phoenix_kit/integrations/providers.ex:1058
+#: lib/phoenix_kit/integrations/providers.ex:1060
 #, elixir-autogen, elixir-format
 msgid "Auto (from port)"
 msgstr "Automatycznie (na podstawie portu)"
 
-#: lib/phoenix_kit/integrations/providers.ex:1054
+#: lib/phoenix_kit/integrations/providers.ex:1056
 #, elixir-autogen, elixir-format
 msgid "Auto follows the port: 465 means implicit TLS, anything else STARTTLS (required when a login is set). Choose explicitly for a relay that ignores that convention."
 msgstr "„Automatycznie” zależy od portu: 465 oznacza niejawny TLS, każdy inny STARTTLS (wymagany, gdy ustawiono login). Wybierz ręcznie dla przekaźnika, który nie stosuje tej konwencji."
@@ -10428,12 +10433,12 @@ msgstr "Grupuj częste typy w okresowe podsumowania — ustaw częstotliwość d
 msgid "Best,\nThe Team"
 msgstr "Z poważaniem,\nzespół"
 
-#: lib/phoenix_kit/integrations/providers.ex:1174
+#: lib/phoenix_kit/integrations/providers.ex:1176
 #, elixir-autogen, elixir-format
 msgid "Bot Token"
 msgstr "Token bota"
 
-#: lib/phoenix_kit/integrations/providers.ex:1194
+#: lib/phoenix_kit/integrations/providers.ex:1196
 #, elixir-autogen, elixir-format
 msgid "BotFather replies with an HTTP API token like `123456789:ABCdef...` — copy it"
 msgstr "BotFather odpowie tokenem API HTTP w postaci `123456789:ABCdef...` — skopiuj go"
@@ -10443,7 +10448,7 @@ msgstr "BotFather odpowie tokenem API HTTP w postaci `123456789:ABCdef...` — s
 msgid "Brevo error %{status}"
 msgstr "Błąd Brevo %{status}"
 
-#: lib/phoenix_kit/integrations/providers.ex:1098
+#: lib/phoenix_kit/integrations/providers.ex:1100
 #, elixir-autogen, elixir-format
 msgid "CA certificate (PEM)"
 msgstr "Certyfikat CA (PEM)"
@@ -10453,7 +10458,7 @@ msgstr "Certyfikat CA (PEM)"
 msgid "Cannot delete send profile"
 msgstr "Nie można usunąć profilu wysyłki"
 
-#: lib/phoenix_kit/integrations/providers.ex:1083
+#: lib/phoenix_kit/integrations/providers.ex:1085
 #, elixir-autogen, elixir-format
 msgid "Certificate verification"
 msgstr "Weryfikacja certyfikatu"
@@ -10509,7 +10514,7 @@ msgstr "Połączenie działa"
 msgid "Content Editor"
 msgstr "Edytor treści"
 
-#: lib/phoenix_kit/integrations/providers.ex:1192
+#: lib/phoenix_kit/integrations/providers.ex:1194
 #, elixir-autogen, elixir-format
 msgid "Copy the bot token"
 msgstr "Skopiuj token bota"
@@ -10543,7 +10548,7 @@ msgstr "Nie udało się połączyć z Telegramem"
 msgid "Could not reach the SMTP server"
 msgstr "Nie udało się połączyć z serwerem SMTP"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2099
+#: lib/phoenix_kit_web/components/media_browser.ex:2220
 #, elixir-autogen, elixir-format
 msgid "Could not rotate the image."
 msgstr "Nie udało się obrócić obrazu."
@@ -10593,7 +10598,7 @@ msgstr "Nie udało się zaktualizować ustawień podsumowań."
 msgid "Could not update default send integration"
 msgstr "Nie udało się zaktualizować domyślnej integracji wysyłki"
 
-#: lib/phoenix_kit/integrations/providers.ex:1185
+#: lib/phoenix_kit/integrations/providers.ex:1187
 #, elixir-autogen, elixir-format
 msgid "Create a bot with BotFather"
 msgstr "Utwórz bota za pomocą BotFather"
@@ -10669,7 +10674,7 @@ msgstr "Wyłączone profile nigdy nie są używane do wysyłki, nawet jako domy�
 msgid "Dismiss"
 msgstr "Odrzuć"
 
-#: lib/phoenix_kit/integrations/providers.ex:1093
+#: lib/phoenix_kit/integrations/providers.ex:1095
 #, elixir-autogen, elixir-format
 msgid "Do not verify"
 msgstr "Nie weryfikuj"
@@ -10694,7 +10699,7 @@ msgstr "Edytuj ustawienia profilu wysyłki"
 msgid "Edit send profile: %{name}"
 msgstr "Edycja profilu wysyłki: %{name}"
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:239
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:241
 #, elixir-autogen, elixir-format
 msgid "Email confirmed. Welcome!"
 msgstr "E-mail potwierdzony. Witamy!"
@@ -10704,7 +10709,7 @@ msgstr "E-mail potwierdzony. Witamy!"
 msgid "Email-capable integrations"
 msgstr "Integracje z obsługą e-maili"
 
-#: lib/phoenix_kit/integrations/providers.ex:1049
+#: lib/phoenix_kit/integrations/providers.ex:1051
 #, elixir-autogen, elixir-format
 msgid "Encryption"
 msgstr "Szyfrowanie"
@@ -10724,7 +10729,7 @@ msgstr "Co 12 godzin"
 msgid "Everyone who starts the bot"
 msgstr "Wszyscy, którzy uruchomią bota"
 
-#: lib/phoenix_kit/integrations/providers.ex:1103
+#: lib/phoenix_kit/integrations/providers.ex:1105
 #, elixir-autogen, elixir-format
 msgid "For a private or self-signed relay certificate. Replaces the system CA store for this connection only."
 msgstr "Dla prywatnego lub samopodpisanego certyfikatu przekaźnika. Zastępuje systemowy magazyn CA tylko dla tego połączenia."
@@ -10735,7 +10740,7 @@ msgstr "Dla prywatnego lub samopodpisanego certyfikatu przekaźnika. Zastępuje 
 msgid "From"
 msgstr "Nadawca"
 
-#: lib/phoenix_kit/integrations/providers.ex:1178
+#: lib/phoenix_kit/integrations/providers.ex:1180
 #, elixir-autogen, elixir-format
 msgid "From @BotFather → /newbot (or /token for an existing bot)"
 msgstr "Od @BotFather → /newbot (lub /token dla istniejącego bota)"
@@ -10762,7 +10767,7 @@ msgstr "Pełny dostęp"
 msgid "Hourly"
 msgstr "Co godzinę"
 
-#: lib/phoenix_kit/integrations/providers.ex:1076
+#: lib/phoenix_kit/integrations/providers.ex:1078
 #, elixir-autogen, elixir-format
 msgid "If offered (default)"
 msgstr "Jeśli oferowane (domyślnie)"
@@ -10772,7 +10777,7 @@ msgstr "Jeśli oferowane (domyślnie)"
 msgid "Immediate"
 msgstr "Natychmiast"
 
-#: lib/phoenix_kit/integrations/providers.ex:1059
+#: lib/phoenix_kit/integrations/providers.ex:1061
 #, elixir-autogen, elixir-format
 msgid "Implicit TLS / SMTPS"
 msgstr "Niejawny TLS / SMTPS"
@@ -10847,7 +10852,7 @@ msgstr "Nieprawidłowy limit czasu: %{value}"
 msgid "Leave a field blank to fall back to the application config or built-in default."
 msgstr "Pozostaw pole puste, aby użyć konfiguracji aplikacji lub wbudowanej wartości domyślnej."
 
-#: lib/phoenix_kit/integrations/providers.ex:1114
+#: lib/phoenix_kit/integrations/providers.ex:1116
 #, elixir-autogen, elixir-format
 msgid "Leave blank for the gen_smtp default."
 msgstr "Pozostaw puste, aby użyć domyślnej wartości gen_smtp."
@@ -10972,7 +10977,7 @@ msgstr "Nie znaleziono systemowych certyfikatów CA, więc nie można zweryfikow
 msgid "No unread notifications"
 msgstr "Brak nieprzeczytanych powiadomień"
 
-#: lib/phoenix_kit/integrations/providers.ex:1062
+#: lib/phoenix_kit/integrations/providers.ex:1064
 #, elixir-autogen, elixir-format
 msgid "None — plaintext"
 msgstr "Brak — bez szyfrowania"
@@ -11012,12 +11017,12 @@ msgstr "Tylko właściciel może zalogować się jako inny administrator."
 msgid "Only me"
 msgstr "Tylko ja"
 
-#: lib/phoenix_kit/integrations/providers.ex:1187
+#: lib/phoenix_kit/integrations/providers.ex:1189
 #, elixir-autogen, elixir-format
 msgid "Open [@BotFather](https://t.me/BotFather) in Telegram"
 msgstr "Otwórz [@BotFather](https://t.me/BotFather) w Telegramie"
 
-#: lib/phoenix_kit/integrations/providers.ex:1197
+#: lib/phoenix_kit/integrations/providers.ex:1199
 #, elixir-autogen, elixir-format
 msgid "Paste the token into the form above and press **Test Connection**"
 msgstr "Wklej token do formularza powyżej i naciśnij **Testuj połączenie**"
@@ -11095,21 +11100,22 @@ msgstr "Adres odpowiedzi"
 msgid "Require email confirmation before using the app"
 msgstr "Wymagaj potwierdzenia e-maila przed korzystaniem z aplikacji"
 
+#: lib/phoenix_kit_web/components/image_editor.ex:968
 #: lib/phoenix_kit_web/live/notifications/inbox.ex:343
 #, elixir-autogen, elixir-format
 msgid "Restore"
 msgstr "Przywróć"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2940
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1615
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2245
+#: lib/phoenix_kit_web/components/media_browser.ex:3099
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1633
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2280
 #, elixir-autogen, elixir-format
 msgid "Rotate left"
 msgstr "Obróć w lewo"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:2949
-#: lib/phoenix_kit_web/components/media_browser.html.heex:1624
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2254
+#: lib/phoenix_kit_web/components/media_browser.ex:3108
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1642
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2289
 #, elixir-autogen, elixir-format
 msgid "Rotate right"
 msgstr "Obróć w prawo"
@@ -11129,12 +11135,12 @@ msgstr "SMTP nie ma ustawień dostawcy na poziomie profilu — przekaźnik, port
 msgid "SMTP server rejected the connection"
 msgstr "Serwer SMTP odrzucił połączenie"
 
-#: lib/phoenix_kit/integrations/providers.ex:1061
+#: lib/phoenix_kit/integrations/providers.ex:1063
 #, elixir-autogen, elixir-format
 msgid "STARTTLS — if offered"
 msgstr "STARTTLS — jeśli oferowane"
 
-#: lib/phoenix_kit/integrations/providers.ex:1060
+#: lib/phoenix_kit/integrations/providers.ex:1062
 #, elixir-autogen, elixir-format
 msgid "STARTTLS — required"
 msgstr "STARTTLS — wymagane"
@@ -11154,12 +11160,12 @@ msgstr "Zapisz dane nadawcy"
 msgid "Select an integration..."
 msgstr "Wybierz integrację…"
 
-#: lib/phoenix_kit/integrations/providers.ex:1188
+#: lib/phoenix_kit/integrations/providers.ex:1190
 #, elixir-autogen, elixir-format
 msgid "Send **/newbot** and follow the prompts to name your bot"
 msgstr "Wyślij **/newbot** i podążaj za instrukcjami, aby nazwać bota"
 
-#: lib/phoenix_kit/integrations/providers.ex:1163
+#: lib/phoenix_kit/integrations/providers.ex:1165
 #, elixir-autogen, elixir-format
 msgid "Send messages and notifications via your own Telegram bot"
 msgstr "Wysyłaj wiadomości i powiadomienia przez własnego bota Telegram"
@@ -11245,7 +11251,7 @@ msgstr "Uzgadnianie TLS nie powiodło się"
 msgid "Tags"
 msgstr "Tagi"
 
-#: lib/phoenix_kit/integrations/providers.ex:1162
+#: lib/phoenix_kit/integrations/providers.ex:1164
 #: lib/phoenix_kit/notifications/channels/telegram.ex:36
 #, elixir-autogen, elixir-format
 msgid "Telegram"
@@ -11318,7 +11324,7 @@ msgstr "Ten profil wysyłki zostanie trwale usunięty."
 msgid "This sender address cannot be logged"
 msgstr "Tego adresu nadawcy nie można zapisać w dzienniku"
 
-#: lib/phoenix_kit/integrations/providers.ex:1110
+#: lib/phoenix_kit/integrations/providers.ex:1112
 #, elixir-autogen, elixir-format
 msgid "Timeout (seconds)"
 msgstr "Limit czasu (sekundy)"
@@ -11329,7 +11335,7 @@ msgstr "Limit czasu (sekundy)"
 msgid "Transport"
 msgstr "Transport"
 
-#: lib/phoenix_kit/integrations/providers.ex:1088
+#: lib/phoenix_kit/integrations/providers.ex:1090
 #, elixir-autogen, elixir-format
 msgid "Turning verification off means the login travels to whoever answers, including an impostor. Use a CA certificate below instead whenever you can."
 msgstr "Wyłączenie weryfikacji oznacza, że dane logowania trafią do każdego, kto odpowie, także do oszusta. Gdy tylko możesz, użyj zamiast tego certyfikatu CA poniżej."
@@ -11364,7 +11370,7 @@ msgstr "Używane, gdy poniżej nie wybrano domyślnej integracji transakcyjnej."
 msgid "User not found."
 msgstr "Nie znaleziono użytkownika."
 
-#: lib/phoenix_kit/integrations/providers.ex:1092
+#: lib/phoenix_kit/integrations/providers.ex:1094
 #, elixir-autogen, elixir-format
 msgid "Verify (default)"
 msgstr "Weryfikuj (domyślnie)"
@@ -11374,7 +11380,7 @@ msgstr "Weryfikuj (domyślnie)"
 msgid "Where a freshly registered account lands. Empty = after-login path."
 msgstr "Gdzie trafia świeżo zarejestrowane konto. Puste = ścieżka po zalogowaniu."
 
-#: lib/phoenix_kit/integrations/providers.ex:1072
+#: lib/phoenix_kit/integrations/providers.ex:1074
 #, elixir-autogen, elixir-format
 msgid "Whether to send the login at all. “If offered” follows the relay; “Never” is for relays that authenticate by IP."
 msgstr "Czy w ogóle wysyłać dane logowania. „Jeśli oferowane” zależy od przekaźnika; „Nigdy” dotyczy przekaźników uwierzytelniających po IP."
@@ -11484,7 +11490,7 @@ msgstr "Pliki audio"
 msgid "Click on an audio file to select it"
 msgstr "Kliknij plik audio, aby go wybrać"
 
-#: lib/phoenix_kit_web/components/media_browser.ex:334
+#: lib/phoenix_kit_web/components/media_browser.ex:371
 #: lib/phoenix_kit_web/live/components/media_selector_modal.ex:355
 #, elixir-autogen, elixir-format
 msgid "Only audio files can be added here."
@@ -11668,12 +11674,12 @@ msgstr "Nie masz uprawnień do zarządzania danymi logowania tego użytkownika"
 msgid "AI Discovery"
 msgstr "Wykrywalność przez AI"
 
-#: lib/phoenix_kit/integrations/providers.ex:703
+#: lib/phoenix_kit/integrations/providers.ex:705
 #, elixir-autogen, elixir-format
 msgid "AWS Bedrock LLMs via a Bedrock API key (OpenAI-compatible endpoint: gpt-oss models; the rest via native Converse)"
 msgstr "Modele LLM AWS Bedrock przez klucz API Bedrock (punkt końcowy zgodny z OpenAI: modele gpt-oss; pozostałe przez natywne Converse)"
 
-#: lib/phoenix_kit/integrations/providers.ex:720
+#: lib/phoenix_kit/integrations/providers.ex:722
 #, elixir-autogen, elixir-format
 msgid "AWS console → Amazon Bedrock → API keys (long-term key)"
 msgstr "Konsola AWS → Amazon Bedrock → API keys (klucz długoterminowy)"
@@ -11698,7 +11704,7 @@ msgstr "Charakter doradczy: każdy może wysłać dowolny User-Agent, więc scra
 msgid "Allowed"
 msgstr "Dozwolone"
 
-#: lib/phoenix_kit/integrations/providers.ex:701
+#: lib/phoenix_kit/integrations/providers.ex:703
 #, elixir-autogen, elixir-format
 msgid "Amazon Bedrock"
 msgstr "Amazon Bedrock"
@@ -11713,7 +11719,7 @@ msgstr "Odpowiadaj kodem 403 na żądania, których User-Agent pasuje do zabloko
 msgid "Auth mail carries single-use tokens, and /dev/mailbox has no authentication — anyone who can reach this server can read them. Only for closed environments."
 msgstr "Wiadomości uwierzytelniające zawierają tokeny jednorazowe, a /dev/mailbox nie ma żadnego uwierzytelniania — przeczyta je każdy, kto dosięgnie tego serwera. Tylko dla zamkniętych środowisk."
 
-#: lib/phoenix_kit/integrations/providers.ex:716
+#: lib/phoenix_kit/integrations/providers.ex:718
 #, elixir-autogen, elixir-format
 msgid "Bedrock API key"
 msgstr "Klucz API Bedrock"
@@ -11749,12 +11755,12 @@ msgstr "Domyślnie wzmianka pokazuje to, co nazywa, nawet osobie bez dostępu �
 msgid "Control how search engines and AI bots crawl and index this site"
 msgstr "Określ, jak wyszukiwarki i boty AI skanują i indeksują tę witrynę"
 
-#: lib/phoenix_kit/integrations/providers.ex:744
+#: lib/phoenix_kit/integrations/providers.ex:746
 #, elixir-autogen, elixir-format
 msgid "Copy the key (shown once, `ABSK…`) and paste it into the form above"
 msgstr "Skopiuj klucz (pokazywany tylko raz, `ABSK…`) i wklej go do formularza powyżej"
 
-#: lib/phoenix_kit/integrations/providers.ex:820
+#: lib/phoenix_kit/integrations/providers.ex:822
 #, elixir-autogen, elixir-format
 msgid "Copy the token and paste it into the form above"
 msgstr "Skopiuj token i wklej go do formularza powyżej"
@@ -11790,22 +11796,22 @@ msgstr "Roboty indeksujące"
 msgid "Crawlers module is disabled. Enable it from the Modules page to configure settings."
 msgstr "Moduł robotów indeksujących jest wyłączony. Włącz go na stronie Moduły, aby skonfigurować ustawienia."
 
-#: lib/phoenix_kit/integrations/providers.ex:736
+#: lib/phoenix_kit/integrations/providers.ex:738
 #, elixir-autogen, elixir-format
 msgid "Create a Bedrock API key"
 msgstr "Utwórz klucz API Bedrock"
 
-#: lib/phoenix_kit/integrations/providers.ex:812
+#: lib/phoenix_kit/integrations/providers.ex:814
 #, elixir-autogen, elixir-format
 msgid "Create a token"
 msgstr "Utwórz token"
 
-#: lib/phoenix_kit/integrations/providers.ex:876
+#: lib/phoenix_kit/integrations/providers.ex:878
 #, elixir-autogen, elixir-format
 msgid "Create an IAM user with SES access"
 msgstr "Utwórz użytkownika IAM z dostępem do SES"
 
-#: lib/phoenix_kit/integrations/providers.ex:881
+#: lib/phoenix_kit/integrations/providers.ex:883
 #, elixir-autogen, elixir-format
 msgid "Create an access key for that user (Security credentials → Create access key) and paste the ID and secret above"
 msgstr "Utwórz klucz dostępu dla tego użytkownika (Security credentials → Create access key) i wklej powyżej identyfikator oraz sekret"
@@ -11820,7 +11826,7 @@ msgstr "Zdecyduj, kto może czytać tę witrynę — dyrektywy indeksowania, dos
 msgid "Deliver development mail to /dev/mailbox"
 msgstr "Dostarczaj pocztę deweloperską do /dev/mailbox"
 
-#: lib/phoenix_kit/integrations/providers.ex:752
+#: lib/phoenix_kit/integrations/providers.ex:754
 #, elixir-autogen, elixir-format
 msgid "Enable model access"
 msgstr "Włącz dostęp do modeli"
@@ -11841,17 +11847,17 @@ msgstr "Egzekwowanie"
 msgid "Failed to update crawler settings"
 msgstr "Nie udało się zaktualizować ustawień robotów indeksujących"
 
-#: lib/phoenix_kit/integrations/providers.ex:785
+#: lib/phoenix_kit/integrations/providers.ex:787
 #, elixir-autogen, elixir-format
 msgid "GitHub"
 msgstr "GitHub"
 
-#: lib/phoenix_kit/integrations/providers.ex:787
+#: lib/phoenix_kit/integrations/providers.ex:789
 #, elixir-autogen, elixir-format
 msgid "GitHub API token — org statistics, repositories (read-only is enough)"
 msgstr "Token API GitHub — statystyki organizacji, repozytoria (wystarczy tylko do odczytu)"
 
-#: lib/phoenix_kit/integrations/providers.ex:814
+#: lib/phoenix_kit/integrations/providers.ex:816
 #, elixir-autogen, elixir-format
 msgid "Go to [Fine-grained tokens](https://github.com/settings/personal-access-tokens) and click **Generate new token**"
 msgstr "Przejdź do [Fine-grained tokens](https://github.com/settings/personal-access-tokens) i kliknij **Generate new token**"
@@ -11866,22 +11872,22 @@ msgstr "Pogrupowane według powodu odwiedzin. Zablokowanie grupy zapisuje ją w 
 msgid "Hide titles of records the reader can't open"
 msgstr "Ukrywaj tytuły rekordów, których czytelnik nie może otworzyć"
 
-#: lib/phoenix_kit/integrations/providers.ex:754
+#: lib/phoenix_kit/integrations/providers.ex:756
 #, elixir-autogen, elixir-format
 msgid "In [Bedrock → Model access](https://console.aws.amazon.com/bedrock/home#/modelaccess) enable the models you plan to call — a key with no enabled models validates but cannot complete"
 msgstr "W [Bedrock → Model access](https://console.aws.amazon.com/bedrock/home#/modelaccess) włącz modele, które zamierzasz wywoływać — klucz bez włączonych modeli przechodzi walidację, ale nie wykona uzupełnienia"
 
-#: lib/phoenix_kit/integrations/providers.ex:768
+#: lib/phoenix_kit/integrations/providers.ex:770
 #, elixir-autogen, elixir-format
 msgid "In the AI module, create an endpoint pointing at this connection with a `gpt-oss` model and a base URL in the SAME region as this key"
 msgstr "W module AI utwórz punkt końcowy wskazujący na to połączenie, z modelem `gpt-oss` i bazowym adresem URL w TYM SAMYM regionie co ten klucz"
 
-#: lib/phoenix_kit/integrations/providers.ex:878
+#: lib/phoenix_kit/integrations/providers.ex:880
 #, elixir-autogen, elixir-format
 msgid "In the [IAM console](https://console.aws.amazon.com/iam/home#/users) create a user for programmatic access and attach an SES policy (least privilege: `ses:SendEmail`/`ses:SendRawEmail`; docs: [SES setup](https://docs.aws.amazon.com/ses/latest/dg/setting-up.html))"
 msgstr "W [konsoli IAM](https://console.aws.amazon.com/iam/home#/users) utwórz użytkownika do dostępu programowego i dołącz politykę SES (najmniejsze uprawnienia: `ses:SendEmail`/`ses:SendRawEmail`; dokumentacja: [SES setup](https://docs.aws.amazon.com/ses/latest/dg/setting-up.html))"
 
-#: lib/phoenix_kit/integrations/providers.ex:889
+#: lib/phoenix_kit/integrations/providers.ex:891
 #, elixir-autogen, elixir-format
 msgid "In the [SES console](https://console.aws.amazon.com/ses/home#/identities) verify your domain or sender address — SES refuses to send from unverified identities"
 msgstr "W [konsoli SES](https://console.aws.amazon.com/ses/home#/identities) zweryfikuj swoją domenę lub adres nadawcy — SES odmawia wysyłki z niezweryfikowanych tożsamości"
@@ -11926,7 +11932,7 @@ msgstr "Wzmianki i odnośniki do rekordów"
 msgid "Model catalog in %{region}: %{count} (grants are configured separately)"
 msgstr "Katalog modeli w regionie %{region}: %{count} (uprawnienia konfiguruje się osobno)"
 
-#: lib/phoenix_kit/integrations/providers.ex:892
+#: lib/phoenix_kit/integrations/providers.ex:894
 #, elixir-autogen, elixir-format
 msgid "New accounts start in the SES sandbox (verified recipients only) — [request production access](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html) before real sending"
 msgstr "Nowe konta zaczynają w piaskownicy SES (tylko zweryfikowani odbiorcy) — [poproś o dostęp produkcyjny](https://docs.aws.amazon.com/ses/latest/dg/request-production-access.html) przed prawdziwą wysyłką"
@@ -11956,7 +11962,7 @@ msgstr "Nie wyświetlane na tej stronie"
 msgid "Note (optional)"
 msgstr "Notatka (opcjonalnie)"
 
-#: lib/phoenix_kit/integrations/providers.ex:738
+#: lib/phoenix_kit/integrations/providers.ex:740
 #, elixir-autogen, elixir-format
 msgid "Open the [Bedrock console → API keys](https://console.aws.amazon.com/bedrock/home#/api-keys) and generate a **long-term** key (docs: [Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html))"
 msgstr "Otwórz [konsolę Bedrock → API keys](https://console.aws.amazon.com/bedrock/home#/api-keys) i wygeneruj klucz **długoterminowy** (dokumentacja: [Bedrock API keys](https://docs.aws.amazon.com/bedrock/latest/userguide/api-keys.html))"
@@ -11966,7 +11972,7 @@ msgstr "Otwórz [konsolę Bedrock → API keys](https://console.aws.amazon.com/b
 msgid "Optional markdown: a summary paragraph, key links, docs pointers…"
 msgstr "Opcjonalny markdown: akapit podsumowania, najważniejsze odnośniki, wskazówki do dokumentacji…"
 
-#: lib/phoenix_kit/integrations/providers.ex:741
+#: lib/phoenix_kit/integrations/providers.ex:743
 #, elixir-autogen, elixir-format
 msgid "Or attach one to an existing IAM user: [IAM console](https://console.aws.amazon.com/iam/home#/users) → user → Security credentials → Bedrock API keys"
 msgstr "Albo dołącz go do istniejącego użytkownika IAM: [konsola IAM](https://console.aws.amazon.com/iam/home#/users) → użytkownik → Security credentials → Bedrock API keys"
@@ -11976,7 +11982,7 @@ msgstr "Albo dołącz go do istniejącego użytkownika IAM: [konsola IAM](https:
 msgid "Paste the verification content Google Search Console or Bing Webmaster Tools gives you — the meta tags are added to every layout head. Pasting the whole <meta> tag also works; the content value is extracted."
 msgstr "Wklej treść weryfikacyjną otrzymaną z Google Search Console lub Bing Webmaster Tools — metatagi zostaną dodane do sekcji head każdego układu. Można też wkleić cały tag <meta>; wartość content zostanie z niego wyodrębniona."
 
-#: lib/phoenix_kit/integrations/providers.ex:801
+#: lib/phoenix_kit/integrations/providers.ex:803
 #, elixir-autogen, elixir-format
 msgid "Personal access token"
 msgstr "Osobisty token dostępu"
@@ -11986,7 +11992,7 @@ msgstr "Osobisty token dostępu"
 msgid "PhoenixKit does not serve this file — it is yours, served from priv/static before any route is consulted. This is the complete file your toggles above describe: paste it into priv/static/robots.txt."
 msgstr "PhoenixKit nie serwuje tego pliku — należy on do Ciebie i jest serwowany z priv/static, zanim sprawdzona zostanie jakakolwiek trasa. Oto kompletny plik opisany przez powyższe przełączniki: wklej go do priv/static/robots.txt."
 
-#: lib/phoenix_kit/integrations/providers.ex:757
+#: lib/phoenix_kit/integrations/providers.ex:759
 #, elixir-autogen, elixir-format
 msgid "Pick the region where access was granted; the AI endpoint's base URL must use the same region"
 msgstr "Wybierz region, w którym przyznano dostęp; bazowy adres URL punktu końcowego AI musi używać tego samego regionu"
@@ -11996,7 +12002,7 @@ msgstr "Wybierz region, w którym przyznano dostęp; bazowy adres URL punktu ko�
 msgid "Preview of the served file:"
 msgstr "Podgląd serwowanego pliku:"
 
-#: lib/phoenix_kit/integrations/providers.ex:817
+#: lib/phoenix_kit/integrations/providers.ex:819
 #, elixir-autogen, elixir-format
 msgid "Repository access: **Public repositories (read-only)** — no extra permissions needed for public-org statistics"
 msgstr "Dostęp do repozytoriów: **Public repositories (read-only)** — statystyki publicznych organizacji nie wymagają dodatkowych uprawnień"
@@ -12026,12 +12032,12 @@ msgstr "Wysyłanie…"
 msgid "Sign in to request access."
 msgstr "Zaloguj się, aby poprosić o dostęp."
 
-#: lib/phoenix_kit/integrations/providers.ex:765
+#: lib/phoenix_kit/integrations/providers.ex:767
 #, elixir-autogen, elixir-format
 msgid "The OpenAI-compatible endpoint (`…/openai/v1`) currently serves only the `openai.gpt-oss-*` models — Anthropic and the other Bedrock models answer on the native Converse API with the same key"
 msgstr "Punkt końcowy zgodny z OpenAI (`…/openai/v1`) obsługuje obecnie wyłącznie modele `openai.gpt-oss-*` — Anthropic i pozostałe modele Bedrock odpowiadają w natywnym API Converse przy użyciu tego samego klucza"
 
-#: lib/phoenix_kit/integrations/providers.ex:747
+#: lib/phoenix_kit/integrations/providers.ex:749
 #, elixir-autogen, elixir-format
 msgid "The key's IAM identity must allow the `bedrock:CallWithBearerToken` action — without it every Bearer call answers 403 even when invoke permissions are in place."
 msgstr "Tożsamość IAM klucza musi zezwalać na akcję `bedrock:CallWithBearerToken` — bez niej każde wywołanie z tokenem Bearer odpowiada kodem 403, nawet gdy uprawnienia do wywołań są nadane."
@@ -12051,7 +12057,7 @@ msgstr "Przełącznik noindex i robots.txt to osobne mechanizmy: noindex to meta
 msgid "The other half of bot policy: a markdown summary telling AI assistants what this site is about, served at"
 msgstr "Druga połowa polityki wobec botów: podsumowanie w markdownie mówiące asystentom AI, czego dotyczy ta witryna, serwowane pod"
 
-#: lib/phoenix_kit/integrations/providers.ex:897
+#: lib/phoenix_kit/integrations/providers.ex:899
 #, elixir-autogen, elixir-format
 msgid "This connection stores the credential. The full sending pipeline — configuration set, SNS topic, SQS event queue, delivery tracking — is configured in Admin → Settings → Emails, which can select this connection as its credential source."
 msgstr "To połączenie przechowuje poświadczenie. Cały potok wysyłki — configuration set, temat SNS, kolejka zdarzeń SQS, śledzenie doręczeń — konfiguruje się w Admin → Ustawienia → E-maile, gdzie można wskazać to połączenie jako źródło poświadczeń."
@@ -12068,7 +12074,7 @@ msgstr "Wpisz @, aby wspomnieć o kimś, lub #, aby podlinkować rekord."
 msgid "Unread · %{day}"
 msgstr "Nieprzeczytane · %{day}"
 
-#: lib/phoenix_kit/integrations/providers.ex:763
+#: lib/phoenix_kit/integrations/providers.ex:765
 #, elixir-autogen, elixir-format
 msgid "Use it from the AI module"
 msgstr "Użyj go z modułu AI"
@@ -12084,7 +12090,7 @@ msgstr "Weryfikacja"
 msgid "Verification tags saved."
 msgstr "Zapisano tagi weryfikacyjne."
 
-#: lib/phoenix_kit/integrations/providers.ex:887
+#: lib/phoenix_kit/integrations/providers.ex:889
 #, elixir-autogen, elixir-format
 msgid "Verify a sender in SES"
 msgstr "Zweryfikuj nadawcę w SES"
@@ -12119,7 +12125,7 @@ msgstr "Nie masz dostępu do tego elementu (%{kind}). Poproś osoby, które nim 
 msgid "You don't have access — click to request it"
 msgstr "Nie masz dostępu — kliknij, aby o niego poprosić"
 
-#: lib/phoenix_kit/integrations/providers.ex:805
+#: lib/phoenix_kit/integrations/providers.ex:807
 #, elixir-autogen, elixir-format
 msgid "github.com/settings/personal-access-tokens — fine-grained, read-only"
 msgstr "github.com/settings/personal-access-tokens — szczegółowy, tylko do odczytu"
@@ -12203,7 +12209,7 @@ msgstr "Wybierz awatar"
 msgid "Select Background Image"
 msgstr "Wybierz obraz tła"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2470
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2505
 #, elixir-autogen, elixir-format
 msgid "Select Cover Image"
 msgstr "Wybierz obraz okładki"
@@ -12213,7 +12219,7 @@ msgstr "Wybierz obraz okładki"
 msgid "Select Images"
 msgstr "Wybierz obrazy"
 
-#: lib/phoenix_kit_web/components/media_browser.html.heex:2469
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2504
 #: lib/phoenix_kit_web/live/settings.html.heex:668
 #: lib/phoenix_kit_web/live/settings/authorization.html.heex:733
 #, elixir-autogen, elixir-format
@@ -12271,7 +12277,7 @@ msgstr "Kolumny"
 msgid "Shown"
 msgstr "Widoczne"
 
-#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:318
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:320
 #, elixir-autogen, elixir-format
 msgid "Reply to this annotation"
 msgstr "Odpowiedz na tę adnotację"
@@ -12316,7 +12322,7 @@ msgstr "Szyfrowanie danych integracji wymaga uwagi"
 msgid "The current encryption status could not be described by this admin page — it may be newer than what this page recognizes. Check PhoenixKit.Integrations.Encryption.status/0 directly."
 msgstr "Bieżącego stanu szyfrowania nie można opisać na tej stronie administracyjnej — może być nowszy niż rozpoznaje ta strona. Sprawdź bezpośrednio PhoenixKit.Integrations.Encryption.status/0."
 
-#: lib/phoenix_kit_web/components/core/integrations_ui.ex:330
+#: lib/phoenix_kit_web/components/core/integrations_ui.ex:341
 #: lib/phoenix_kit_web/live/settings/authorization.ex:328
 #, elixir-autogen, elixir-format
 msgid "A secret is already configured — leave blank to keep the current value"
@@ -12419,12 +12425,12 @@ msgstr "Zgodnie z noindex"
 msgid "If that email address exists, a magic link has been sent."
 msgstr "Jeśli ten adres e-mail istnieje, magiczny link został wysłany."
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:263
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:265
 #, elixir-autogen, elixir-format
 msgid "If your email is in our system and it has not been confirmed yet, you will receive an email with instructions shortly."
 msgstr "Jeśli Twój adres e-mail jest w naszym systemie i nie został jeszcze potwierdzony, wkrótce otrzymasz wiadomość z instrukcjami."
 
-#: lib/phoenix_kit_web/users/forgot_password.ex:58
+#: lib/phoenix_kit_web/users/forgot_password.ex:60
 #, elixir-autogen, elixir-format
 msgid "If your email is in our system, you will receive instructions to reset your password shortly."
 msgstr "Jeśli Twój adres e-mail jest w naszym systemie, wkrótce otrzymasz instrukcje resetowania hasła."
@@ -12502,7 +12508,7 @@ msgstr "Osiągnięto maksymalną liczbę kont."
 msgid "Multi-account switching is not available."
 msgstr "Przełączanie między wieloma kontami jest niedostępne."
 
-#: lib/phoenix_kit/integrations/providers.ex:954
+#: lib/phoenix_kit/integrations/providers.ex:956
 #, elixir-autogen, elixir-format
 msgid "Not every S3-compatible provider needs one — leave blank if the endpoint doesn't require it."
 msgstr "Nie każdy dostawca zgodny z S3 go potrzebuje — pozostaw puste, jeśli punkt końcowy go nie wymaga."
@@ -12522,12 +12528,12 @@ msgstr "Dostawca OAuth „%{provider}” jest obecnie wyłączony."
 msgid "OAuth provider '%{provider}' is not configured. Please contact your administrator."
 msgstr "Dostawca OAuth „%{provider}” nie jest skonfigurowany. Skontaktuj się z administratorem."
 
-#: lib/phoenix_kit/integrations/providers.ex:917
+#: lib/phoenix_kit/integrations/providers.ex:919
 #, elixir-autogen, elixir-format
 msgid "Object Storage (S3-compatible)"
 msgstr "Magazyn obiektowy (zgodny z S3)"
 
-#: lib/phoenix_kit_web/users/reset_password.ex:41
+#: lib/phoenix_kit_web/users/reset_password.ex:43
 #, elixir-autogen, elixir-format
 msgid "Password reset successfully."
 msgstr "Hasło zostało zresetowane."
@@ -12538,7 +12544,7 @@ msgid "Password updated successfully!"
 msgstr "Hasło zostało zaktualizowane!"
 
 #: lib/phoenix_kit_web/users/magic_link_registration.ex:35
-#: lib/phoenix_kit_web/users/registration.ex:135
+#: lib/phoenix_kit_web/users/registration.ex:137
 #, elixir-autogen, elixir-format
 msgid "Registration is currently disabled."
 msgstr "Rejestracja jest obecnie wyłączona."
@@ -12560,17 +12566,17 @@ msgstr "Link rejestracyjny jest nieprawidłowy lub wygasł. Poproś o nowy."
 msgid "Registration link sent! Check your email."
 msgstr "Wysłano link rejestracyjny! Sprawdź swoją skrzynkę."
 
-#: lib/phoenix_kit/integrations/providers.ex:966
+#: lib/phoenix_kit/integrations/providers.ex:968
 #, elixir-autogen, elixir-format
 msgid "Required for Cloudflare R2, Backblaze B2, Tigris, and self-hosted S3-compatible storage. Leave blank for AWS S3."
 msgstr "Wymagane dla Cloudflare R2, Backblaze B2, Tigris oraz samodzielnie hostowanego magazynu zgodnego z S3. Dla AWS S3 pozostaw puste."
 
-#: lib/phoenix_kit_web/users/reset_password.ex:59
+#: lib/phoenix_kit_web/users/reset_password.ex:61
 #, elixir-autogen, elixir-format
 msgid "Reset password link is invalid or it has expired."
 msgstr "Link do resetowania hasła jest nieprawidłowy lub wygasł."
 
-#: lib/phoenix_kit/integrations/providers.ex:919
+#: lib/phoenix_kit/integrations/providers.ex:921
 #, elixir-autogen, elixir-format
 msgid "S3-compatible object storage — AWS S3, Cloudflare R2, Backblaze B2, Tigris, or a self-hosted endpoint"
 msgstr "Magazyn obiektowy zgodny z S3 — AWS S3, Cloudflare R2, Backblaze B2, Tigris lub samodzielnie hostowany punkt końcowy"
@@ -12637,12 +12643,12 @@ msgstr "Zbyt wiele prób logowania. Spróbuj ponownie później."
 msgid "Unknown OAuth provider: %{provider}"
 msgstr "Nieznany dostawca OAuth: %{provider}"
 
-#: lib/phoenix_kit_web/users/confirmation.ex:68
+#: lib/phoenix_kit_web/users/confirmation.ex:70
 #, elixir-autogen, elixir-format
 msgid "User confirmation link is invalid or it has expired."
 msgstr "Link potwierdzający jest nieprawidłowy lub wygasł."
 
-#: lib/phoenix_kit_web/users/confirmation.ex:50
+#: lib/phoenix_kit_web/users/confirmation.ex:52
 #, elixir-autogen, elixir-format
 msgid "User confirmed successfully."
 msgstr "Użytkownik został potwierdzony."
@@ -12653,7 +12659,7 @@ msgid "User registration is currently disabled."
 msgstr "Rejestracja użytkowników jest obecnie wyłączona."
 
 #: lib/phoenix_kit_web/users/magic_link_registration_request.ex:51
-#: lib/phoenix_kit_web/users/registration.ex:117
+#: lib/phoenix_kit_web/users/registration.ex:119
 #, elixir-autogen, elixir-format
 msgid "User registration is currently disabled. Please contact an administrator."
 msgstr "Rejestracja użytkowników jest obecnie wyłączona. Skontaktuj się z administratorem."
@@ -12668,17 +12674,17 @@ msgstr "Witamy ponownie!"
 msgid "Your account is currently inactive. Please contact the team if you believe this is an error."
 msgstr "Twoje konto jest obecnie nieaktywne. Skontaktuj się z zespołem, jeśli uważasz, że to pomyłka."
 
-#: lib/phoenix_kit_web/users/auth.ex:1980
+#: lib/phoenix_kit_web/users/auth.ex:2089
 #, elixir-autogen, elixir-format
 msgid "%{label} module is not enabled"
 msgstr "Moduł %{label} nie jest włączony"
 
-#: lib/phoenix_kit_web/users/auth.ex:2656
+#: lib/phoenix_kit_web/users/auth.ex:2765
 #, elixir-autogen, elixir-format
 msgid "Enter your referral code to continue."
 msgstr "Wprowadź swój kod polecający, aby kontynuować."
 
-#: lib/phoenix_kit_web/users/auth.ex:2652
+#: lib/phoenix_kit_web/users/auth.ex:2761
 #, elixir-autogen, elixir-format
 msgid "Please confirm your email before accessing the application."
 msgstr "Potwierdź swój adres e-mail, zanim uzyskasz dostęp do aplikacji."
@@ -12688,47 +12694,47 @@ msgstr "Potwierdź swój adres e-mail, zanim uzyskasz dostęp do aplikacji."
 msgid "This account is not active. Contact an administrator."
 msgstr "To konto nie jest aktywne. Skontaktuj się z administratorem."
 
-#: lib/phoenix_kit_web/users/auth.ex:805
-#: lib/phoenix_kit_web/users/auth.ex:1999
-#: lib/phoenix_kit_web/users/auth.ex:2801
+#: lib/phoenix_kit_web/users/auth.ex:898
+#: lib/phoenix_kit_web/users/auth.ex:2108
+#: lib/phoenix_kit_web/users/auth.ex:2910
 #, elixir-autogen, elixir-format
 msgid "You do not have permission to access this section."
 msgstr "Nie masz uprawnień do tej sekcji."
 
-#: lib/phoenix_kit_web/users/auth.ex:780
-#: lib/phoenix_kit_web/users/auth.ex:934
-#: lib/phoenix_kit_web/users/auth.ex:2750
-#: lib/phoenix_kit_web/users/auth.ex:2786
+#: lib/phoenix_kit_web/users/auth.ex:873
+#: lib/phoenix_kit_web/users/auth.ex:1033
+#: lib/phoenix_kit_web/users/auth.ex:2859
+#: lib/phoenix_kit_web/users/auth.ex:2895
 #, elixir-autogen, elixir-format
 msgid "You do not have the required permission to access this page."
 msgstr "Nie masz wymaganych uprawnień, aby otworzyć tę stronę."
 
-#: lib/phoenix_kit_web/users/auth.ex:1538
+#: lib/phoenix_kit_web/users/auth.ex:1647
 #, elixir-autogen, elixir-format
 msgid "You must be an admin to access this page."
 msgstr "Aby otworzyć tę stronę, musisz być administratorem."
 
-#: lib/phoenix_kit_web/users/auth.ex:735
-#: lib/phoenix_kit_web/users/auth.ex:2713
+#: lib/phoenix_kit_web/users/auth.ex:834
+#: lib/phoenix_kit_web/users/auth.ex:2822
 #, elixir-autogen, elixir-format
 msgid "You must be an owner to access this page."
 msgstr "Aby otworzyć tę stronę, musisz być właścicielem."
 
-#: lib/phoenix_kit_web/users/auth.ex:2829
+#: lib/phoenix_kit_web/users/auth.ex:2938
 #, elixir-autogen, elixir-format
 msgid "You must have the %{role_name} role to access this page."
 msgstr "Aby otworzyć tę stronę, musisz mieć rolę %{role_name}."
 
-#: lib/phoenix_kit_web/users/auth.ex:959
-#: lib/phoenix_kit_web/users/auth.ex:2577
-#: lib/phoenix_kit_web/users/auth.ex:2614
-#: lib/phoenix_kit_web/users/auth.ex:2757
+#: lib/phoenix_kit_web/users/auth.ex:1058
+#: lib/phoenix_kit_web/users/auth.ex:2686
+#: lib/phoenix_kit_web/users/auth.ex:2723
+#: lib/phoenix_kit_web/users/auth.ex:2866
 #: lib/phoenix_kit_web/users/session.ex:212
 #, elixir-autogen, elixir-format
 msgid "You must log in to access this page."
 msgstr "Aby otworzyć tę stronę, musisz się zalogować."
 
-#: lib/phoenix_kit_web/users/auth.ex:1541
+#: lib/phoenix_kit_web/users/auth.ex:1650
 #, elixir-autogen, elixir-format
 msgid "You no longer have permission to access this section."
 msgstr "Nie masz już uprawnień do tej sekcji."
@@ -12895,13 +12901,13 @@ msgstr "Nocny marek"
 
 #: lib/phoenix_kit_web/live/integrations/my_integration_form.ex:137
 #: lib/phoenix_kit_web/live/integrations/my_integration_form.ex:263
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:373
-#: lib/phoenix_kit_web/live/settings/integration_form.ex:486
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:377
+#: lib/phoenix_kit_web/live/settings/integration_form.ex:490
 #, elixir-autogen, elixir-format
 msgid "Not tested — this provider has no connection check"
 msgstr "Nie przetestowano — ten dostawca nie ma sprawdzania połączenia"
 
-#: lib/phoenix_kit/integrations/integrations.ex:1271
+#: lib/phoenix_kit/integrations/integrations.ex:1277
 #, elixir-autogen, elixir-format
 msgid "Not verified — this provider has no connection check"
 msgstr "Niezweryfikowane — ten dostawca nie ma sprawdzania połączenia"
@@ -13053,19 +13059,19 @@ msgstr "w ciągu ostatniej godziny"
 msgid "in the last week"
 msgstr "w ciągu ostatniego tygodnia"
 
-#: lib/phoenix_kit_web/components/layout_wrapper.ex:1203
+#: lib/phoenix_kit_web/components/layout_wrapper.ex:1207
 #, elixir-autogen, elixir-format
 msgid "Collapse"
 msgstr "Zwiń"
 
-#: lib/phoenix_kit_web/components/layout_wrapper.ex:1194
-#: lib/phoenix_kit_web/components/layout_wrapper.ex:1195
-#: lib/phoenix_kit_web/components/layout_wrapper.ex:1197
+#: lib/phoenix_kit_web/components/layout_wrapper.ex:1198
+#: lib/phoenix_kit_web/components/layout_wrapper.ex:1199
+#: lib/phoenix_kit_web/components/layout_wrapper.ex:1201
 #, elixir-autogen, elixir-format
 msgid "Collapse the menu to icons"
 msgstr "Zwiń menu do ikon"
 
-#: lib/phoenix_kit_web/components/layout_wrapper.ex:1196
+#: lib/phoenix_kit_web/components/layout_wrapper.ex:1200
 #, elixir-autogen, elixir-format
 msgid "Expand the menu"
 msgstr "Rozwiń menu"
@@ -13728,6 +13734,7 @@ msgid "Complete your registration"
 msgstr "Dokończ rejestrację"
 
 #: lib/phoenix_kit/users/auth/user_notifier.ex:123
+#: lib/phoenix_kit_web/users/confirmation.ex:18
 #, elixir-autogen, elixir-format
 msgid "Confirm your account"
 msgstr "Potwierdź swoje konto"
@@ -14132,7 +14139,7 @@ msgstr ""
 msgid "Change Email"
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirm_email_change.html.heex:4
+#: lib/phoenix_kit_web/users/confirm_email_change.ex:26
 #: lib/phoenix_kit_web/users/confirm_email_change.html.heex:13
 #, elixir-autogen, elixir-format
 msgid "Confirm Email Change"
@@ -14153,7 +14160,7 @@ msgstr ""
 msgid "Confirming also completes your account confirmation."
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirm_email_change.ex:46
+#: lib/phoenix_kit_web/users/confirm_email_change.ex:48
 #, elixir-autogen, elixir-format
 msgid "Email changed and confirmed. Welcome!"
 msgstr ""
@@ -14193,12 +14200,12 @@ msgstr ""
 msgid "Updating..."
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:193
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:195
 #, elixir-autogen, elixir-format
 msgid "We've sent a confirmation link to %{email}. Click it to finish updating your email — that also confirms your account."
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:274
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:276
 #, elixir-autogen, elixir-format
 msgid "We've sent a new confirmation link to %{email}."
 msgstr ""
@@ -14353,7 +14360,7 @@ msgstr ""
 msgid "Support tickets"
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:298
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:300
 #, elixir-autogen, elixir-format
 msgid "We couldn't send that email just now — please try again in a moment."
 msgstr ""
@@ -14368,12 +14375,12 @@ msgstr ""
 msgid "Will be permanently deleted:"
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:282
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:284
 #, elixir-autogen, elixir-format
 msgid "You've asked for this a few times already — please wait a few minutes and try again."
 msgstr ""
 
-#: lib/phoenix_kit_web/users/confirmation_instructions.ex:289
+#: lib/phoenix_kit_web/users/confirmation_instructions.ex:291
 #, elixir-autogen, elixir-format
 msgid "Your email is already confirmed."
 msgstr ""
@@ -14440,7 +14447,7 @@ msgstr "Strona główna panelu administracyjnego"
 msgid "There are no custom roles yet."
 msgstr "Nie ma jeszcze ról niestandardowych."
 
-#: lib/phoenix_kit_web/users/auth.ex:1535
+#: lib/phoenix_kit_web/users/auth.ex:1644
 #, elixir-autogen, elixir-format
 msgid "This page is not available in the role you switched to."
 msgstr "Ta strona nie jest dostępna w roli, na którą się przełączyłeś."
@@ -14550,3 +14557,571 @@ msgstr "Użytkownik utworzony, ale nie udało się wysłać e-maila potwierdzaj�
 #, elixir-autogen, elixir-format
 msgid "User created. A confirmation email was sent."
 msgstr "Użytkownik utworzony. Wysłano e-mail potwierdzający."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:319
+#, elixir-autogen, elixir-format
+msgid "A copy is being made. It will appear next to the original."
+msgstr "Trwa tworzenie kopii. Pojawi się obok oryginału."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:861
+#, elixir-autogen, elixir-format
+msgid "Add area"
+msgstr "Dodaj obszar"
+
+#: lib/phoenix_kit_web/live/users/media_detail.html.heex:107
+#, elixir-autogen, elixir-format
+msgid "Applying edit"
+msgstr "Stosowanie edycji"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:592
+#, elixir-autogen, elixir-format
+msgid "Applying the edit…"
+msgstr "Stosowanie edycji…"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:1097
+#, elixir-autogen, elixir-format
+msgid "Black box"
+msgstr "Czarny prostokąt"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:1095
+#, elixir-autogen, elixir-format
+msgid "Blur"
+msgstr "Rozmyj"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:881
+#, elixir-autogen, elixir-format
+msgid "Brightness"
+msgstr "Jasność"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:882
+#, elixir-autogen, elixir-format
+msgid "Contrast"
+msgstr "Kontrast"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:658
+#: lib/phoenix_kit_web/components/image_editor.ex:747
+#, elixir-autogen, elixir-format
+msgid "Crop"
+msgstr "Przytnij"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:1020
+#, elixir-autogen, elixir-format
+msgid "Delete for good"
+msgstr "Usuń na stałe"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:1011
+#, elixir-autogen, elixir-format
+msgid "Delete the unedited original for good? The edit becomes permanent and can no longer be changed or undone."
+msgstr "Usunąć na stałe nieedytowany oryginał? Edycja stanie się trwała i nie będzie można jej już zmienić ani cofnąć."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:811
+#, elixir-autogen, elixir-format
+msgid "Drag on the image to cover an area, or add one and set it below. Covered areas are permanently removed from the saved image."
+msgstr "Przeciągnij po obrazie, aby zakryć obszar, albo dodaj obszar i ustaw go poniżej. Zakryte obszary są trwale usuwane z zapisanego obrazu."
+
+#: lib/phoenix_kit_web/live/users/media_detail.html.heex:115
+#, elixir-autogen, elixir-format
+msgid "Edit failed"
+msgstr "Edycja nie powiodła się"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:622
+#: lib/phoenix_kit_web/components/media_browser.ex:3090
+#: lib/phoenix_kit_web/components/media_browser.html.heex:1624
+#: lib/phoenix_kit_web/components/media_browser.html.heex:2271
+#: lib/phoenix_kit_web/components/media_canvas_viewer.html.heex:400
+#: lib/phoenix_kit_web/live/users/media_detail.html.heex:99
+#, elixir-autogen, elixir-format
+msgid "Edit image"
+msgstr "Edytuj obraz"
+
+#: lib/phoenix_kit_web/live/users/media_detail.html.heex:121
+#, elixir-autogen, elixir-format
+msgid "Edited"
+msgstr "Edytowany"
+
+#: lib/modules/storage/web/settings.html.heex:473
+#, elixir-autogen, elixir-format
+msgid "Every save overwrites the image for good. Nothing can be undone, and redacted areas are gone from storage."
+msgstr "Każdy zapis nadpisuje obraz na stałe. Niczego nie można cofnąć, a zakryte obszary znikają z magazynu."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:724
+#, elixir-autogen, elixir-format
+msgid "Flip"
+msgstr "Odwróć"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:757
+#, elixir-autogen, elixir-format
+msgid "Free"
+msgstr "Dowolny"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:776
+#: lib/phoenix_kit_web/components/image_editor.ex:1102
+#, elixir-autogen, elixir-format
+msgid "Height %"
+msgstr "Wysokość %"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:658
+#, elixir-autogen, elixir-format
+msgid "Hide areas"
+msgstr "Ukryj obszary"
+
+#: lib/modules/storage/web/settings.html.heex:438
+#, elixir-autogen, elixir-format
+msgid "Image Editing"
+msgstr "Edycja obrazów"
+
+#: lib/modules/storage/web/settings.html.heex:454
+#, elixir-autogen, elixir-format
+msgid "Keep the original (recommended)"
+msgstr "Zachowaj oryginał (zalecane)"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:949
+#, elixir-autogen, elixir-format
+msgid "Kept privately so the edit can be changed or undone. Only people who can edit this image can get it."
+msgstr "Przechowywany prywatnie, aby edycję można było zmienić lub cofnąć. Mogą go pobrać tylko osoby, które mogą edytować ten obraz."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:773
+#: lib/phoenix_kit_web/components/image_editor.ex:1099
+#, elixir-autogen, elixir-format
+msgid "Left %"
+msgstr "Od lewej %"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:714
+#, elixir-autogen, elixir-format
+msgid "Mirror"
+msgstr "Lustrzane odbicie"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:766
+#, elixir-autogen, elixir-format
+msgid "No crop"
+msgstr "Bez przycinania"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:568
+#, elixir-autogen, elixir-format
+msgid "No preview is available. The fields still work."
+msgstr "Podgląd jest niedostępny. Pola nadal działają."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:445
+#, elixir-autogen, elixir-format
+msgid "Nothing to save: the copy would be the same as the original."
+msgstr "Nie ma czego zapisać: kopia byłaby taka sama jak oryginał."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:640
+#, elixir-autogen, elixir-format
+msgid "Only still JPEG, PNG, WebP, AVIF, TIFF and BMP images can be edited."
+msgstr "Edytować można tylko nieruchome obrazy JPEG, PNG, WebP, AVIF, TIFF i BMP."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:1096
+#, elixir-autogen, elixir-format
+msgid "Pixelate"
+msgstr "Pikselizuj"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:836
+#, elixir-autogen, elixir-format
+msgid "Remove area"
+msgstr "Usuń obszar"
+
+#: lib/modules/storage/web/settings.html.heex:471
+#, elixir-autogen, elixir-format
+msgid "Replace the original"
+msgstr "Zastąp oryginał"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:996
+#, elixir-autogen, elixir-format
+msgid "Restore original"
+msgstr "Przywróć oryginał"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:905
+#, elixir-autogen, elixir-format
+msgid "Result: %{width} × %{height} px"
+msgstr "Wynik: %{width} × %{height} px"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:929
+#, elixir-autogen, elixir-format
+msgid "Save as copy"
+msgstr "Zapisz jako kopię"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:442
+#, elixir-autogen, elixir-format
+msgid "Saved, but the image could not be queued for rendering. Try again."
+msgstr "Zapisano, ale nie udało się dodać obrazu do kolejki przetwarzania. Spróbuj ponownie."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:909
+#, elixir-autogen, elixir-format
+msgid "Saving replaces the original image. This can't be undone."
+msgstr "Zapisanie zastępuje oryginalny obraz. Tego nie można cofnąć."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:464
+#, elixir-autogen, elixir-format
+msgid "Some of the values are not valid."
+msgstr "Niektóre wartości są nieprawidłowe."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:468
+#, elixir-autogen, elixir-format
+msgid "Something went wrong. Try again."
+msgstr "Coś poszło nie tak. Spróbuj ponownie."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:730
+#, elixir-autogen, elixir-format
+msgid "Straighten"
+msgstr "Wyprostuj"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:605
+#, elixir-autogen, elixir-format
+msgid "Taking long? Start again"
+msgstr "Trwa to długo? Zacznij od nowa"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:577
+#, elixir-autogen, elixir-format
+msgid "The edit could not be applied."
+msgstr "Nie udało się zastosować edycji."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:451
+#, elixir-autogen, elixir-format
+msgid "The image changed meanwhile. Check it and try again."
+msgstr "Obraz w międzyczasie się zmienił. Sprawdź go i spróbuj ponownie."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:565
+#, elixir-autogen, elixir-format
+msgid "The image has no dimensions yet. Try again once it has been processed."
+msgstr "Obraz nie ma jeszcze wymiarów. Spróbuj ponownie, gdy zostanie przetworzony."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:594
+#, elixir-autogen, elixir-format
+msgid "The image shows a placeholder until it is done."
+msgstr "Do tego czasu zamiast obrazu wyświetlany jest symbol zastępczy."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:615
+#, elixir-autogen, elixir-format
+msgid "The preview is approximate; colours and blur are exact once saved."
+msgstr "Podgląd jest przybliżony; kolory i rozmycie są dokładne po zapisaniu."
+
+#: lib/modules/storage/web/settings.html.heex:456
+#, elixir-autogen, elixir-format
+msgid "The unedited image is kept privately, so an edit can be changed or undone. Owners can delete it themselves."
+msgstr "Nieedytowany obraz jest przechowywany prywatnie, aby edycję można było zmienić lub cofnąć. Właściciele mogą go sami usunąć."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:448
+#, elixir-autogen, elixir-format
+msgid "There is nothing to retry."
+msgstr "Nie ma czego ponawiać."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:438
+#, elixir-autogen, elixir-format
+msgid "This file can't be edited."
+msgstr "Tego pliku nie można edytować."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:439
+#: lib/phoenix_kit_web/components/image_editor.ex:479
+#, elixir-autogen, elixir-format
+msgid "This file no longer exists."
+msgstr "Ten plik już nie istnieje."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:674
+#, elixir-autogen, elixir-format
+msgid "This image has an annotation, so it can't be cropped, turned, flipped or straightened (the annotation would end up in the wrong place). Save a copy for that."
+msgid_plural "This image has %{count} annotations, so it can't be cropped, turned, flipped or straightened (they would end up in the wrong place). Save a copy for that."
+msgstr[0] "Ten obraz ma adnotację, więc nie można go przycinać, obracać, odwracać ani prostować (adnotacja znalazłaby się w złym miejscu). Zapisz w tym celu kopię."
+msgstr[1] "Ten obraz ma %{count} adnotacje, więc nie można go przycinać, obracać, odwracać ani prostować (znalazłyby się w złym miejscu). Zapisz w tym celu kopię."
+msgstr[2] "Ten obraz ma %{count} adnotacji, więc nie można go przycinać, obracać, odwracać ani prostować (znalazłyby się w złym miejscu). Zapisz w tym celu kopię."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:458
+#, elixir-autogen, elixir-format
+msgid "This image has an annotation. Cropping, turning, flipping or straightening it would move the annotation off its place. Save a copy instead."
+msgid_plural "This image has %{count} annotations. Cropping, turning, flipping or straightening it would move them off their places. Save a copy instead."
+msgstr[0] "Ten obraz ma adnotację. Przycięcie, obrót, odwrócenie lub wyprostowanie przesunęłoby ją z jej miejsca. Zamiast tego zapisz kopię."
+msgstr[1] "Ten obraz ma %{count} adnotacje. Przycięcie, obrót, odwrócenie lub wyprostowanie przesunęłoby je z ich miejsc. Zamiast tego zapisz kopię."
+msgstr[2] "Ten obraz ma %{count} adnotacji. Przycięcie, obrót, odwrócenie lub wyprostowanie przesunęłoby je z ich miejsc. Zamiast tego zapisz kopię."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:447
+#, elixir-autogen, elixir-format
+msgid "This image has no unedited original."
+msgstr "Ten obraz nie ma nieedytowanego oryginału."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:774
+#: lib/phoenix_kit_web/components/image_editor.ex:1100
+#, elixir-autogen, elixir-format
+msgid "Top %"
+msgstr "Od góry %"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:588
+#, elixir-autogen, elixir-format
+msgid "Try again"
+msgstr "Spróbuj ponownie"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:690
+#: lib/phoenix_kit_web/components/image_editor.ex:691
+#, elixir-autogen, elixir-format
+msgid "Turn left"
+msgstr "Obróć w lewo"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:701
+#: lib/phoenix_kit_web/components/image_editor.ex:702
+#, elixir-autogen, elixir-format
+msgid "Turn right"
+msgstr "Obróć w prawo"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:938
+#, elixir-autogen, elixir-format
+msgid "Undo changes"
+msgstr "Cofnij zmiany"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:987
+#, elixir-autogen, elixir-format
+msgid "Undo the edit and show the unedited original again everywhere this image is used?"
+msgstr "Cofnąć edycję i znów pokazywać nieedytowany oryginał wszędzie tam, gdzie używany jest ten obraz?"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:947
+#, elixir-autogen, elixir-format
+msgid "Unedited original"
+msgstr "Nieedytowany oryginał"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:579
+#, elixir-autogen, elixir-format
+msgid "Until it is, the image shows a placeholder everywhere."
+msgstr "Do tego czasu obraz jest wszędzie zastąpiony symbolem zastępczym."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:454
+#, elixir-autogen, elixir-format
+msgid "Wait until the image has finished rendering."
+msgstr "Poczekaj, aż przetwarzanie obrazu się zakończy."
+
+#: lib/modules/storage/web/settings.html.heex:440
+#, elixir-autogen, elixir-format
+msgid "What saving an edited image (crop, turn, redaction…) does with the original."
+msgstr "Co zapisanie edytowanego obrazu (przycięcie, obrót, zakrycie…) robi z oryginałem."
+
+#: lib/phoenix_kit_web/components/image_editor.ex:775
+#: lib/phoenix_kit_web/components/image_editor.ex:1101
+#, elixir-autogen, elixir-format
+msgid "Width %"
+msgstr "Szerokość %"
+
+#: lib/phoenix_kit_web/components/image_editor.ex:437
+#: lib/phoenix_kit_web/components/image_editor.ex:643
+#, elixir-autogen, elixir-format
+msgid "You can't edit this image."
+msgstr "Nie możesz edytować tego obrazu."
+
+#: lib/phoenix_kit/integrations/validators.ex:1163
+#, elixir-autogen, elixir-format
+msgid "%{plan} · searches left: %{left}"
+msgstr "%{plan} · pozostałe wyszukiwania: %{left}"
+
+#: lib/phoenix_kit/integrations/providers.ex:1229
+#, elixir-autogen, elixir-format
+msgid "API login"
+msgstr "Login API"
+
+#: lib/phoenix_kit/integrations/providers.ex:1238
+#, elixir-autogen, elixir-format
+msgid "API password"
+msgstr "Hasło API"
+
+#: lib/phoenix_kit/integrations/validators.ex:1003
+#, elixir-autogen, elixir-format
+msgid "Balance: $%{amount}"
+msgstr "Saldo: $%{amount}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1005
+#, elixir-autogen, elixir-format
+msgid "Balance: $%{amount} — add funds before running searches"
+msgstr "Saldo: $%{amount} — zasil konto przed uruchomieniem wyszukiwań"
+
+#: lib/phoenix_kit/integrations/providers.ex:1303
+#, elixir-autogen, elixir-format
+msgid "Copy the key from [API Key](https://serpapi.com/manage-api-key) and paste it into the form above"
+msgstr "Skopiuj klucz ze strony [API Key](https://serpapi.com/manage-api-key) i wklej go do formularza powyżej"
+
+#: lib/phoenix_kit/integrations/validators.ex:945
+#, elixir-autogen, elixir-format
+msgid "Could not reach DataForSEO"
+msgstr "Nie udało się połączyć z DataForSEO"
+
+#: lib/phoenix_kit/integrations/validators.ex:1104
+#, elixir-autogen, elixir-format
+msgid "Could not reach SerpApi"
+msgstr "Nie udało się połączyć z SerpApi"
+
+#: lib/phoenix_kit/integrations/providers.ex:1252
+#, elixir-autogen, elixir-format
+msgid "Create an account at [DataForSEO](https://app.dataforseo.com/register) — new accounts start with a small trial balance"
+msgstr "Załóż konto w [DataForSEO](https://app.dataforseo.com/register) — nowe konta otrzymują niewielkie saldo próbne"
+
+#: lib/phoenix_kit/integrations/providers.ex:1219
+#, elixir-autogen, elixir-format
+msgid "DataForSEO"
+msgstr "DataForSEO"
+
+#: lib/phoenix_kit/integrations/validators.ex:1054
+#, elixir-autogen, elixir-format
+msgid "DataForSEO error %{code}"
+msgstr "Błąd DataForSEO %{code}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1047
+#, elixir-autogen, elixir-format
+msgid "DataForSEO error %{code}: %{message}"
+msgstr "Błąd DataForSEO %{code}: %{message}"
+
+#: lib/phoenix_kit/integrations/validators.ex:987
+#, elixir-autogen, elixir-format
+msgid "DataForSEO error %{status}"
+msgstr "Błąd DataForSEO %{status}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1030
+#, elixir-autogen, elixir-format
+msgid "DataForSEO has paused this account — contact their support"
+msgstr "DataForSEO wstrzymało to konto — skontaktuj się z ich pomocą techniczną"
+
+#: lib/phoenix_kit/integrations/providers.ex:1243
+#, elixir-autogen, elixir-format
+msgid "From app.dataforseo.com → API Access. Not the password you sign in with."
+msgstr "Z app.dataforseo.com → API Access. To nie jest hasło, którym się logujesz."
+
+#: lib/phoenix_kit/integrations/providers.ex:1298
+#, elixir-autogen, elixir-format
+msgid "Get your API key"
+msgstr "Uzyskaj klucz API"
+
+#: lib/phoenix_kit/integrations/providers.ex:1250
+#, elixir-autogen, elixir-format
+msgid "Get your API login and password"
+msgstr "Uzyskaj login i hasło API"
+
+#: lib/phoenix_kit/integrations/validators.ex:1125
+#, elixir-autogen, elixir-format
+msgid "Invalid API key"
+msgstr "Nieprawidłowy klucz API"
+
+#: lib/phoenix_kit/integrations/validators.ex:1018
+#, elixir-autogen, elixir-format
+msgid "Invalid API login or password — use the API password from the API Access page, not the one you sign in with"
+msgstr "Nieprawidłowy login lub hasło API — użyj hasła API ze strony API Access, a nie hasła do logowania"
+
+#: lib/phoenix_kit/integrations/providers.ex:1255
+#, elixir-autogen, elixir-format
+msgid "Open [API Access](https://app.dataforseo.com/api-access): the API login is your account e-mail, and the API password is shown there"
+msgstr "Otwórz [API Access](https://app.dataforseo.com/api-access): login API to adres e-mail Twojego konta, a hasło API jest tam wyświetlone"
+
+#: lib/phoenix_kit/integrations/providers.ex:1261
+#, elixir-autogen, elixir-format
+msgid "Paste both into the form above and press **Test Connection**"
+msgstr "Wklej oba do formularza powyżej i naciśnij **Testuj połączenie**"
+
+#: lib/phoenix_kit/integrations/providers.ex:1279
+#, elixir-autogen, elixir-format
+msgid "Search engine results — a monthly plan of searches"
+msgstr "Wyniki wyszukiwarek — miesięczny pakiet wyszukiwań"
+
+#: lib/phoenix_kit/integrations/providers.ex:1221
+#, elixir-autogen, elixir-format
+msgid "Search engine results, keyword and SEO data — pay as you go per request"
+msgstr "Wyniki wyszukiwarek, dane o słowach kluczowych i SEO — płatność za zapytanie"
+
+#: lib/phoenix_kit/integrations/providers.ex:1278
+#, elixir-autogen, elixir-format
+msgid "SerpApi"
+msgstr "SerpApi"
+
+#: lib/phoenix_kit/integrations/validators.ex:1136
+#, elixir-autogen, elixir-format
+msgid "SerpApi error %{status}"
+msgstr "Błąd SerpApi %{status}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1129
+#, elixir-autogen, elixir-format
+msgid "SerpApi error %{status}: %{message}"
+msgstr "Błąd SerpApi %{status}: %{message}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1116
+#, elixir-autogen, elixir-format
+msgid "SerpApi error: %{message}"
+msgstr "Błąd SerpApi: %{message}"
+
+#: lib/phoenix_kit/integrations/providers.ex:1300
+#, elixir-autogen, elixir-format
+msgid "Sign up at [SerpApi](https://serpapi.com) — the free plan includes a number of searches each month"
+msgstr "Zarejestruj się w [SerpApi](https://serpapi.com) — darmowy plan obejmuje pewną liczbę wyszukiwań miesięcznie"
+
+#: lib/phoenix_kit/integrations/providers.ex:1264
+#, elixir-autogen, elixir-format
+msgid "Test Connection is free and shows the account balance. Every search is paid from that balance, so top it up on app.dataforseo.com before it runs out."
+msgstr "„Testuj połączenie” jest bezpłatne i pokazuje saldo konta. Każde wyszukiwanie jest opłacane z tego salda, więc zasil je na app.dataforseo.com, zanim się skończy."
+
+#: lib/phoenix_kit/integrations/providers.ex:1258
+#, elixir-autogen, elixir-format
+msgid "The API password is generated for you and differs from your sign-in password. After the first day it is no longer shown — use **Send by e-mail** on the same page to get it"
+msgstr "Hasło API jest generowane dla Ciebie i różni się od hasła do logowania. Po pierwszym dniu nie jest już wyświetlane — użyj **Send by e-mail** na tej samej stronie, aby je otrzymać"
+
+#: lib/phoenix_kit/integrations/providers.ex:1233
+#, elixir-autogen, elixir-format
+msgid "The e-mail address of your DataForSEO account"
+msgstr "Adres e-mail Twojego konta DataForSEO"
+
+#: lib/phoenix_kit/integrations/validators.ex:1024
+#, elixir-autogen, elixir-format
+msgid "This DataForSEO account is not verified yet"
+msgstr "To konto DataForSEO nie zostało jeszcze zweryfikowane"
+
+#: lib/phoenix_kit/integrations/validators.ex:1027
+#, elixir-autogen, elixir-format
+msgid "This DataForSEO account needs funds — top up the balance"
+msgstr "To konto DataForSEO wymaga środków — zasil saldo"
+
+#: lib/phoenix_kit/integrations/validators.ex:1033
+#, elixir-autogen, elixir-format
+msgid "Too many requests to DataForSEO — try again in a minute"
+msgstr "Zbyt wiele zapytań do DataForSEO — spróbuj ponownie za minutę"
+
+#: lib/phoenix_kit/integrations/validators.ex:946
+#: lib/phoenix_kit/integrations/validators.ex:984
+#, elixir-autogen, elixir-format
+msgid "Unexpected answer from DataForSEO"
+msgstr "Nieoczekiwana odpowiedź z DataForSEO"
+
+#: lib/phoenix_kit/integrations/validators.ex:1105
+#: lib/phoenix_kit/integrations/validators.ex:1119
+#: lib/phoenix_kit/integrations/validators.ex:1123
+#, elixir-autogen, elixir-format
+msgid "Unexpected answer from SerpApi"
+msgstr "Nieoczekiwana odpowiedź z SerpApi"
+
+#: lib/phoenix_kit/integrations/providers.ex:1291
+#, elixir-autogen, elixir-format
+msgid "From serpapi.com/manage-api-key"
+msgstr "Z serpapi.com/manage-api-key"
+
+#: lib/phoenix_kit/integrations/providers.ex:1308
+#, elixir-autogen, elixir-format
+msgid "Test Connection does not use up a search. It shows your plan and how many searches are left."
+msgstr "„Testuj połączenie” nie zużywa wyszukiwania. Pokazuje Twój plan i liczbę pozostałych wyszukiwań."
+
+#: lib/phoenix_kit/integrations/validators.ex:1164
+#, elixir-autogen, elixir-format
+msgid "%{plan} · no searches left"
+msgstr "%{plan} · brak pozostałych wyszukiwań"
+
+#: lib/phoenix_kit/integrations/validators.ex:1146
+#, elixir-autogen, elixir-format
+msgid "Account status: %{status}"
+msgstr "Status konta: %{status}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1170
+#, elixir-autogen, elixir-format
+msgid "No searches left"
+msgstr "Brak pozostałych wyszukiwań"
+
+#: lib/phoenix_kit/integrations/validators.ex:1169
+#, elixir-autogen, elixir-format
+msgid "Searches left: %{left}"
+msgstr "Pozostałe wyszukiwania: %{left}"
+
+#: lib/phoenix_kit/integrations/validators.ex:1037
+#, elixir-autogen, elixir-format
+msgid "This DataForSEO account has reached its daily spending limit — raise it on app.dataforseo.com"
+msgstr "To konto DataForSEO osiągnęło dzienny limit wydatków — zwiększ go na app.dataforseo.com"
+
+#: lib/phoenix_kit/integrations/validators.ex:1043
+#, elixir-autogen, elixir-format
+msgid "Too many requests to DataForSEO at once — try again shortly"
+msgstr "Zbyt wiele jednoczesnych zapytań do DataForSEO — spróbuj ponownie za chwilę"

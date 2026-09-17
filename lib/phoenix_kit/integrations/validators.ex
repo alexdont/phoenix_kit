@@ -893,7 +893,321 @@ defmodule PhoenixKit.Integrations.Validators do
 
   defp telegram_username(_body), do: nil
 
+  # --- DataForSEO ---------------------------------------------------------
+
+  @dataforseo_account_url "https://api.dataforseo.com/v3/appendix/user_data"
+
+  @doc """
+  Validates a DataForSEO API login and password against the account endpoint,
+  and reports the balance.
+
+  `GET /v3/appendix/user_data` costs nothing, takes the same HTTP Basic
+  credentials as every paid call, and carries the account balance — which is
+  what runs out, because every search is paid from it.
+
+  `req_options` is merged into the request (tests pass a `:plug`).
+  """
+  @spec dataforseo(map(), keyword()) :: :ok | {:ok, String.t()} | {:error, String.t()}
+  def dataforseo(data, req_options \\ []) do
+    login = data["login"]
+    password = data["password"]
+
+    if blank?(login) or blank?(password) do
+      {:error, gettext("No credentials configured")}
+    else
+      Probe.run(fn -> request_dataforseo_account(login, password, req_options) end)
+    end
+  end
+
+  defp request_dataforseo_account(login, password, req_options) do
+    # retry: false — Req's retries would sleep through most of Probe's
+    # deadline; one request is the check. redirect: false — the endpoint does
+    # not redirect, and Req logs each Location it follows. decode_body: false
+    # — see decode_json/1.
+    options =
+      Keyword.merge(
+        [
+          auth: {:basic, "#{login}:#{password}"},
+          receive_timeout: @http_timeout,
+          retry: false,
+          redirect: false,
+          decode_body: false
+        ],
+        req_options
+      )
+
+    case Req.get(@dataforseo_account_url, options) do
+      {:ok, %{status: status, body: body}} ->
+        interpret_dataforseo(status, decode_json(body))
+
+      {:error, reason} ->
+        case request_failure("DataForSEO", reason) do
+          :unreachable -> {:error, gettext("Could not reach DataForSEO")}
+          :unreadable -> {:error, gettext("Unexpected answer from DataForSEO")}
+        end
+    end
+  end
+
+  @doc false
+  # Pure: the HTTP status and decoded body of /v3/appendix/user_data in, a
+  # verdict out. Public so it can be tested against the answers DataForSEO
+  # really gives.
+  #
+  # DataForSEO reports its own outcome in `status_code`, at the top of the body
+  # and again on each task: 2xxxx is success, 4xxxx and 5xxxx are failures, and
+  # the code says more than the HTTP status does. A wrong login or password is
+  # HTTP 401 with code 40100 and no tasks.
+  def interpret_dataforseo(200, %{"status_code" => code} = body)
+      when is_integer(code) and code in 20_000..29_999 do
+    case body["tasks"] do
+      [%{"status_code" => task_code} = task | _]
+      when is_integer(task_code) and task_code not in 20_000..29_999 ->
+        dataforseo_error(task_code, task["status_message"])
+
+      [%{"result" => [account | _]} | _] ->
+        dataforseo_balance_note(account)
+
+      # Authenticated — a bad login never gets a 2xxxx code — but nothing to
+      # report beyond that.
+      _ ->
+        :ok
+    end
+  end
+
+  def interpret_dataforseo(_status, %{"status_code" => code} = body)
+      when is_integer(code) and code not in 20_000..29_999,
+      do: dataforseo_error(code, body["status_message"])
+
+  def interpret_dataforseo(401, _body), do: dataforseo_error(40_100, nil)
+
+  def interpret_dataforseo(200, _body),
+    do: {:error, gettext("Unexpected answer from DataForSEO")}
+
+  def interpret_dataforseo(status, _body),
+    do: {:error, gettext("DataForSEO error %{status}", status: status)}
+
+  # Decimal rather than float formatting: `:erlang.float_to_binary/2` refuses
+  # large floats, and an integer past the float range cannot become one. The
+  # warning follows the amount shown, so "$0.00" never appears without it.
+  defp dataforseo_balance_note(%{"money" => %{"balance" => balance}}) when is_number(balance) do
+    cents =
+      balance
+      |> to_decimal()
+      |> Decimal.round(2)
+      # -0.00 → 0.00
+      |> Decimal.add(Decimal.new(0))
+
+    amount = Decimal.to_string(cents, :normal)
+
+    if Decimal.gt?(cents, 0) do
+      {:ok, gettext("Balance: $%{amount}", amount: amount)}
+    else
+      {:ok, gettext("Balance: $%{amount} — add funds before running searches", amount: amount)}
+    end
+  end
+
+  defp dataforseo_balance_note(_account), do: :ok
+
+  defp to_decimal(value) when is_integer(value), do: Decimal.new(value)
+  defp to_decimal(value) when is_float(value), do: Decimal.from_float(value)
+
+  # The codes from DataForSEO's error list that an operator can act on; the
+  # rest are reported with DataForSEO's own message.
+  defp dataforseo_error(40_100, _message) do
+    {:error,
+     gettext(
+       "Invalid API login or password — use the API password from the API Access page, not the one you sign in with"
+     )}
+  end
+
+  defp dataforseo_error(40_104, _message),
+    do: {:error, gettext("This DataForSEO account is not verified yet")}
+
+  defp dataforseo_error(code, _message) when code in [40_200, 40_210],
+    do: {:error, gettext("This DataForSEO account needs funds — top up the balance")}
+
+  defp dataforseo_error(40_201, _message),
+    do: {:error, gettext("DataForSEO has paused this account — contact their support")}
+
+  defp dataforseo_error(40_202, _message),
+    do: {:error, gettext("Too many requests to DataForSEO — try again in a minute")}
+
+  defp dataforseo_error(40_203, _message) do
+    {:error,
+     gettext(
+       "This DataForSEO account has reached its daily spending limit — raise it on app.dataforseo.com"
+     )}
+  end
+
+  defp dataforseo_error(40_209, _message),
+    do: {:error, gettext("Too many requests to DataForSEO at once — try again shortly")}
+
+  defp dataforseo_error(code, message) when is_binary(message) and message != "" do
+    {:error,
+     gettext("DataForSEO error %{code}: %{message}",
+       code: code,
+       message: String.slice(message, 0, 200)
+     )}
+  end
+
+  defp dataforseo_error(code, _message),
+    do: {:error, gettext("DataForSEO error %{code}", code: code)}
+
+  # --- SerpApi --------------------------------------------------------------
+
+  @serpapi_account_url "https://serpapi.com/account.json"
+
+  @doc """
+  Validates a SerpApi key against the Account API, and reports the searches
+  left.
+
+  The Account API is free and does not count as a search. SerpApi takes its key
+  as the `api_key` query parameter, as its search API does.
+
+  `req_options` is merged into the request (tests pass a `:plug`).
+  """
+  @spec serpapi(map(), keyword()) :: :ok | {:ok, String.t()} | {:error, String.t()}
+  def serpapi(data, req_options \\ []) do
+    api_key = data["api_key"]
+
+    if blank?(api_key) do
+      {:error, gettext("No credentials configured")}
+    else
+      Probe.run(fn -> request_serpapi_account(api_key, req_options) end)
+    end
+  end
+
+  defp request_serpapi_account(api_key, req_options) do
+    # retry: false — Req's retries would sleep through most of Probe's
+    # deadline; one request is the check. redirect: false — the endpoint does
+    # not redirect; Req would log each Location it follows, and a same-host
+    # redirect drops `params`, key included. decode_body: false — see
+    # decode_json/1.
+    options =
+      Keyword.merge(
+        [
+          params: [api_key: api_key],
+          receive_timeout: @http_timeout,
+          retry: false,
+          redirect: false,
+          decode_body: false
+        ],
+        req_options
+      )
+
+    case Req.get(@serpapi_account_url, options) do
+      {:ok, %{status: status, body: body}} ->
+        interpret_serpapi(status, decode_json(body))
+
+      {:error, reason} ->
+        case request_failure("SerpApi", reason) do
+          :unreachable -> {:error, gettext("Could not reach SerpApi")}
+          :unreadable -> {:error, gettext("Unexpected answer from SerpApi")}
+        end
+    end
+  end
+
+  @doc false
+  # Pure: the HTTP status and decoded body of /account.json in, a verdict out.
+  # Public so it can be tested against the answers SerpApi really gives. A bad
+  # key is HTTP 401 with `{"error": "Invalid API key. …"}`. An `error` of any
+  # other shape still means the answer is not an account.
+  def interpret_serpapi(200, %{"error" => message}) when is_binary(message) and message != "",
+    do: {:error, gettext("SerpApi error: %{message}", message: String.slice(message, 0, 200))}
+
+  def interpret_serpapi(200, %{"error" => error}) when error not in [nil, false],
+    do: {:error, gettext("Unexpected answer from SerpApi")}
+
+  def interpret_serpapi(200, %{} = account), do: serpapi_account_note(account)
+
+  def interpret_serpapi(200, _body), do: {:error, gettext("Unexpected answer from SerpApi")}
+
+  def interpret_serpapi(401, _body), do: {:error, gettext("Invalid API key")}
+
+  def interpret_serpapi(status, %{"error" => message}) when is_binary(message) do
+    {:error,
+     gettext("SerpApi error %{status}: %{message}",
+       status: status,
+       message: String.slice(message, 0, 200)
+     )}
+  end
+
+  def interpret_serpapi(status, _body),
+    do: {:error, gettext("SerpApi error %{status}", status: status)}
+
+  # The key worked; the note says what the account can do with it. An
+  # account status other than SerpApi's documented "Active" leads the note —
+  # the key is valid, but the account may not run searches.
+  defp serpapi_account_note(account) do
+    status =
+      case account["account_status"] do
+        status when is_binary(status) and status != "" ->
+          if String.downcase(status) != "active",
+            do: gettext("Account status: %{status}", status: String.slice(status, 0, 50))
+
+        _ ->
+          nil
+      end
+
+    case Enum.reject([status, serpapi_searches(account)], &is_nil/1) do
+      [] -> :ok
+      parts -> {:ok, Enum.join(parts, " · ")}
+    end
+  end
+
+  # `total_searches_left` is SerpApi's own count of what the account can still
+  # run; the plan's monthly allowance alone would miss any extra credits.
+  defp serpapi_searches(%{"plan_name" => plan, "total_searches_left" => left})
+       when is_binary(plan) and plan != "" and is_integer(left) do
+    if left > 0,
+      do: gettext("%{plan} · searches left: %{left}", plan: plan, left: Number.format(left)),
+      else: gettext("%{plan} · no searches left", plan: plan)
+  end
+
+  defp serpapi_searches(%{"total_searches_left" => left}) when is_integer(left) do
+    if left > 0,
+      do: gettext("Searches left: %{left}", left: Number.format(left)),
+      else: gettext("No searches left")
+  end
+
+  defp serpapi_searches(%{"plan_name" => plan}) when is_binary(plan) and plan != "", do: plan
+  defp serpapi_searches(_account), do: nil
+
   # --- shared ---------------------------------------------------------------
+
+  # The body is decoded here rather than by Req, for two reasons. Req decodes
+  # by the URL's extension when there is no content type, so a plain-text 503
+  # from `account.json` came back as a decode error with its status lost. And a
+  # decode error carries the whole body — SerpApi's account body includes the
+  # API key — so it must never become a logged `{:error, reason}`. A body that
+  # is not JSON stays a binary, which the interpreters read as "not an answer".
+  defp decode_json(body) when is_binary(body) do
+    case Jason.decode(body) do
+      {:ok, decoded} -> decoded
+      {:error, _reason} -> body
+    end
+  end
+
+  defp decode_json(body), do: body
+
+  # A request that failed without a response to read. Only the kind of failure
+  # is logged, never the whole term: some reasons carry response bytes (Mint's
+  # `{:unexpected_data, data}`), so of a tuple only its tag is kept.
+  defp request_failure(service, %error{reason: reason})
+       when error in [Req.TransportError, Req.HTTPError] do
+    Logger.warning("#{service} connection check failed: #{inspect(reason_tag(reason))}")
+    :unreachable
+  end
+
+  # `Req.get/2` returns an exception struct as the error, always.
+  defp request_failure(service, %{__struct__: kind}) do
+    Logger.warning("#{service} connection check failed: unreadable answer (#{inspect(kind)})")
+    :unreadable
+  end
+
+  defp reason_tag(reason) when is_tuple(reason) and tuple_size(reason) > 0, do: elem(reason, 0)
+  defp reason_tag(reason) when is_atom(reason), do: reason
+  defp reason_tag(_reason), do: :other
 
   defp blank?(nil), do: true
   defp blank?(value) when is_binary(value), do: String.trim(value) == ""

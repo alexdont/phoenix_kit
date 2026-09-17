@@ -90,6 +90,10 @@ defmodule PhoenixKitWeb.Live.Settings.IntegrationForm do
           |> assign(:name, name)
           |> assign(:uuid, uuid)
           |> assign(:data, data)
+          # Values typed on /new (a dry-run Test) are saved by now. Kept, they
+          # would be rendered as typed — a secret included — on the edit page
+          # that Create patches to.
+          |> assign(:form_values, %{})
 
         # Handle OAuth callback (code in query params).
         # Only process during live WebSocket connection — during dead

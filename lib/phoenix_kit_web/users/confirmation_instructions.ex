@@ -47,6 +47,8 @@ defmodule PhoenixKitWeb.Users.ConfirmationInstructions do
   alias PhoenixKit.Utils.Routes
 
   def mount(params, session, socket) do
+    socket = assign(socket, :page_title, gettext("Resend confirmation"))
+
     user = socket.assigns[:phoenix_kit_current_user]
     destination = resolve_destination(params, session, socket)
 

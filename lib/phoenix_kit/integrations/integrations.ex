@@ -18,7 +18,7 @@ defmodule PhoenixKit.Integrations do
 
   - `:oauth2` — Google, Microsoft, Slack, etc. (client_id/secret + access/refresh tokens)
   - `:api_key` — OpenRouter, Stripe, SendGrid, etc. (single API key)
-  - `:key_secret` — AWS, Twilio, etc. (access key + secret key)
+  - `:key_secret` — AWS, Twilio, DataForSEO, etc. (a key or login + a secret)
   - `:bot_token` — Telegram, Discord, etc. (single bot token)
   - `:credentials` — SMTP, databases, etc. (freeform credential map)
 
@@ -1141,6 +1141,12 @@ defmodule PhoenixKit.Integrations do
 
   defp do_validate(%{auth_type: :bot_token, validation: %{strategy: :telegram}}, data),
     do: Validators.telegram(data)
+
+  defp do_validate(%{auth_type: :key_secret, validation: %{strategy: :dataforseo}}, data),
+    do: Validators.dataforseo(data)
+
+  defp do_validate(%{auth_type: :api_key, validation: %{strategy: :serpapi}}, data),
+    do: Validators.serpapi(data)
 
   defp do_validate(%{auth_type: auth_type} = provider, data)
        when auth_type in [:api_key, :bot_token] do

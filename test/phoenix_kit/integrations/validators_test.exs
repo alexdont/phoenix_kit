@@ -2,6 +2,8 @@ defmodule PhoenixKit.Integrations.ValidatorsTest do
   # async: false — one test swaps the global check deadline.
   use ExUnit.Case, async: false
 
+  import ExUnit.CaptureLog
+
   alias PhoenixKit.Integrations.Validators
 
   describe "aws_ses/1 refuses to guess" do
@@ -595,6 +597,469 @@ defmodule PhoenixKit.Integrations.ValidatorsTest do
       assert message =~ "reach"
     end
   end
+
+  # Response bodies below are the shapes DataForSEO and SerpApi returned to
+  # real requests (2026-09-17), trimmed to the fields that matter and with the
+  # account details replaced.
+  @dataforseo_ok %{
+    "status_code" => 20_000,
+    "status_message" => "Ok.",
+    "cost" => 0,
+    "tasks_count" => 1,
+    "tasks_error" => 0,
+    "tasks" => [
+      %{
+        "status_code" => 20_000,
+        "status_message" => "Ok.",
+        "path" => ["v3", "appendix", "user_data"],
+        "result" => [
+          %{
+            "login" => "you@example.com",
+            "timezone" => "UTC",
+            "money" => %{"total" => 1, "balance" => 1, "limits" => %{}, "statistics" => %{}},
+            "price" => %{},
+            "rates" => %{},
+            "backlinks_subscription_expiry_date" => nil,
+            "llm_mentions_subscription_expiry_date" => nil
+          }
+        ]
+      }
+    ]
+  }
+
+  @dataforseo_unauthorized %{
+    "status_code" => 40_100,
+    "status_message" =>
+      "You are not authorized to access this resource. See your login details here: https://app.dataforseo.com/api-access .",
+    "cost" => 0,
+    "tasks_count" => 0,
+    "tasks_error" => 0,
+    "tasks" => []
+  }
+
+  # SerpApi's own documented example carries the account's API key too.
+  @serpapi_ok %{
+    "account_id" => "5ac54d6adefb2f1dba1663f5",
+    "api_key" => "serp-key",
+    "account_email" => "you@example.com",
+    "account_status" => "Active",
+    "plan_name" => "Free Plan",
+    "searches_per_month" => 250,
+    "this_month_usage" => 12,
+    "total_searches_left" => 238
+  }
+
+  @serpapi_invalid_key %{
+    "error" => "Invalid API key. Your API key should be here: https://serpapi.com/manage-api-key"
+  }
+
+  describe "dataforseo/2 refuses to guess" do
+    test "a missing login or password is reported without a network round trip" do
+      for creds <- [
+            %{},
+            %{"login" => "you@example.com"},
+            %{"password" => "secret"},
+            %{"login" => "  ", "password" => "secret"},
+            %{"login" => "you@example.com", "password" => ""}
+          ] do
+        assert {:error, "No credentials configured"} =
+                 Validators.dataforseo(creds, plug: &flunk_request/1),
+               inspect(creds)
+      end
+    end
+  end
+
+  describe "dataforseo/2 asks the account endpoint" do
+    test "with HTTP Basic credentials, and reports the balance" do
+      plug = fn conn ->
+        assert conn.method == "GET"
+        assert conn.host == "api.dataforseo.com"
+        assert conn.request_path == "/v3/appendix/user_data"
+
+        assert Plug.Conn.get_req_header(conn, "authorization") ==
+                 ["Basic " <> Base.encode64("you@example.com:api-secret")]
+
+        Req.Test.json(conn, @dataforseo_ok)
+      end
+
+      creds = %{"login" => "you@example.com", "password" => "api-secret"}
+      assert {:ok, "Balance: $1.00"} = Validators.dataforseo(creds, plug: plug)
+    end
+
+    test "a wrong password is an error that points at the API password" do
+      plug = fn conn ->
+        conn |> Plug.Conn.put_status(401) |> Req.Test.json(@dataforseo_unauthorized)
+      end
+
+      creds = %{"login" => "you@example.com", "password" => "account-password"}
+      assert {:error, message} = Validators.dataforseo(creds, plug: plug)
+      assert message =~ "Invalid API login or password"
+      assert message =~ "API Access"
+    end
+
+    test "an unreachable API is reported as such" do
+      plug = &Req.Test.transport_error(&1, :econnrefused)
+      creds = %{"login" => "you@example.com", "password" => "api-secret"}
+
+      assert {:error, "Could not reach DataForSEO"} = Validators.dataforseo(creds, plug: plug)
+    end
+
+    test "an answer that cannot be read is not called unreachable, and its body is not logged" do
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(
+          200,
+          ~s({"status_code":20000,"tasks":[{"result":[{"login":"you@exa)
+        )
+      end
+
+      creds = %{"login" => "you@example.com", "password" => "api-secret"}
+
+      log =
+        capture_log(fn ->
+          assert {:error, "Unexpected answer from DataForSEO"} =
+                   Validators.dataforseo(creds, plug: plug)
+        end)
+
+      refute log =~ "you@exa"
+      refute log =~ "api-secret"
+    end
+
+    test "a redirect is not followed" do
+      {plug, calls} =
+        counting(fn conn ->
+          conn
+          |> Plug.Conn.put_resp_header("location", "https://app.dataforseo.com/login")
+          |> Plug.Conn.send_resp(301, "")
+        end)
+
+      creds = %{"login" => "you@example.com", "password" => "api-secret"}
+      assert {:error, "DataForSEO error 301"} = Validators.dataforseo(creds, plug: plug)
+      assert calls.() == 1
+    end
+
+    test "asks once: no retry on a failed answer or a dropped connection" do
+      creds = %{"login" => "you@example.com", "password" => "api-secret"}
+
+      for {respond, expected} <- [
+            {&Plug.Conn.send_resp(&1, 503, "busy"), "DataForSEO error 503"},
+            {&Req.Test.transport_error(&1, :timeout), "Could not reach DataForSEO"}
+          ] do
+        {plug, calls} = counting(respond)
+        assert {:error, ^expected} = Validators.dataforseo(creds, plug: plug)
+        assert calls.() == 1, expected
+      end
+    end
+  end
+
+  describe "interpret_dataforseo/2" do
+    test "a float balance is shown to the cent" do
+      body =
+        put_in(@dataforseo_ok, ["tasks", Access.at(0), "result", Access.at(0), "money"], %{
+          "balance" => 12.3456
+        })
+
+      assert {:ok, "Balance: $12.35"} = Validators.interpret_dataforseo(200, body)
+    end
+
+    test "an empty balance still connects, and says what it means" do
+      body =
+        put_in(@dataforseo_ok, ["tasks", Access.at(0), "result", Access.at(0), "money"], %{
+          "balance" => 0
+        })
+
+      assert {:ok, note} = Validators.interpret_dataforseo(200, body)
+      assert note =~ "$0.00"
+      assert note =~ "add funds"
+    end
+
+    test "the warning follows the amount shown, not the raw number" do
+      for {balance, shown} <- [{0.004, "$0.00"}, {-0.004, "$0.00"}, {-5, "$-5.00"}] do
+        body = with_balance(balance)
+        assert {:ok, note} = Validators.interpret_dataforseo(200, body)
+        assert note =~ shown, "#{balance}: #{note}"
+        assert note =~ "add funds", "#{balance}: #{note}"
+      end
+
+      assert {:ok, "Balance: $0.01"} = Validators.interpret_dataforseo(200, with_balance(0.005))
+    end
+
+    test "a balance no float can hold is shown, not crashed on" do
+      # `:erlang.float_to_binary/2` refuses 1.0e300, and an integer this large
+      # cannot become a float at all.
+      assert {:ok, "Balance: $" <> _} =
+               Validators.interpret_dataforseo(200, with_balance(1.0e300))
+
+      assert {:ok, "Balance: $1" <> rest} =
+               Validators.interpret_dataforseo(200, with_balance(Integer.pow(10, 400)))
+
+      # Past Decimal's 28-digit context the cents are dropped; the digits stay.
+      assert rest =~ ~r/^0+(\.00)?$/
+    end
+
+    test "a success with no account in it is still a success" do
+      assert :ok = Validators.interpret_dataforseo(200, Map.put(@dataforseo_ok, "tasks", []))
+
+      no_money =
+        put_in(@dataforseo_ok, ["tasks", Access.at(0), "result"], [%{"login" => "x"}])
+
+      assert :ok = Validators.interpret_dataforseo(200, no_money)
+    end
+
+    test "a failed task is an error even when the request succeeded" do
+      body =
+        @dataforseo_ok
+        |> put_in(["tasks", Access.at(0), "status_code"], 40_204)
+        |> put_in(["tasks", Access.at(0), "status_message"], "Access denied.")
+
+      assert {:error, "DataForSEO error 40204: Access denied."} =
+               Validators.interpret_dataforseo(200, body)
+    end
+
+    test "the account problems an operator can fix get their own message" do
+      for {code, expected} <- [
+            {40_104, "not verified"},
+            {40_200, "needs funds"},
+            {40_210, "needs funds"},
+            {40_201, "paused"},
+            {40_202, "Too many requests"},
+            {40_203, "daily spending limit"},
+            {40_209, "at once"}
+          ] do
+        body = %{@dataforseo_unauthorized | "status_code" => code, "status_message" => "x"}
+        assert {:error, message} = Validators.interpret_dataforseo(402, body)
+        assert message =~ expected, "#{code}: #{message}"
+      end
+    end
+
+    test "an unknown code carries DataForSEO's own message, cut to length" do
+      body = %{@dataforseo_unauthorized | "status_code" => 50_000, "status_message" => "Boom."}
+
+      assert {:error, "DataForSEO error 50000: Boom."} =
+               Validators.interpret_dataforseo(500, body)
+
+      long = %{body | "status_message" => String.duplicate("a", 1_000)}
+      assert {:error, message} = Validators.interpret_dataforseo(500, long)
+      assert String.length(message) < 250
+    end
+
+    test "answers without a DataForSEO body fall back to the HTTP status" do
+      assert {:error, message} = Validators.interpret_dataforseo(401, "Unauthorized")
+      assert message =~ "Invalid API login or password"
+
+      assert {:error, "DataForSEO error 502"} =
+               Validators.interpret_dataforseo(502, "<html>Bad gateway</html>")
+
+      assert {:error, "Unexpected answer from DataForSEO"} =
+               Validators.interpret_dataforseo(200, "<html>maintenance</html>")
+    end
+
+    test "a success code on a failed HTTP response is not a success" do
+      assert {:error, "DataForSEO error 500"} =
+               Validators.interpret_dataforseo(500, @dataforseo_ok)
+    end
+  end
+
+  describe "serpapi/2 refuses to guess" do
+    test "a missing key is reported without a network round trip" do
+      for creds <- [%{}, %{"api_key" => ""}, %{"api_key" => "   "}] do
+        assert {:error, "No credentials configured"} =
+                 Validators.serpapi(creds, plug: &flunk_request/1),
+               inspect(creds)
+      end
+    end
+  end
+
+  describe "serpapi/2 asks the Account API" do
+    test "with the key as a query parameter, and reports the searches left" do
+      plug = fn conn ->
+        conn = Plug.Conn.fetch_query_params(conn)
+        assert conn.method == "GET"
+        assert conn.host == "serpapi.com"
+        assert conn.request_path == "/account.json"
+        assert conn.query_params == %{"api_key" => "serp-key"}
+        assert Plug.Conn.get_req_header(conn, "authorization") == []
+
+        Req.Test.json(conn, @serpapi_ok)
+      end
+
+      assert {:ok, "Free Plan · searches left: 238"} =
+               Validators.serpapi(%{"api_key" => "serp-key"}, plug: plug)
+    end
+
+    test "a bad key is an error" do
+      plug = fn conn ->
+        conn |> Plug.Conn.put_status(401) |> Req.Test.json(@serpapi_invalid_key)
+      end
+
+      assert {:error, "Invalid API key"} =
+               Validators.serpapi(%{"api_key" => "wrong"}, plug: plug)
+    end
+
+    test "an unreachable API is reported as such" do
+      plug = &Req.Test.transport_error(&1, :timeout)
+
+      assert {:error, "Could not reach SerpApi"} =
+               Validators.serpapi(%{"api_key" => "serp-key"}, plug: plug)
+    end
+
+    test "an answer that cannot be read is not called unreachable, and the key stays out of the log" do
+      # A cut-off account body: SerpApi's carries the API key.
+      plug = fn conn ->
+        conn
+        |> Plug.Conn.put_resp_content_type("application/json")
+        |> Plug.Conn.send_resp(200, ~s({"account_id":"x","api_key":"serp-key","plan_name":"Fr))
+      end
+
+      log =
+        capture_log(fn ->
+          assert {:error, "Unexpected answer from SerpApi"} =
+                   Validators.serpapi(%{"api_key" => "serp-key"}, plug: plug)
+        end)
+
+      refute log =~ "serp-key"
+    end
+
+    test "a redirect is not followed" do
+      # A same-host redirect would drop `params` — the key with it — and Req
+      # logs every Location it follows.
+      {plug, calls} =
+        counting(fn conn ->
+          conn
+          |> Plug.Conn.put_resp_header("location", "/account.json?api_key=serp-key")
+          |> Plug.Conn.send_resp(302, "")
+        end)
+
+      assert {:error, "SerpApi error 302"} =
+               Validators.serpapi(%{"api_key" => "serp-key"}, plug: plug)
+
+      assert calls.() == 1
+    end
+
+    test "a failure reason carrying response bytes is logged by its tag only" do
+      plug = &Req.Test.transport_error(&1, {:bad_alpn_protocol, "SERP-SECRET-bytes"})
+
+      log =
+        capture_log(fn ->
+          assert {:error, "Could not reach SerpApi"} =
+                   Validators.serpapi(%{"api_key" => "serp-key"}, plug: plug)
+        end)
+
+      assert log =~ ":bad_alpn_protocol"
+      refute log =~ "SERP-SECRET"
+    end
+
+    test "asks once: no retry on a failed answer or a dropped connection" do
+      for {respond, expected} <- [
+            {&Plug.Conn.send_resp(&1, 503, "busy"), "SerpApi error 503"},
+            {&Req.Test.transport_error(&1, :timeout), "Could not reach SerpApi"}
+          ] do
+        {plug, calls} = counting(respond)
+        assert {:error, ^expected} = Validators.serpapi(%{"api_key" => "serp-key"}, plug: plug)
+        assert calls.() == 1, expected
+      end
+    end
+  end
+
+  describe "interpret_serpapi/2" do
+    test "a used-up plan still connects, and says so" do
+      body = %{@serpapi_ok | "this_month_usage" => 250, "total_searches_left" => 0}
+
+      assert {:ok, "Free Plan · no searches left"} = Validators.interpret_serpapi(200, body)
+    end
+
+    test "large counts are grouped" do
+      body = %{@serpapi_ok | "plan_name" => "Big Data Plan", "total_searches_left" => 29_500}
+
+      assert {:ok, "Big Data Plan · searches left: 29,500"} =
+               Validators.interpret_serpapi(200, body)
+    end
+
+    test "an account without plan details is still a success" do
+      assert :ok = Validators.interpret_serpapi(200, %{"account_email" => "you@example.com"})
+    end
+
+    test "the searches left are reported with or without a plan name" do
+      assert {:ok, "No searches left"} =
+               Validators.interpret_serpapi(200, %{"total_searches_left" => 0})
+
+      assert {:ok, "Searches left: 1,500"} =
+               Validators.interpret_serpapi(200, %{"total_searches_left" => 1_500})
+
+      assert {:ok, "Free Plan"} = Validators.interpret_serpapi(200, %{"plan_name" => "Free Plan"})
+
+      # A blank plan name is no plan name.
+      assert {:ok, "Searches left: 3"} =
+               Validators.interpret_serpapi(200, %{"plan_name" => "", "total_searches_left" => 3})
+
+      assert :ok = Validators.interpret_serpapi(200, %{"plan_name" => ""})
+    end
+
+    test "an account that is not active says so first" do
+      body = %{@serpapi_ok | "account_status" => "Suspended"}
+
+      assert {:ok, "Account status: Suspended · Free Plan · searches left: 238"} =
+               Validators.interpret_serpapi(200, body)
+
+      # Case aside, "Active" is the documented healthy value.
+      assert {:ok, "Free Plan · searches left: 238"} =
+               Validators.interpret_serpapi(200, %{@serpapi_ok | "account_status" => "active"})
+    end
+
+    test "an error body is an error, whatever the status" do
+      assert {:error, "SerpApi error: Account is suspended."} =
+               Validators.interpret_serpapi(200, %{"error" => "Account is suspended."})
+
+      assert {:error, "Unexpected answer from SerpApi"} =
+               Validators.interpret_serpapi(200, %{"error" => ""})
+
+      assert {:error, "SerpApi error 429: Too many requests."} =
+               Validators.interpret_serpapi(429, %{"error" => "Too many requests."})
+    end
+
+    test "an error of any other shape is not an account" do
+      for error <- [%{"code" => "rate_limited"}, ["x"], true, 1] do
+        assert {:error, "Unexpected answer from SerpApi"} =
+                 Validators.interpret_serpapi(200, Map.put(@serpapi_ok, "error", error)),
+               inspect(error)
+      end
+
+      # An explicit null or false is no error.
+      assert {:ok, _} = Validators.interpret_serpapi(200, Map.put(@serpapi_ok, "error", nil))
+      assert {:ok, _} = Validators.interpret_serpapi(200, Map.put(@serpapi_ok, "error", false))
+    end
+
+    test "answers without a SerpApi body fall back to the HTTP status" do
+      assert {:error, "Invalid API key"} = Validators.interpret_serpapi(401, "")
+      assert {:error, "SerpApi error 503"} = Validators.interpret_serpapi(503, "<html></html>")
+
+      assert {:error, "Unexpected answer from SerpApi"} =
+               Validators.interpret_serpapi(200, "<html></html>")
+    end
+  end
+
+  defp with_balance(balance) do
+    put_in(@dataforseo_ok, ["tasks", Access.at(0), "result", Access.at(0), "money"], %{
+      "balance" => balance
+    })
+  end
+
+  # Wraps a plug so the test can see how many requests reached it. The plug runs
+  # in Probe's check process, hence a counter rather than the process dictionary.
+  defp counting(respond) do
+    counter = :counters.new(1, [])
+
+    plug = fn conn ->
+      :counters.add(counter, 1, 1)
+      respond.(conn)
+    end
+
+    {plug, fn -> :counters.get(counter, 1) end}
+  end
+
+  # A plug for tests that must not reach the network at all.
+  defp flunk_request(_conn), do: flunk("no request was expected")
 
   defp s3_error(code) do
     {:http_error, 403,

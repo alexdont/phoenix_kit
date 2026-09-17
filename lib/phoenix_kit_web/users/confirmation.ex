@@ -15,6 +15,8 @@ defmodule PhoenixKitWeb.Users.Confirmation do
   alias PhoenixKit.Utils.Routes
 
   def mount(%{"token" => token} = params, session, socket) do
+    socket = assign(socket, :page_title, gettext("Confirm your account"))
+
     form = to_form(%{"token" => token}, as: "user")
 
     # Same destination rule as the parked /users/confirm page, so the tab that

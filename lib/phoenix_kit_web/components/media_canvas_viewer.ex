@@ -60,6 +60,11 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
       standalone-page hosts like `MediaDetail` that have their own
       surrounding chrome (admin actions, metadata editor, file
       details).
+    * `:edit_target` (default `nil`) — `{module, id}` of a LiveComponent
+      that opens the image editor. When set, the sidebar of an editable
+      image shows "Edit image", which sends it
+      `send_update(module, id: id, open_image_editor: file_uuid)`.
+      `MediaBrowser` passes itself.
     * `:details_path` (default `nil`) — when set, the sidebar shows an
       "Open details page" button navigating to this path. Admin-context
       hosts (`MediaBrowser` with `admin={true}`) pass the file's
@@ -137,7 +142,8 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
      |> assign(:rotation_status, nil)
      |> assign(:rotation_status_token, 0)
      |> assign(:sidebar_collapsed, false)
-     |> assign(:details_path, nil)}
+     |> assign(:details_path, nil)
+     |> assign(:edit_target, nil)}
   end
 
   @impl true
@@ -214,6 +220,7 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
       # shows; they just don't write.
       |> assign(:persist_rotation, assigns[:persist_rotation] || false)
       |> assign(:details_path, assigns[:details_path])
+      |> assign(:edit_target, assigns[:edit_target])
 
     # First mount (or file changed via re-mount): hydrate annotations
     # + canvas. Because the id encodes the file uuid, the parent's
@@ -408,6 +415,15 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
   # width (the win is biggest on small screens). Persisted per-user so
   # prev/next — which remounts this component — and later opens keep
   # the choice. Helpers live in "Info sidebar collapse" below.
+  def handle_event("edit_image", _params, socket) do
+    case {socket.assigns.edit_target, socket.assigns.file} do
+      {{module, id}, %{file_uuid: uuid}} -> send_update(module, id: id, open_image_editor: uuid)
+      _ -> :ok
+    end
+
+    {:noreply, socket}
+  end
+
   def handle_event("toggle_viewer_sidebar", _params, socket) do
     collapsed = not socket.assigns[:sidebar_collapsed]
     persist_sidebar_collapsed(socket.assigns[:current_user], collapsed)

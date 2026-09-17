@@ -9,9 +9,14 @@ defmodule PhoenixKit.Application do
 
   require Logger
 
+  alias PhoenixKit.Modules.Storage.ApplyImageEditJob
+  alias PhoenixKit.Modules.Storage.Providers.Local
+
   @impl true
   def start(_type, _args) do
     check_installation()
+    Local.remember_start_dir()
+    ApplyImageEditJob.attach_telemetry()
 
     # PhoenixKit.Supervisor is started by parent app in its supervision tree
     # This is just a placeholder to satisfy OTP application callback

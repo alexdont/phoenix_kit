@@ -22,7 +22,7 @@ defmodule PhoenixKit.Utils.IpAddress do
       "192.168.1.1"
 
       iex> PhoenixKit.Utils.IpAddress.extract_ip_address(%{address: {8193, 3512, 1, 0, 0, 0, 0, 1}})
-      "8193:3512:1:0:0:0:0:1"
+      "2001:db8:1::1"
 
       iex> PhoenixKit.Utils.IpAddress.extract_ip_address(nil)
       "unknown"
@@ -44,21 +44,13 @@ defmodule PhoenixKit.Utils.IpAddress do
   ## Returns
 
   - IPv4 as "a.b.c.d" string
-  - IPv6 as "a:b:c:d:e:f:g:h" string
+  - IPv6 in its standard compressed hex form ("2001:db8::1")
   - "unknown" for invalid or missing data
   """
   def extract_ip_address(nil), do: "unknown"
 
-  def extract_ip_address(%{address: {a, b, c, d}})
-      when is_integer(a) and is_integer(b) and is_integer(c) and is_integer(d) do
-    "#{a}.#{b}.#{c}.#{d}"
-  end
-
-  def extract_ip_address(%{address: {a, b, c, d, e, f, g, h}})
-      when is_integer(a) and is_integer(b) and is_integer(c) and is_integer(d) and
-             is_integer(e) and is_integer(f) and is_integer(g) and is_integer(h) do
-    "#{a}:#{b}:#{c}:#{d}:#{e}:#{f}:#{g}:#{h}"
-  end
+  def extract_ip_address(%{address: ip}) when is_tuple(ip) and tuple_size(ip) in [4, 8],
+    do: format(ip) || "unknown"
 
   def extract_ip_address(_), do: "unknown"
 
@@ -139,6 +131,57 @@ defmodule PhoenixKit.Utils.IpAddress do
     RuntimeError -> nil
   end
 
+  @doc """
+  The network an address belongs to — what to count or compare visitors by.
+
+  An IPv4 address is its own network. An IPv6 address is its `/64`: that is
+  the block one household, phone or server is handed, and every address in
+  it is theirs to use — operating systems rotate a temporary address inside
+  it daily, and anyone can pick a fresh one per request. Keyed on the full
+  address, a rate limit is one new address away from empty and a session
+  "changes IP" every day.
+
+  Exceptions, where a `/64` would put many hosts in one bucket:
+
+  - IPv4-mapped (`::ffff:a.b.c.d`) and well-known NAT64 (`64:ff9b::/96`)
+    unmap to the embedded IPv4, as does deprecated IPv4-compatible
+    (`::a.b.c.d`)
+  - loopback (`::1`), unspecified (`::`), and link-local (`fe80::/10`)
+    are the address itself
+
+  Anything that does not parse (including "unknown") comes back unchanged.
+
+      iex> PhoenixKit.Utils.IpAddress.network("2a0d:3344:6a:c310:88f8:482c:e41a:9ef5")
+      "2a0d:3344:6a:c310::/64"
+
+      iex> PhoenixKit.Utils.IpAddress.network("203.0.113.7")
+      "203.0.113.7"
+
+      iex> PhoenixKit.Utils.IpAddress.network("::ffff:203.0.113.7")
+      "203.0.113.7"
+
+      iex> PhoenixKit.Utils.IpAddress.network("unknown")
+      "unknown"
+  """
+  @spec network(String.t() | nil) :: String.t() | nil
+  def network(nil), do: nil
+
+  def network(address) when is_binary(address) do
+    case :inet.parse_strict_address(String.to_charlist(address)) do
+      {:ok, tuple} -> network_key(tuple)
+      {:error, _} -> address
+    end
+  end
+
+  defp network_key({_, _, _, _} = v4), do: format(v4)
+  defp network_key({0, 0, 0, 0, 0, 65_535, _, _} = mapped), do: format(unmap(mapped))
+  defp network_key({0x64, 0xFF9B, 0, 0, 0, 0, _, _} = nat64), do: format(unmap(nat64))
+  defp network_key({0, 0, 0, 0, 0, 0, 0, 1} = loopback), do: format(loopback)
+  defp network_key({0, 0, 0, 0, 0, 0, 0, 0} = unspecified), do: format(unspecified)
+  defp network_key({0, 0, 0, 0, 0, 0, _, _} = compatible), do: format(unmap(compatible))
+  defp network_key({a, _, _, _, _, _, _, _} = ll) when a in 0xFE80..0xFEBF, do: format(ll)
+  defp network_key({a, b, c, d, _, _, _, _}), do: format({a, b, c, d, 0, 0, 0, 0}) <> "/64"
+
   # Every instance of the header, in order, as one list — a proxy that adds
   # its own header line rather than appending to the visitor's still puts
   # the real address last.
@@ -188,7 +231,8 @@ defmodule PhoenixKit.Utils.IpAddress do
   defp local?({a, _, _, _, _, _, _, _}) when a in 0xFC00..0xFDFF, do: true
   defp local?(_), do: false
 
-  defp unmap({0, 0, 0, 0, 0, 65_535, ab, cd}),
+  # Mapped, NAT64, and IPv4-compatible all stash the IPv4 in the last 32 bits.
+  defp unmap({_, _, _, _, _, _, ab, cd}),
     do: {div(ab, 256), rem(ab, 256), div(cd, 256), rem(cd, 256)}
 
   @doc """

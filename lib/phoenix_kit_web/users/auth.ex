@@ -625,6 +625,45 @@ defmodule PhoenixKitWeb.Users.Auth do
     * `:phoenix_kit_redirect_if_authenticated_scope` - Checks authentication via scope system.
       Redirects to signed_in_path if there's a logged user.
 
+    * `{:phoenix_kit_require, requirement}` - **Checks only; mounts nothing.**
+      `requirement` is `:authenticated`, `:owner`, `:admin` or
+      `{:module, key}`, with exactly the rules of the matching `ensure_*`
+      hook. It reads the scope an earlier `:phoenix_kit_mount_current_scope`
+      put on the socket, and raises if there is none — that is a wiring
+      mistake, not an anonymous visitor.
+
+  ## Two verbs: mount, then require
+
+  Every hook does one or both of two things: **mount** the scope (the
+  current user, locale, and the hooks that keep them fresh) and **require**
+  something of it. The `ensure_*` hooks do both, which is convenient for a
+  `live_session` whose pages all have the same requirement. When pages with
+  different requirements share one `live_session` — public and signed-in
+  pages together, so navigating between them stays on the socket — mount once
+  for the session and require per page:
+
+      live_session :app,
+        on_mount: [{PhoenixKitWeb.Users.Auth, :phoenix_kit_mount_current_scope}] do
+        live "/", HomeLive              # public
+        live "/account", AccountLive    # signed in, see below
+      end
+
+      defmodule MyAppWeb.AccountLive do
+        use MyAppWeb, :live_view
+        on_mount {PhoenixKitWeb.Users.Auth, {:phoenix_kit_require, :authenticated}}
+      end
+
+  | Where | Hook |
+  |---|---|
+  | a `live_session` whose pages differ | `:phoenix_kit_mount_current_scope` |
+  | a page in it with a requirement | `{:phoenix_kit_require, requirement}` |
+  | a `live_session` whose pages all share one requirement | the matching `:phoenix_kit_ensure_*` |
+
+  Stacking is safe in any order — every hook the mount attaches is attached
+  once — but mounting twice does the work twice, so prefer the pairing above.
+  The website access gate runs before every hook, including the check-only
+  one.
+
   ## Examples
 
   Use the `on_mount` lifecycle macro in LiveViews to mount or authenticate
@@ -686,13 +725,12 @@ defmodule PhoenixKitWeb.Users.Auth do
   end
 
   defp mount_hook(:phoenix_kit_ensure_authenticated_scope, params, session, socket) do
-    socket = mount_phoenix_kit_current_scope(socket, session, params)
-    socket = attach_locale_hook(socket)
-    scope = socket.assigns.phoenix_kit_current_scope
+    socket =
+      socket
+      |> mount_phoenix_kit_current_scope(session, params)
+      |> attach_locale_hook()
 
-    with {:cont, socket} <- require_authenticated_live(socket, scope) do
-      live_account_gate(socket, scope)
-    end
+    require_scope(:authenticated, socket, socket.assigns.phoenix_kit_current_scope)
   end
 
   defp mount_hook(:phoenix_kit_redirect_if_user_is_authenticated, _params, session, socket) do
@@ -718,8 +756,69 @@ defmodule PhoenixKitWeb.Users.Auth do
 
   defp mount_hook(:phoenix_kit_ensure_owner, _params, session, socket) do
     socket = mount_phoenix_kit_current_scope(socket, session)
-    scope = socket.assigns.phoenix_kit_current_scope
+    require_scope(:owner, socket, socket.assigns.phoenix_kit_current_scope)
+  end
 
+  defp mount_hook(:phoenix_kit_ensure_admin, params, session, socket) do
+    socket = mount_phoenix_kit_current_scope(socket, session, params)
+    require_scope(:admin, socket, socket.assigns.phoenix_kit_current_scope)
+  end
+
+  defp mount_hook({:phoenix_kit_ensure_module_access, module_key}, params, session, socket) do
+    socket = mount_phoenix_kit_current_scope(socket, session, params)
+    require_scope({:module, module_key}, socket, socket.assigns.phoenix_kit_current_scope)
+  end
+
+  # The check-only verb: it reads the scope a session-level
+  # `:phoenix_kit_mount_current_scope` already put on the socket and mounts
+  # nothing itself. That is what a host with public and signed-in pages in ONE
+  # live_session needs (one live_session keeps navigation between them on the
+  # socket): mount once for the session, require per LiveView.
+  defp mount_hook({:phoenix_kit_require, requirement}, _params, _session, socket) do
+    require_scope(requirement, socket, mounted_scope!(socket, requirement))
+  end
+
+  defp mount_hook(hook, _params, _session, _socket) do
+    raise ArgumentError,
+          "unknown PhoenixKitWeb.Users.Auth on_mount hook #{inspect(hook)}. " <>
+            "See the on_mount/4 docs for the supported hooks."
+  end
+
+  # A `{:phoenix_kit_require, _}` with no scope on the socket is a wiring
+  # mistake, not an anonymous visitor: treating the missing assign as "not
+  # signed in" would bounce a signed-in user to the login page with no hint
+  # why. A scope that IS present with no user is the anonymous case, and is
+  # redirected as usual.
+  defp mounted_scope!(socket, requirement) do
+    case Map.fetch(socket.assigns, :phoenix_kit_current_scope) do
+      {:ok, scope} ->
+        scope
+
+      :error ->
+        raise ArgumentError, """
+        on_mount {PhoenixKitWeb.Users.Auth, {:phoenix_kit_require, #{inspect(requirement)}}} \
+        found no scope on the socket. It only checks — mount the scope first, e.g.
+
+            live_session :app,
+              on_mount: [{PhoenixKitWeb.Users.Auth, :phoenix_kit_mount_current_scope}] do
+              live "/account", AccountLive  # with on_mount {PhoenixKitWeb.Users.Auth, {:phoenix_kit_require, :authenticated}}
+            end
+
+        or use a hook that does both, such as :phoenix_kit_ensure_authenticated_scope.
+        """
+    end
+  end
+
+  # What each requirement demands of an already-mounted scope. The legacy
+  # `:phoenix_kit_ensure_*` hooks mount and then call these, so the two
+  # entry points cannot drift apart.
+  defp require_scope(:authenticated, socket, scope) do
+    with {:cont, socket} <- require_authenticated_live(socket, scope) do
+      live_account_gate(socket, scope)
+    end
+  end
+
+  defp require_scope(:owner, socket, scope) do
     with {:cont, socket} <- require_authenticated_live(socket, scope),
          {:cont, socket} <- live_account_gate(socket, scope) do
       if Scope.owner?(scope) do
@@ -741,10 +840,7 @@ defmodule PhoenixKitWeb.Users.Auth do
     end
   end
 
-  defp mount_hook(:phoenix_kit_ensure_admin, params, session, socket) do
-    socket = mount_phoenix_kit_current_scope(socket, session, params)
-    scope = socket.assigns.phoenix_kit_current_scope
-
+  defp require_scope(:admin, socket, scope) do
     with {:cont, socket} <- require_authenticated_live(socket, scope),
          {:cont, socket} <- live_account_gate(socket, scope) do
       case admin_gate_decision(scope, socket.view) do
@@ -762,10 +858,7 @@ defmodule PhoenixKitWeb.Users.Auth do
     end
   end
 
-  defp mount_hook({:phoenix_kit_ensure_module_access, module_key}, params, session, socket) do
-    socket = mount_phoenix_kit_current_scope(socket, session, params)
-    scope = socket.assigns.phoenix_kit_current_scope
-
+  defp require_scope({:module, module_key}, socket, scope) do
     # Store current module key for scope refresh checks
     socket = Phoenix.Component.assign(socket, :phoenix_kit_current_module_key, module_key)
 
@@ -809,6 +902,12 @@ defmodule PhoenixKitWeb.Users.Auth do
           {:halt, socket}
       end
     end
+  end
+
+  defp require_scope(requirement, _socket, _scope) do
+    raise ArgumentError,
+          "unknown requirement #{inspect(requirement)} for {:phoenix_kit_require, _}; " <>
+            "expected :authenticated, :owner, :admin or {:module, key}"
   end
 
   # The `/admin` index. Named ONCE, here, because three things have to agree
@@ -1175,13 +1274,7 @@ defmodule PhoenixKitWeb.Users.Auth do
   end
 
   defp mount_phoenix_kit_current_user(socket, session) do
-    socket =
-      attach_hook(
-        socket,
-        :current_page,
-        :handle_params,
-        &set_routing_info(&1, &2, &3)
-      )
+    socket = maybe_attach_current_page_hook(socket)
 
     # The raw session token is kept on the socket so the scope refresh can
     # reload the user THROUGH it (`refresh_scope_assigns/1`): the role a
@@ -1195,6 +1288,22 @@ defmodule PhoenixKitWeb.Users.Auth do
         user_token -> get_active_user_from_token(user_token)
       end
     end)
+  end
+
+  # Guarded like the locale, scope-refresh and timezone hooks: LiveView raises
+  # on a second attach with the same id, and this mount step runs once per
+  # scope-mounting hook — so `:phoenix_kit_mount_current_scope` followed by any
+  # `:phoenix_kit_ensure_*` hook (or `{:phoenix_kit_require, _}`) used to crash
+  # with "existing hook :current_page already attached".
+  defp maybe_attach_current_page_hook(
+         %{assigns: %{phoenix_kit_current_page_hook_attached?: true}} = socket
+       ),
+       do: socket
+
+  defp maybe_attach_current_page_hook(socket) do
+    socket
+    |> attach_hook(:current_page, :handle_params, &set_routing_info(&1, &2, &3))
+    |> Phoenix.Component.assign(:phoenix_kit_current_page_hook_attached?, true)
   end
 
   defp get_active_user_from_token(user_token) do

@@ -24,6 +24,12 @@ defmodule PhoenixKit.Migrations.Repair.EnvironmentTest do
       assert Environment.classify_config(url: "ecto://user:pass@db.internal:5432/db") == :direct
     end
 
+    test "a URL with no explicit port is the default port, not a pooler" do
+      # URI.parse gives port nil for an ecto:// URL without one; treating that
+      # as "not 5432" reported every such deployment as a likely PgBouncer.
+      assert Environment.classify_config(url: "ecto://user:pass@postgres/db") == :direct
+    end
+
     test "no port/host/url at all defaults to 5432 + localhost → :direct" do
       assert Environment.classify_config([]) == :direct
     end

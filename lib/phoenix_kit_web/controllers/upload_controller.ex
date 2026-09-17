@@ -8,7 +8,6 @@ defmodule PhoenixKitWeb.UploadController do
 
   alias PhoenixKit.Modules.Storage
   alias PhoenixKit.Modules.Storage.File, as: StorageFile
-  alias PhoenixKit.Modules.Storage.ProcessFileJob
   alias PhoenixKit.Users.Auth.Scope
   alias PhoenixKit.Users.RateLimiter
   alias PhoenixKit.Utils.Format
@@ -252,10 +251,8 @@ defmodule PhoenixKitWeb.UploadController do
            mime_type: upload.content_type
          ) do
       {:ok, file} ->
-        # Queue background job for variant generation
-        %{file_uuid: file.uuid, user_uuid: user_uuid, filename: upload.filename}
-        |> ProcessFileJob.new()
-        |> Oban.insert()
+        # Best-effort: the upload stands even when the job cannot be queued.
+        _ = Storage.queue_variant_generation(file, user_uuid, upload.filename)
 
         {:ok, file.uuid}
 

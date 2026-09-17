@@ -282,6 +282,7 @@ defmodule PhoenixKitWeb.Integration do
         post "/api/upload", UploadController, :create
         get "/file/:file_uuid/:variant/:token", FileController, :show
         get "/api/files/:file_uuid/info", FileController, :info
+        get "/api/files/:file_uuid/unedited", FileController, :unedited
         # Token in the path (not query string) so OpenSeadragon's tile-URL
         # derivation preserves it — OSD strips `.dzi?query=...` to build
         # `<base>_files/<level>/<col>_<row>.<ext>`, but a path-token

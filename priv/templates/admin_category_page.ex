@@ -14,7 +14,6 @@ defmodule <%= @web_module_prefix %>.PhoenixKit.Admin.<%= @category %>.<%= @page_
       socket
       |> assign(:project_title, Settings.get_setting("project_title", "PhoenixKit"))
       |> assign(:page_title, gettext("<%= @page_title %>"))
-      |> assign(:url_path, "<%= @url %>")
 
     {:ok, socket}
   end

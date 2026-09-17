@@ -23,6 +23,7 @@ defmodule PhoenixKitWeb.Live.Integrations.MyIntegrationForm do
   alias PhoenixKit.Integrations
   alias PhoenixKit.Integrations.Providers
   alias PhoenixKit.Integrations.Telegram
+  alias PhoenixKit.Integrations.Telegram.ChatLink
   alias PhoenixKit.Settings
   alias PhoenixKit.Users.Auth.Scope
   alias PhoenixKit.Utils.Routes
@@ -215,21 +216,39 @@ defmodule PhoenixKitWeb.Live.Integrations.MyIntegrationForm do
   # (single mode has no nonce, so a stranger who messaged the bot right before
   # Test could be captured). Re-link by messaging the bot again + pressing Test.
   def handle_event("unlink_chats", _params, socket) do
-    case Integrations.save_setup(
-           socket.assigns.uuid,
-           %{"chat_ids" => []},
-           socket.assigns.user_uuid,
-           owner: owner(socket)
-         ) do
-      {:ok, _} ->
-        {:noreply,
-         socket
-         |> reload()
-         |> put_flash(:info, gettext("Unlinked. Message the bot and press Test to re-link."))}
+    save_chat_ids(socket, [], gettext("Unlinked. Message the bot and press Test to re-link."))
+  end
 
-      _ ->
-        {:noreply, put_flash(socket, :error, gettext("Could not unlink chats"))}
+  # Link a chat by its id. Capture can only reach chats whose update is still
+  # in Telegram's ~24h queue; an id the operator already knows (a group's, a
+  # channel's) should not depend on that window.
+  def handle_event("link_chat", %{"chat_id" => value}, socket) do
+    existing = socket.assigns.data["chat_ids"] || []
+
+    case ChatLink.normalize_chat_id(value) do
+      {:ok, id} ->
+        if id in existing do
+          {:noreply, put_flash(socket, :info, gettext("That chat is already linked"))}
+        else
+          save_chat_ids(socket, existing ++ [id], gettext("Chat linked"))
+        end
+
+      :error ->
+        {:noreply,
+         put_flash(
+           socket,
+           :error,
+           gettext("Not a chat id — expected a number like -1001234567890, or @channelname")
+         )}
     end
+  end
+
+  # Remove ONE chat. The all-or-nothing `unlink_chats` above cannot express
+  # "drop the group, keep my own chat" once more than one is linked.
+  def handle_event("unlink_chat", %{"chat_id" => id}, socket) do
+    remaining = Enum.reject(socket.assigns.data["chat_ids"] || [], &(&1 == id))
+
+    save_chat_ids(socket, remaining, gettext("Chat unlinked"))
   end
 
   def handle_event("delete_connection", _params, socket) do
@@ -254,12 +273,12 @@ defmodule PhoenixKitWeb.Live.Integrations.MyIntegrationForm do
 
     # For Telegram, Test doubles as chat capture: read the chats that have
     # messaged the bot and store them (single = lock the first, multi = all).
-    maybe_capture_telegram_chats(socket)
+    capture = maybe_capture_telegram_chats(socket)
 
     flash =
       case result do
-        :ok -> {:info, gettext("Connection works")}
-        {:ok, note} -> {:info, note}
+        :ok -> capture_flash(capture, socket) || {:info, gettext("Connection works")}
+        {:ok, note} -> capture_flash(capture, socket) || {:info, note}
         :unverified -> {:warning, gettext("Not tested — this provider has no connection check")}
         {:error, reason} -> {:error, reason}
       end
@@ -274,8 +293,13 @@ defmodule PhoenixKitWeb.Live.Integrations.MyIntegrationForm do
   def handle_info(_msg, socket), do: {:noreply, socket}
 
   # Telegram chat capture (no-op for other providers). Reads the bot's pending
-  # updates, extracts private-chat ids, and merges per mode. `save_setup` merges
-  # `chat_ids` into the connection data; `reload/1` (called after) refreshes it.
+  # updates and merges the linkable chats per mode — see `ChatLink` for the
+  # rules. `save_setup` merges `chat_ids` into the connection data; `reload/1`
+  # (called after) refreshes it.
+  #
+  # Returns what actually happened so the caller's flash can say it: the old
+  # version swallowed every outcome into `:ok`, which is why "nothing was
+  # captured" and "your chat is linked" both read as "Connection works".
   defp maybe_capture_telegram_chats(
          %{assigns: %{provider: %{key: "telegram"}, uuid: uuid}} = socket
        ) do
@@ -285,39 +309,107 @@ defmodule PhoenixKitWeb.Live.Integrations.MyIntegrationForm do
 
     case Telegram.get_updates(uuid, offset: nil, owner: owner) do
       {:ok, updates} ->
-        merged = merge_chats(mode, existing, private_chat_ids(updates))
+        %{ids: ids, added: added, meta: meta} =
+          ChatLink.capture(
+            mode,
+            existing,
+            socket.assigns.data["chat_meta"] || %{},
+            ChatLink.capturable_chats(updates)
+          )
 
-        if merged != existing do
-          Integrations.save_setup(uuid, %{"chat_ids" => merged}, socket.assigns.user_uuid,
+        if added != [] do
+          Integrations.save_setup(
+            uuid,
+            %{"chat_ids" => ids, "chat_meta" => meta},
+            socket.assigns.user_uuid,
             owner: owner
           )
         end
 
+        {:captured, added}
+
       _ ->
-        :ok
+        :unreachable
     end
   end
 
-  defp maybe_capture_telegram_chats(_socket), do: :ok
+  defp maybe_capture_telegram_chats(_socket), do: :not_telegram
 
-  # single: lock ONE chat and never change it. Take the MOST RECENT private chat
-  # (getUpdates returns oldest-first) — the owner presses Test right after they
-  # /start the bot, so the newest message is theirs, not an earlier stranger's.
-  defp merge_chats("single", [_ | _] = existing, _captured), do: existing
-  defp merge_chats("single", [], captured), do: captured |> Enum.take(-1)
-  defp merge_chats("multi", existing, captured), do: Enum.uniq(existing ++ captured)
-  defp merge_chats(_mode, existing, _captured), do: existing
+  # A working token with nothing linked is the state that used to be reported
+  # as plain success — and it is precisely the state in which no notification
+  # will ever arrive. Say so.
+  defp capture_flash({:captured, [_ | _] = added}, _socket) do
+    {:info, gettext("Linked %{count} chat(s)", count: length(added))}
+  end
 
-  defp private_chat_ids(updates) do
-    updates
-    |> Enum.flat_map(fn update ->
-      chat = get_in(update, ["message", "chat"]) || %{}
+  defp capture_flash({:captured, []}, socket) do
+    if socket.assigns.data["chat_ids"] in [nil, []] do
+      {:warning,
+       gettext(
+         "The bot works, but no chat is linked yet — message the bot (or run /start@%{bot} in a group), then press Test again.",
+         bot: bot_username(socket.assigns.data)
+       )}
+    end
+  end
 
-      if chat["type"] == "private" and chat["id"],
-        do: [to_string(chat["id"])],
-        else: []
-    end)
-    |> Enum.uniq()
+  # The token checked out but the update peek didn't: whatever is linked stays
+  # linked, and nothing new could have been. Saying "connection works" here
+  # would hide the one thing that just failed.
+  defp capture_flash(:unreachable, _socket) do
+    {:warning, gettext("The bot answers, but its chats could not be read just now — try again.")}
+  end
+
+  defp capture_flash(_capture, _socket), do: nil
+
+  # What a linked chat IS, in words. Falls back to the id's own shape when no
+  # metadata was captured (a hand-typed id, or one linked before this existed):
+  # Telegram signs group ids negative, and an @handle is a channel.
+  defp chat_kind_label(id, meta) do
+    case (meta || %{})["type"] do
+      "private" ->
+        gettext("Direct message")
+
+      type when type in ["group", "supergroup"] ->
+        gettext("Group")
+
+      "channel" ->
+        gettext("Channel")
+
+      _ ->
+        cond do
+          String.starts_with?(id, "@") -> gettext("Channel")
+          ChatLink.group_id?(id) -> gettext("Group")
+          true -> gettext("Direct message")
+        end
+    end
+  end
+
+  # BotFather's handle, as recorded by the last successful validation
+  # ("Connected as @somebot") — the group command is useless without it, so an
+  # unvalidated connection still gets a placeholder to show the shape.
+  defp bot_username(data) do
+    case Regex.run(~r/@([A-Za-z0-9_]+)/, to_string(data["validation_status"])) do
+      [_, name] -> name
+      _ -> "yourbot"
+    end
+  end
+
+  # `chat_meta` (what each linked chat IS, so the card can name it) is kept
+  # alongside `chat_ids` rather than inside it: the notifications channel reads
+  # that list and must keep seeing plain ids. It follows the list on every
+  # write — an unlinked chat's title has no business lingering.
+  defp save_chat_ids(socket, ids, message) do
+    meta = ChatLink.prune_meta(socket.assigns.data["chat_meta"] || %{}, ids)
+
+    case Integrations.save_setup(
+           socket.assigns.uuid,
+           %{"chat_ids" => ids, "chat_meta" => meta},
+           socket.assigns.user_uuid,
+           owner: owner(socket)
+         ) do
+      {:ok, _} -> {:noreply, socket |> reload() |> put_flash(:info, message)}
+      _ -> {:noreply, put_flash(socket, :error, gettext("Could not save the linked chats"))}
+    end
   end
 
   # ── Internals ────────────────────────────────────────────────────────
@@ -499,28 +591,76 @@ defmodule PhoenixKitWeb.Live.Integrations.MyIntegrationForm do
                 />
               </form>
 
-              <% chats = @data["chat_ids"] || [] %>
-              <p :if={chats == []} class="text-xs text-warning">
-                {gettext("No chats linked yet — message your bot, then press Test.")}
+              <p :if={(@data["mode"] || "single") == "multi"} class="text-xs text-warning">
+                {gettext(
+                  "Anyone who starts this bot will be linked on the next Test and will receive every notification sent here. Use it only for a bot you hand out deliberately."
+                )}
               </p>
-              <div :if={chats != []} class="flex items-center justify-between gap-3">
-                <p class="text-xs text-base-content/60">
-                  {gettext("Linked chats")}: <span class="font-mono">{Enum.join(chats, ", ")}</span>
+
+              <% chats = @data["chat_ids"] || [] %>
+              <% meta = @data["chat_meta"] || %{} %>
+
+              <p :if={chats == []} class="text-xs text-warning">
+                {gettext("No chats linked yet — nothing will be delivered.")}
+              </p>
+
+              <ul :if={chats != []} class="divide-y divide-base-200">
+                <li :for={id <- chats} class="flex items-center justify-between gap-3 py-1.5">
+                  <span class="text-xs">
+                    <span class="badge badge-ghost badge-sm mr-2">
+                      {chat_kind_label(id, meta[id])}
+                    </span>
+                    <span :if={meta[id]["title"]} class="mr-2">{meta[id]["title"]}</span>
+                    <span class="font-mono text-base-content/60">{id}</span>
+                  </span>
+                  <button
+                    type="button"
+                    phx-click="unlink_chat"
+                    phx-value-chat_id={id}
+                    data-confirm={gettext("Stop sending notifications to this chat?")}
+                    class="btn btn-ghost btn-xs text-error gap-1"
+                  >
+                    <.icon name="hero-x-mark" class="w-3.5 h-3.5" />
+                    {gettext("Unlink")}
+                  </button>
+                </li>
+              </ul>
+
+              <%!-- Two ways in, because capture alone cannot reach every chat:
+                   it only sees updates still in Telegram's ~24h queue. --%>
+              <div class="rounded-box bg-base-200/50 p-3 space-y-2 text-xs">
+                <p class="font-medium">{gettext("How to link a chat")}</p>
+                <p>
+                  {gettext("Your own chat:")}
+                  <span class="font-mono">
+                    /start
+                  </span>
+                  {gettext("the bot in Telegram, then press Test Connection above.")}
                 </p>
-                <button
-                  type="button"
-                  phx-click="unlink_chats"
-                  data-confirm={
-                    gettext(
-                      "Unlink the connected chat(s)? Re-link by messaging the bot and pressing Test again."
-                    )
-                  }
-                  class="btn btn-ghost btn-xs text-error gap-1"
-                >
-                  <.icon name="hero-x-mark" class="w-3.5 h-3.5" />
-                  {gettext("Unlink")}
-                </button>
+                <p>
+                  {gettext("A group:")} {gettext("add the bot to the group, then send")}
+                  <span class="font-mono">/start@{bot_username(@data)}</span>
+                  {gettext(
+                    "there and press Test Connection. A group needs that command — bots cannot read ordinary group messages."
+                  )}
+                </p>
               </div>
+
+              <form id="telegram-link-chat-form" phx-submit="link_chat" class="flex items-end gap-2">
+                <div class="flex-1">
+                  <.input
+                    type="text"
+                    id="telegram-chat-id-input"
+                    name="chat_id"
+                    value=""
+                    label={gettext("Or link a chat by ID")}
+                    placeholder="-1001234567890"
+                  />
+                </div>
+                <button type="submit" class="btn btn-outline btn-sm">
+                  {gettext("Link")}
+                </button>
+              </form>
             </div>
           </div>
 

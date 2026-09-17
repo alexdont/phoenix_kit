@@ -93,6 +93,15 @@ Building admin forms, lists, or media pickers? Read `dev_docs/guides/2026-09-11-
 - ⚠️ **Multilang wrapper scope:** `<.multilang_fields_wrapper>` wraps translatable fields **only** — its id includes `@current_lang`, so a language switch re-mounts everything inside; non-translatable fields (pricing, status, actions) render outside it or lose state on every switch.
 - ⚠️ **Every `<form phx-change=…>` needs a unique `id`** — without it LiveView form recovery is silently disabled and host test suites warn `missing_form_id`. LiveComponent → derive from `@id`; inside a comprehension → include the row uuid. Full audit: `dev_docs/investigations/2026-07-27-missing-form-id-audit.md`.
 
+## Storage & Image Editing
+
+Files, variants, buckets and serving: `lib/modules/storage/README.md` (→ "Versions and caching", "Editing images"). Landmines:
+
+- ⚠️ **System-managed files are never served or listed** — tile chunks and an edited image's hidden unedited original (`ImageEditing.backup/1`) are `system_managed` children. `FileController`, `FileServer` and `Storage.get_public_url*` refuse them; a new serving path must too. The unedited original is reachable only through `GET /api/files/:uuid/unedited`. Its objects sit at private `unedited_*` keys, copied off the served keys by the first edit (a public bucket hands served keys out as plain URLs), so never point a backup row back at a served key.
+- ⚠️ **Delete stored objects only through `Storage.delete_stored_objects/2`** (or `delete_file_completely/1`, which ends in it). Keys are shared (cross-user copies, an edited file and its backup) and content-addressed (written again by later jobs); it re-checks the references under the directory lock. A bare `Manager.delete_file/1` on a key can delete another file's bytes.
+- ⚠️ **Something derived from a file's bytes is recorded only while those bytes are still its original** — read them with `Storage.retrieve_original/1` and check `Storage.original_key?/2` in the transaction that records the result (variants, dimensions). An image edit can swap the original at any moment.
+- **Build file URLs with `version:`** when the instance is at hand (`URLSigner.signed_url(uuid, variant, version: instance)`); only a versioned URL is cached for good.
+
 ## Login & Registration
 
 Full reference: `dev_docs/guides/2026-07-28-login-and-registration.md`. All settings live on `/admin/settings/users`. Landmines:
@@ -165,6 +174,19 @@ url = Routes.url("/users/confirm/#{token}")
 <.pk_link navigate="/admin">Admin</.pk_link>
 <.pk_link_button navigate="/admin/users" variant="primary">Manage Users</.pk_link_button>
 ```
+
+#### The language lives in the URL — never in the session
+
+Every localized page is served at a URL that carries its language
+(`/et/products`; the default language may be prefixless). The navigation hook
+sets Gettext from the URL on every navigation, and the language switcher
+rewrites the locale segment. **Session-locale routing is unsupported by
+design** — don't add a session fallback, a "session locale mode", or a switcher
+option that can emit the same URL for every language. A saved preference may
+only pick where a bare landing request redirects. Rationale and a migration
+recipe: `guides/locale-routing.md`; the switcher's moduledoc states the same
+contract, and in dev it warns when a non-default language renders at a
+locale-less URL.
 
 #### The admin segment is renameable — keep writing `/admin`
 

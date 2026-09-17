@@ -43,4 +43,28 @@ defmodule PhoenixKit.Utils.SessionFingerprintIpTest do
   test "no headers, no proxy: the raw peer address" do
     assert SessionFingerprint.get_ip_address(conn({203, 0, 113, 7})) == "203.0.113.7"
   end
+
+  describe "verify_fingerprint/4 with IPv6" do
+    test "a rotated address inside the same /64 is the same IP" do
+      conn = conn({0x2A0D, 0x3344, 0x6A, 0xC310, 0x1111, 0x2222, 0x3333, 0x4444})
+
+      assert :ok =
+               SessionFingerprint.verify_fingerprint(
+                 conn,
+                 "2a0d:3344:6a:c310:88f8:482c:e41a:9ef5",
+                 nil
+               )
+    end
+
+    test "a different /64 is a changed IP" do
+      conn = conn({0x2A0D, 0x3344, 0x6A, 0xC311, 0, 0, 0, 1})
+
+      assert {:warning, :ip_mismatch} =
+               SessionFingerprint.verify_fingerprint(
+                 conn,
+                 "2a0d:3344:6a:c310:88f8:482c:e41a:9ef5",
+                 nil
+               )
+    end
+  end
 end

@@ -86,7 +86,7 @@ defmodule PhoenixKit.Modules.Storage.AnnotationThumbnail do
   end
 
   defp generate(file, draw_args) do
-    with {:ok, original_path, file} <- Storage.retrieve_file(file.uuid),
+    with {:ok, original_path, file, source} <- Storage.retrieve_original(file.uuid),
          output <- temp_png(),
          :ok <- run_convert(original_path, output, draw_args) do
       # Drop any existing instance first so a fresh one is created with the new
@@ -94,7 +94,9 @@ defmodule PhoenixKit.Modules.Storage.AnnotationThumbnail do
       remove_variant(file)
 
       result =
-        VariantGenerator.store_prepared_variant(file, @variant_name, output, "png", "image/png")
+        VariantGenerator.store_prepared_variant(file, @variant_name, output, "png", "image/png",
+          source_key: source.file_name
+        )
 
       File.rm(original_path)
       result

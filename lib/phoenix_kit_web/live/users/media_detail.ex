@@ -11,16 +11,19 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
 
   import Ecto.Query
 
+  alias Phoenix.LiveView.JS
   alias PhoenixKit.Modules.Storage
   alias PhoenixKit.Modules.Storage.File
   alias PhoenixKit.Modules.Storage.FileInstance
   alias PhoenixKit.Modules.Storage.FileLocation
+  alias PhoenixKit.Modules.Storage.ImageEditing
   alias PhoenixKit.Modules.Storage.URLSigner
   alias PhoenixKit.Modules.Storage.VariantGenerator
   alias PhoenixKit.Settings
   alias PhoenixKit.Utils.Date, as: UtilsDate
   alias PhoenixKit.Utils.Format
   alias PhoenixKit.Utils.Routes
+  alias PhoenixKitWeb.Components.ImageEditor
   alias PhoenixKitWeb.Components.MediaCanvasViewer
 
   def mount(params, _session, socket) do
@@ -43,6 +46,10 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
         %{"project_title" => PhoenixKit.Config.get(:project_title, "PhoenixKit")}
       )
 
+    # An edit renders in the background; its progress and result arrive as
+    # storage file events.
+    if connected?(socket) and file_uuid, do: Storage.subscribe_to_file_events()
+
     socket =
       socket
       |> assign(:page_title, "Media Detail")
@@ -50,6 +57,7 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
       |> assign(:current_locale, locale)
       |> assign(:file_uuid, file_uuid)
       |> assign(:show_delete_modal, false)
+      |> assign(:image_editor_open, params["edit"] == "image")
       |> load_file_data(file_uuid)
       |> assign(
         :viewer_annotations,
@@ -126,6 +134,14 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
       {:error, _} ->
         {:noreply, put_flash(socket, :error, "Failed to delete file")}
     end
+  end
+
+  def handle_event("open_image_editor", _params, socket) do
+    {:noreply, assign(socket, :image_editor_open, true)}
+  end
+
+  def handle_event("close_image_editor", _params, socket) do
+    {:noreply, assign(socket, :image_editor_open, false)}
   end
 
   def handle_event("toggle_edit", _params, socket) do
@@ -216,7 +232,7 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
     case socket.assigns[:file_data] do
       %{file_uuid: ^uuid} ->
         Phoenix.LiveView.send_update(PhoenixKitWeb.Components.MediaCanvasViewer,
-          id: "media-detail-canvas-" <> uuid,
+          id: socket.assigns.canvas_id,
           action: :refresh_annotations
         )
 
@@ -227,7 +243,19 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
     {:noreply, socket}
   end
 
+  # This file was processed (an image edit rendered, variants regenerated):
+  # show the new state, and tell the open editor.
+  def handle_info({:phoenix_kit_file_processed, uuid}, %{assigns: %{file_uuid: uuid}} = socket) do
+    if socket.assigns.image_editor_open do
+      send_update(ImageEditor, id: image_editor_id(uuid), file_processed: uuid)
+    end
+
+    {:noreply, load_file_data(socket, uuid)}
+  end
+
   def handle_info(_msg, socket), do: {:noreply, socket}
+
+  defp image_editor_id(uuid), do: "media-detail-image-editor-" <> uuid
 
   defp load_file_data(socket, nil) do
     socket
@@ -267,7 +295,18 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
         socket
         |> assign(:file, file)
         |> assign(:file_data, file_data)
-        |> assign(:edit_mode, false)
+        |> assign(:edit_mode, socket.assigns[:edit_mode] || false)
+        |> assign(:image_editable, ImageEditing.editable?(file))
+        # The canvas keeps its own state; a new original (an edit) must
+        # remount it with the new image and dimensions.
+        |> assign(:canvas_id, "media-detail-canvas-#{file_uuid}-#{canvas_version(instances)}")
+    end
+  end
+
+  defp canvas_version(instances) do
+    case Enum.find(instances, &(&1.variant_name == "original")) do
+      nil -> "none"
+      original -> URLSigner.version(original) || "none"
     end
   end
 
@@ -362,10 +401,12 @@ defmodule PhoenixKitWeb.Live.Users.MediaDetail do
   defp generate_urls_from_instances(instances, file_uuid, mime_type) do
     instances
     |> Enum.reduce(%{}, fn instance, acc ->
-      url = URLSigner.signed_url(file_uuid, instance.variant_name)
+      url = URLSigner.signed_url(file_uuid, instance.variant_name, version: instance)
       Map.put(acc, instance.variant_name, url)
     end)
-    |> URLSigner.put_dzi_url(file_uuid, mime_type)
+    |> URLSigner.put_dzi_url(file_uuid, mime_type,
+      version: Enum.find(instances, &(&1.variant_name == "original"))
+    )
   end
 
   # Load file locations with bucket information

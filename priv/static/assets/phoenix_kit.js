@@ -2326,7 +2326,7 @@ if (typeof window.Chart === "undefined") {
         // The rung above large, only where this viewport will actually ask
         // for it: Tessera picks its raster by displayed width against each
         // rung's pixels x 1.1 headroom, so a viewer column wider than
-        // 1920 x 1.1 CSS px opens straight on the original — and a multi-MB
+        // 1920 x 1.1 device px opens straight on the original — and a multi-MB
         // original nothing warmed was the "waiting and waiting" a step onto
         // a big image showed on large monitors, invisible on small ones
         // (where large suffices and originals would be pure waste).
@@ -8088,5 +8088,218 @@ if (typeof window.Chart === "undefined") {
   if (typeof module === "object" && module.exports) {
     module.exports.avatarCropLayout = avatarCropLayout;
     module.exports.clampAvatarCropFocal = clampAvatarCropFocal;
+  }
+})();
+
+// ---------------------------------------------------------------------------
+// ImageEditor — drawing on the image editor's preview.
+//
+// The editor (PhoenixKitWeb.Components.ImageEditor) is a complete form
+// without this hook: crop and redaction areas are percentage fields. The
+// hook lets you draw them instead: a drag on the preview frame becomes a
+// rectangle in percent of the frame, pushed to the owning LiveComponent
+// (the element carries phx-target) as "drawn". With a crop aspect chosen
+// (data-aspect "w/h"), the rectangle keeps that shape.
+//
+// It also reports the preview's natural size: the recorded dimensions of
+// an older upload are its stored pixels', which for a photo with an EXIF
+// rotation are the displayed ones turned a quarter.
+// ---------------------------------------------------------------------------
+(function () {
+  if (window.PhoenixKitImageEditor) return;
+  window.PhoenixKitImageEditor = true;
+  window.PhoenixKitHooks = window.PhoenixKitHooks || {};
+
+  function clamp(v, lo, hi) {
+    return Math.min(hi, Math.max(lo, v));
+  }
+
+  // The rectangle spanned by two points (percent of the frame), kept inside
+  // the frame. `aspect` is [w, h] in pixels and `frame` the frame's pixel
+  // size: the rectangle then has that shape, grown from `start` toward
+  // `end` and shrunk (not distorted) where it would leave the frame.
+  function imageEditorRect(start, end, aspect, frame) {
+    var a = { x: clamp(start.x, 0, 100), y: clamp(start.y, 0, 100) };
+    var b = { x: clamp(end.x, 0, 100), y: clamp(end.y, 0, 100) };
+
+    if (!aspect || !frame) {
+      return {
+        x: Math.min(a.x, b.x),
+        y: Math.min(a.y, b.y),
+        w: Math.abs(b.x - a.x),
+        h: Math.abs(b.y - a.y)
+      };
+    }
+
+    var ratio = aspect[0] / aspect[1];
+    var dirX = b.x < a.x ? -1 : 1;
+    var dirY = b.y < a.y ? -1 : 1;
+    // Room from the start point to the frame edge in the drag direction, px.
+    var roomW = ((dirX < 0 ? a.x : 100 - a.x) / 100) * frame[0];
+    var roomH = ((dirY < 0 ? a.y : 100 - a.y) / 100) * frame[1];
+
+    var wPx = (Math.abs(b.x - a.x) / 100) * frame[0];
+    var hPx = (Math.abs(b.y - a.y) / 100) * frame[1];
+    // The larger side of the drag decides the size.
+    if (wPx / ratio >= hPx) {
+      hPx = wPx / ratio;
+    } else {
+      wPx = hPx * ratio;
+    }
+    // Shrink to fit, keeping the shape.
+    var fit = Math.min(1, wPx > 0 ? roomW / wPx : 1, hPx > 0 ? roomH / hPx : 1);
+    wPx *= fit;
+    hPx *= fit;
+
+    var w = (wPx / frame[0]) * 100;
+    var h = (hPx / frame[1]) * 100;
+    return {
+      x: dirX < 0 ? a.x - w : a.x,
+      y: dirY < 0 ? a.y - h : a.y,
+      w: w,
+      h: h
+    };
+  }
+
+  // Whether an image of natural size `natural` shows the recorded `size`
+  // turned a quarter: its shape matches the swapped size clearly better than
+  // the size itself (within 2%). Square images never are.
+  function imageEditorSwapped(size, natural) {
+    if (!size || !natural || !natural[0] || !natural[1]) return false;
+    var shown = natural[0] / natural[1];
+    var recorded = size[0] / size[1];
+    var turned = size[1] / size[0];
+    if (Math.abs(recorded - turned) < 0.02 * turned) return false;
+    return Math.abs(shown - turned) < 0.02 * turned &&
+      Math.abs(shown - turned) < Math.abs(shown - recorded);
+  }
+
+  window.PhoenixKitHooks.ImageEditor = {
+    mounted() {
+      var self = this;
+
+      this._onPointerDown = function (e) {
+        var tool = self.el.dataset.tool;
+        if (e.button !== 0) return;
+        if (tool !== "crop" && tool !== "redact") return;
+        if (tool === "crop" && self.el.dataset.locked === "true") return;
+
+        e.preventDefault();
+        // One layout read per gesture: the frame cannot resize mid-drag.
+        self._box = self.el.getBoundingClientRect();
+        self._tool = tool;
+        self._start = self._point(e);
+        self.el.setPointerCapture(e.pointerId);
+      };
+      this._onPointerMove = function (e) {
+        if (!self._start) return;
+        self._show(self._rect(self._point(e)));
+      };
+      this._onPointerUp = function (e) {
+        if (!self._start) return;
+        var rect = self._rect(self._point(e));
+        self._start = null;
+        self._show(null);
+        if (self.el.hasPointerCapture(e.pointerId)) {
+          self.el.releasePointerCapture(e.pointerId);
+        }
+        // A click, not a drag.
+        if (rect.w < 0.5 || rect.h < 0.5) return;
+        self.pushEventTo(self.el, "drawn", {
+          tool: self._tool,
+          x: rect.x,
+          y: rect.y,
+          w: rect.w,
+          h: rect.h
+        });
+      };
+      this._onCancel = function () {
+        self._start = null;
+        self._show(null);
+      };
+
+      this.el.addEventListener("pointerdown", this._onPointerDown);
+      this.el.addEventListener("pointermove", this._onPointerMove);
+      this.el.addEventListener("pointerup", this._onPointerUp);
+      this.el.addEventListener("pointercancel", this._onCancel);
+
+      this._onImageLoad = function () {
+        self._reportSize();
+      };
+      this._watchImage();
+    },
+
+    updated() {
+      this._watchImage();
+    },
+
+    _watchImage() {
+      var img = this.el.querySelector("img");
+      if (img === this._img) return;
+      if (this._img) this._img.removeEventListener("load", this._onImageLoad);
+      this._img = img;
+      if (!img) return;
+      if (img.complete && img.naturalWidth > 0) {
+        this._reportSize();
+      } else {
+        img.addEventListener("load", this._onImageLoad);
+      }
+    },
+
+    _reportSize() {
+      var img = this._img;
+      var size = [parseFloat(this.el.dataset.sourceWidth), parseFloat(this.el.dataset.sourceHeight)];
+      if (img && imageEditorSwapped(size, [img.naturalWidth, img.naturalHeight])) {
+        this.pushEventTo(this.el, "turned_source", {});
+      }
+    },
+
+    _point(e) {
+      var box = this._box;
+      return {
+        x: ((e.clientX - box.left) / box.width) * 100,
+        y: ((e.clientY - box.top) / box.height) * 100
+      };
+    },
+
+    _rect(end) {
+      var aspect = null;
+      if (this._tool === "crop" && this.el.dataset.aspect) {
+        aspect = this.el.dataset.aspect.split("/").map(Number);
+      }
+      var frame = [
+        parseFloat(this.el.dataset.frameWidth),
+        parseFloat(this.el.dataset.frameHeight)
+      ];
+      return imageEditorRect(this._start, end, aspect, frame);
+    },
+
+    _show(rect) {
+      var draft = this.el.querySelector("[data-draft]");
+      if (!draft) return;
+      if (!rect) {
+        draft.classList.add("hidden");
+        return;
+      }
+      draft.classList.remove("hidden");
+      draft.style.left = rect.x + "%";
+      draft.style.top = rect.y + "%";
+      draft.style.width = rect.w + "%";
+      draft.style.height = rect.h + "%";
+    },
+
+    destroyed() {
+      this.el.removeEventListener("pointerdown", this._onPointerDown);
+      this.el.removeEventListener("pointermove", this._onPointerMove);
+      this.el.removeEventListener("pointerup", this._onPointerUp);
+      this.el.removeEventListener("pointercancel", this._onCancel);
+      if (this._img) this._img.removeEventListener("load", this._onImageLoad);
+    }
+  };
+
+  // Exported for the Node test harness (test/js); harmless in a browser.
+  if (typeof module === "object" && module.exports) {
+    module.exports.imageEditorRect = imageEditorRect;
+    module.exports.imageEditorSwapped = imageEditorSwapped;
   }
 })();

@@ -272,6 +272,9 @@ defmodule PhoenixKit.Install.Common do
     end
   rescue
     error -> {:error, error}
+  catch
+    # A dead pool exits rather than raising.
+    :exit, reason -> {:error, reason}
   end
 
   # Try direct database connection (similar to what status command does)
@@ -313,6 +316,8 @@ defmodule PhoenixKit.Install.Common do
     end
   rescue
     _ -> 0
+  catch
+    :exit, _ -> 0
   end
 
   # Direct version query (simplified version of the runtime check)

@@ -58,8 +58,32 @@ defmodule PhoenixKit.Modules.Storage.URLSigner do
     token = generate_token(file_uuid, instance_name)
     file_path = "/file/#{file_uuid}/#{instance_name}/#{token}"
     locale_option = Keyword.get(opts, :locale, :none)
-    Routes.path(file_path, locale: locale_option)
+    path = Routes.path(file_path, locale: locale_option)
+
+    case version(Keyword.get(opts, :version)) do
+      nil -> path
+      v -> path <> "?v=" <> v
+    end
   end
+
+  @doc """
+  The content version a file URL carries: the first 16 hex characters of the
+  served instance's checksum (pass the instance or the checksum).
+
+  A URL with a version is content-addressed: `FileController` serves it with
+  a year-long `immutable` lifetime only while it names the bytes the variant
+  holds now, and redirects to the current version otherwise — so a cached
+  copy can never be different bytes (an edited or redacted image). Build URLs
+  with `signed_url(uuid, variant, version: instance)` wherever the instance
+  is at hand; an unversioned URL still works and is revalidated.
+  """
+  @spec version(term()) :: String.t() | nil
+  def version(%{checksum: checksum}), do: version(checksum)
+
+  def version(checksum) when is_binary(checksum) and byte_size(checksum) >= 16,
+    do: checksum |> binary_part(0, 16) |> String.downcase()
+
+  def version(_), do: nil
 
   @doc """
   Verify a token is valid for the given file and instance.
@@ -137,28 +161,42 @@ defmodule PhoenixKit.Modules.Storage.URLSigner do
 
   Returns the map unchanged unless the file is an image **and** the
   `storage_tile_generation_enabled` setting is on. The signed manifest URL
-  (`/tiles/<token>/<file_uuid>.dzi`) is what Tessera fetches to stream tiles;
-  the token lives in the path (not a query string) so it survives Tessera's
-  manifest → tile URL derivation.
+  (`/tiles/<token>/<file_uuid>-<version>.dzi`) is what Tessera fetches to
+  stream tiles; the token and the version live in the path (not a query
+  string) so they survive Tessera's manifest → tile URL derivation.
+
+  Pass `version:` — the file's original instance, or its checksum — so the
+  tiles are cached for good and an edit moves them to new URLs. Without it
+  the legacy unversioned manifest (`<file_uuid>.dzi`) is emitted, which the
+  server resolves to the current version and never lets a cache keep.
 
   This is the single source of truth for the `"dzi"` URL — every viewer that
   builds a file `urls` map (media browser, detail page, lightbox) pipes
   through it so the deep-zoom layer is wired consistently.
   """
-  def put_dzi_url(urls, file_uuid, mime_type)
+  def put_dzi_url(urls, file_uuid, mime_type, opts \\ [])
+
+  def put_dzi_url(urls, file_uuid, mime_type, opts)
       when is_map(urls) and is_binary(file_uuid) do
     if is_binary(mime_type) and String.starts_with?(mime_type, "image/") and
          tile_generation_enabled?() do
       token = generate_token(file_uuid, "dzi")
+
+      stem =
+        case version(Keyword.get(opts, :version)) do
+          nil -> file_uuid
+          v -> "#{file_uuid}-#{v}"
+        end
+
       # `locale: :none` — the /tiles routes live in the non-localized scope
       # (same as /file/... variant URLs); a locale prefix would 404.
-      Map.put(urls, "dzi", Routes.path("/tiles/#{token}/#{file_uuid}.dzi", locale: :none))
+      Map.put(urls, "dzi", Routes.path("/tiles/#{token}/#{stem}.dzi", locale: :none))
     else
       urls
     end
   end
 
-  def put_dzi_url(urls, _file_uuid, _mime_type), do: urls
+  def put_dzi_url(urls, _file_uuid, _mime_type, _opts), do: urls
 
   defp tile_generation_enabled? do
     Settings.get_setting("storage_tile_generation_enabled", "false") == "true"
