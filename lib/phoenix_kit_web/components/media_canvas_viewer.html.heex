@@ -410,6 +410,80 @@
             </.link>
           </div>
 
+          <%!-- Title & description — the file's own words about itself,      --%>
+          <%!-- collapsible behind a chevron. Same metadata keys the admin     --%>
+          <%!-- detail page's editor writes, so the two surfaces agree.        --%>
+          <%!-- Opens itself when there is something to see; editable in the   --%>
+          <%!-- contexts that can already reach the metadata editor            --%>
+          <%!-- (details_path / edit_target hosts), read-only elsewhere —      --%>
+          <%!-- and hidden entirely when it is both empty and uneditable,      --%>
+          <%!-- because an empty section nobody can fill is furniture.         --%>
+          <% can_edit_meta = @details_path != nil or @edit_target != nil %>
+          <div
+            :if={@media_meta.title != "" or @media_meta.description != "" or can_edit_meta}
+            class="border-t border-base-300 pt-2"
+          >
+            <button
+              type="button"
+              phx-click="toggle_media_details"
+              phx-target={@myself}
+              class="flex items-center justify-between w-full text-left gap-2"
+            >
+              <span class="text-sm font-semibold text-base-content/70">
+                {gettext("Title & description")}
+              </span>
+              <.icon
+                name={if @media_details_open, do: "hero-chevron-up", else: "hero-chevron-down"}
+                class="w-4 h-4 text-base-content/50 shrink-0"
+              />
+            </button>
+            <%= if @media_details_open do %>
+              <%= if can_edit_meta do %>
+                <form
+                  id={"media-meta-form-" <> f.file_uuid}
+                  phx-submit="save_media_details"
+                  phx-target={@myself}
+                  class="mt-2 space-y-2"
+                >
+                  <input
+                    type="text"
+                    name="title"
+                    value={@media_meta.title}
+                    placeholder={gettext("Title")}
+                    class="input input-bordered input-sm w-full"
+                  />
+                  <textarea
+                    name="description"
+                    placeholder={gettext("Description")}
+                    rows="3"
+                    class="textarea textarea-bordered textarea-sm w-full"
+                  >{@media_meta.description}</textarea>
+                  <div class="flex items-center gap-2">
+                    <button type="submit" class="btn btn-primary btn-xs">{gettext("Save")}</button>
+                    <span :if={@media_meta_status == :saved} class="text-xs text-success">
+                      {gettext("Saved")}
+                    </span>
+                    <span :if={@media_meta_status == :error} class="text-xs text-error">
+                      {gettext("Could not save")}
+                    </span>
+                  </div>
+                </form>
+              <% else %>
+                <div class="mt-2 space-y-1">
+                  <p :if={@media_meta.title != ""} class="text-sm font-semibold break-words">
+                    {@media_meta.title}
+                  </p>
+                  <p
+                    :if={@media_meta.description != ""}
+                    class="text-sm text-base-content/70 whitespace-pre-wrap break-words"
+                  >
+                    {@media_meta.description}
+                  </p>
+                </div>
+              <% end %>
+            <% end %>
+          </div>
+
           <div class="text-sm space-y-2 mt-1">
             <div>
               <span class="text-base-content/60">{gettext("Type:")}</span>

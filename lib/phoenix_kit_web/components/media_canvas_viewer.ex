@@ -176,6 +176,10 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
   # Auto-hide timer for the rotation save-status pill (scheduled by
   # show_rotation_status/2). Token-guarded: a burst of saves bumps the
   # token, so only the latest timer clears the pill.
+  def update(%{action: :clear_media_meta_status}, socket) do
+    {:ok, assign(socket, :media_meta_status, nil)}
+  end
+
   def update(%{action: :clear_rotation_status, token: token}, socket) do
     if socket.assigns[:rotation_status_token] == token do
       {:ok, assign(socket, :rotation_status, nil)}
@@ -221,6 +225,9 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
       |> assign(:persist_rotation, assigns[:persist_rotation] || false)
       |> assign(:details_path, assigns[:details_path])
       |> assign(:edit_target, assigns[:edit_target])
+      |> assign_new(:media_meta, fn -> %{title: "", description: ""} end)
+      |> assign_new(:media_details_open, fn -> false end)
+      |> assign_new(:media_meta_status, fn -> nil end)
 
     # First mount (or file changed via re-mount): hydrate annotations
     # + canvas. Because the id encodes the file uuid, the parent's
@@ -234,9 +241,12 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
           socket
           |> assign(:viewer_annotations, annotations)
           |> assign(:viewer_canvas, build_viewer_canvas(file, annotations, locked?(socket)))
-          # Seed the saved rotation so the image paints already-rotated on open
-          # (no flash of unrotated → rotated). Read from the file's metadata row.
-          |> assign(:viewer_rotation, load_saved_rotation(file.file_uuid))
+          # Seed everything that lives on the file's own DB row — the saved
+          # rotation (so the image paints already-rotated on open, no flash
+          # of unrotated → rotated) and the title/description metadata the
+          # sidebar shows. One read for both: they are fields of the same
+          # row, and the parent-passed map does not carry `metadata`.
+          |> seed_file_row_state(file.file_uuid)
           # Read fresh from the DB (not the parent-passed struct) so the
           # palette is correct even on modal prev/next after an in-session
           # edit, where the parent's `current_user` may be stale. ONE read
@@ -424,6 +434,42 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
     {:noreply, socket}
   end
 
+  def handle_event("toggle_media_details", _params, socket) do
+    {:noreply, assign(socket, :media_details_open, !socket.assigns.media_details_open)}
+  end
+
+  # Writes the sidebar's title/description edits into the file's metadata
+  # JSONB — the same keys the admin detail page's editor uses, so the two
+  # surfaces read each other's writes. MERGED into the row's current
+  # metadata, never replacing it: rotation, tags, and anything else living
+  # there must survive a title edit. The write re-reads the row rather
+  # than trusting the parent-passed map, which carries no metadata at all.
+  def handle_event("save_media_details", params, socket) do
+    title = String.trim(params["title"] || "")
+    description = String.trim(params["description"] || "")
+
+    with %{file_uuid: uuid} <- socket.assigns.file,
+         %Storage.File{} = row <- Storage.get_file(uuid),
+         updated =
+           (row.metadata || %{})
+           |> Map.put("title", title)
+           |> Map.put("description", description),
+         {:ok, _} <- Storage.update_file(row, %{metadata: updated}) do
+      Phoenix.LiveView.send_update_after(
+        __MODULE__,
+        [id: socket.assigns.id, action: :clear_media_meta_status],
+        2000
+      )
+
+      {:noreply,
+       socket
+       |> assign(:media_meta, %{title: title, description: description})
+       |> assign(:media_meta_status, :saved)}
+    else
+      _ -> {:noreply, assign(socket, :media_meta_status, :error)}
+    end
+  end
+
   def handle_event("toggle_viewer_sidebar", _params, socket) do
     collapsed = not socket.assigns[:sidebar_collapsed]
     persist_sidebar_collapsed(socket.assigns[:current_user], collapsed)
@@ -454,13 +500,36 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
   # The image's saved orientation (degrees), read from the file row's metadata.
   # A lightweight PK fetch at viewer-open — negligible next to loading the image
   # + annotations. Missing/garbage → 0 (unrotated). Never crashes the viewer.
-  defp load_saved_rotation(file_uuid) do
-    case Storage.get_file(file_uuid) do
-      %{metadata: meta} when is_map(meta) -> normalize_rotation(Map.get(meta, "rotation"))
-      _ -> 0
-    end
+  defp seed_file_row_state(socket, file_uuid) do
+    meta =
+      case Storage.get_file(file_uuid) do
+        %{metadata: meta} when is_map(meta) -> meta
+        _ -> %{}
+      end
+
+    media_meta = media_meta_from(meta)
+
+    socket
+    |> assign(:viewer_rotation, normalize_rotation(Map.get(meta, "rotation")))
+    |> assign(:media_meta, media_meta)
+    # Open where there is something to see; an empty section stays folded
+    # until someone reaches for the chevron.
+    |> assign(:media_details_open, media_meta.title != "" or media_meta.description != "")
+    |> assign(:media_meta_status, nil)
   rescue
-    _ -> 0
+    _ ->
+      socket
+      |> assign(:viewer_rotation, 0)
+      |> assign(:media_meta, %{title: "", description: ""})
+      |> assign(:media_details_open, false)
+      |> assign(:media_meta_status, nil)
+  end
+
+  defp media_meta_from(meta) when is_map(meta) do
+    %{
+      title: String.trim(to_string(Map.get(meta, "title") || "")),
+      description: String.trim(to_string(Map.get(meta, "description") || ""))
+    }
   end
 
   # Write `rotation` into the file's metadata JSONB, skipping the DB round-trip
