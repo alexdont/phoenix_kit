@@ -75,8 +75,18 @@ defmodule PhoenixKitWeb.Live.Components.UserSettings do
     :password,
     :oauth,
     :notifications,
+    :etcher,
     :sessions
   ]
+
+  # The per-user annotation settings a reset clears. Two of them live on the
+  # user row (the palette and the ink the toolbar saves); the rest —
+  # background dots, connector anchors, which tools are on the bar, how much
+  # of the style panel is open, the per-tool colours — are Etcher's own
+  # localStorage answers, cleared in the browser (see the `EtcherReset`
+  # hook). Resetting one without the other would leave someone half-fixed,
+  # which is the whole reason this is a single button.
+  @etcher_user_keys ~w(etcher_colors etcher_line_params)
 
   @doc """
   The section list rendered when a caller doesn't pass `sections` — does NOT
@@ -157,6 +167,7 @@ defmodule PhoenixKitWeb.Live.Components.UserSettings do
       |> assign_new(:browser_timezone_offset, fn -> nil end)
       |> assign_new(:timezone_mismatch_warning, fn -> nil end)
       |> assign_new(:start_page_message, fn -> nil end)
+      |> assign_new(:etcher_reset_message, fn -> nil end)
       |> assign_start_page()
       |> assign_new(:trigger_submit, fn -> false end)
       |> assign_new(:oauth_providers, fn -> OAuth.get_user_oauth_providers(user.uuid) end)
@@ -578,6 +589,31 @@ defmodule PhoenixKitWeb.Live.Components.UserSettings do
       _ ->
         {:noreply, assign(socket, :start_page_message, gettext("Could not save that."))}
     end
+  end
+
+  # Put the annotation tools back to how they ship. Both halves go: the
+  # palette and ink saved on the user row, and Etcher's own browser-side
+  # answers (see @etcher_user_keys). The push is what reaches the second
+  # half — the LiveView has no way to touch localStorage itself — and it
+  # rides the same socket, so the browser clears its copy in the same
+  # round trip that cleared the row.
+  def handle_event("reset_etcher_settings", _params, socket) do
+    # Both keys, whether or not they were ever written: a delete of a key
+    # that was never saved answers :not_found, which is simply "already
+    # reset" — the common case for someone who only ever touched the panel.
+    updated =
+      Enum.reduce(@etcher_user_keys, socket.assigns.user, fn key, current ->
+        case Auth.delete_user_custom_field(current, key) do
+          {:ok, fresh} -> fresh
+          {:error, :not_found} -> current
+        end
+      end)
+
+    {:noreply,
+     socket
+     |> assign(:user, updated)
+     |> assign(:etcher_reset_message, gettext("Annotation settings reset."))
+     |> Phoenix.LiveView.push_event("phoenix_kit:etcher-reset", %{})}
   end
 
   def handle_event("update_notification_prefs", params, socket) do
@@ -1625,6 +1661,45 @@ defmodule PhoenixKitWeb.Live.Components.UserSettings do
                 {@start_page_message}
               </span>
             </form>
+          </div>
+        <% end %>
+
+        <%= if :etcher in @sections do %>
+          <div class="divider"></div>
+          <%!-- The hook is what clears the browser's half (Etcher keeps its --%>
+          <%!-- board answers in localStorage); the server clears the user   --%>
+          <%!-- row's half. One button, both halves, or a reset leaves        --%>
+          <%!-- someone half-fixed.                                          --%>
+          <div id="etcher-reset" phx-hook="EtcherReset">
+            <h2 class="text-lg font-semibold flex items-center gap-2 mb-3">
+              <.icon name="hero-pencil-square" class="w-5 h-5 text-primary" />
+              {gettext("Annotation tools")}
+            </h2>
+            <p class="text-sm text-base-content/60 mb-3">
+              {gettext(
+                "Your drawing colours, line thickness, label size and toolbar layout are remembered as you work. Reset them to start fresh."
+              )}
+            </p>
+            <div class="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                phx-click="reset_etcher_settings"
+                phx-target={@myself}
+                data-confirm={
+                  gettext("Reset your annotation colours, thickness and toolbar to the defaults?")
+                }
+                class="btn btn-outline btn-sm gap-2"
+              >
+                <.icon name="hero-arrow-path" class="w-4 h-4" />
+                {gettext("Reset annotation settings")}
+              </button>
+              <span :if={@etcher_reset_message} class="text-sm text-success">
+                {@etcher_reset_message}
+              </span>
+            </div>
+            <p class="text-xs text-base-content/50 mt-2">
+              {gettext("Your annotations themselves are not touched — only how the tools are set up.")}
+            </p>
           </div>
         <% end %>
 

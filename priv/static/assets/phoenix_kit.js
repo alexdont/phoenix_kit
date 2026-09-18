@@ -5601,6 +5601,39 @@ if (typeof window.Chart === "undefined") {
   // FolderDropUpload Hook — drag files from device to upload into current folder
   // ============================================================================
 
+  // ============================================================================
+  // EtcherReset — the browser half of "reset annotation settings"
+  // ============================================================================
+  //
+  // Etcher keeps how-you-work answers (background dots, connector anchors,
+  // which tools are on the bar, how much of the style panel is open, the
+  // per-tool palettes and colours, the label defaults) in localStorage under
+  // its own key: it works with no host involvement at all, and a viewer that
+  // does not know who you are cannot do better. The palette and ink the
+  // toolbar saves DO live on the user row, and the settings page clears
+  // those server-side — this clears the other half, in the same round trip,
+  // so a reset is a reset rather than a half-fix.
+  //
+  // Cleared, not rewritten with defaults: Etcher falls back to its own
+  // defaults for anything absent, so removing the key is the honest way to
+  // say "no answers of mine". A live viewer on another tab picks them up on
+  // its next mount.
+  // ----------------------------------------------------------------------------
+
+  window.PhoenixKitHooks.EtcherReset = {
+    mounted() {
+      this.handleEvent("phoenix_kit:etcher-reset", function() {
+        try {
+          window.localStorage.removeItem("etcher:prefs");
+        } catch (_) {
+          // Private mode, storage disabled, a browser that refuses: the
+          // server half still happened, and there is nothing here worth
+          // interrupting the page for.
+        }
+      });
+    }
+  };
+
   window.PhoenixKitHooks.FolderDropUpload = {
     mounted: function() {
       var self = this;
