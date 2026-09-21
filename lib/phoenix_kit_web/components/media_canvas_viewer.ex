@@ -147,6 +147,14 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
     {:ok,
      socket
      |> assign(:viewer_canvas, nil)
+     # Opens showing the burned copy when there is one: a picture with its
+     # markup in it is what someone came to look at, and it is the thing
+     # they can right-click and send on. The eye switches to the live
+     # layer, which is the one you can edit.
+     |> assign(:burn_mode, true)
+     |> assign(:burn_canvas, nil)
+     |> assign(:auto_annotate, false)
+     |> assign(:burn_version, nil)
      |> assign(:viewer_annotations, [])
      |> assign(:replying_annotation_uuid, nil)
      |> assign(:reply_parent_uuid, nil)
@@ -277,6 +285,8 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
           socket
           |> assign(:viewer_annotations, annotations)
           |> assign(:viewer_canvas, build_viewer_canvas(file, annotations, locked?(socket)))
+          |> assign(:burn_canvas, build_burn_canvas(file))
+          |> assign(:burn_version, Map.get(file, :burn_fingerprint))
           # Seed everything that lives on the file's own DB row — the saved
           # rotation (so the image paints already-rotated on open, no flash
           # of unrotated → rotated) and the title/description metadata the
@@ -525,6 +535,55 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
     else
       _ -> {:noreply, assign(socket, :media_meta_status, :error)}
     end
+  end
+
+  # The eye: burned copy ⇄ the live layer over the picture.
+  #
+  # Switching flips the id of the canvas below it, which is what makes
+  # LiveView tear the old one down and mount the new one — Fresco's canvas
+  # is `phx-update="ignore"`, so a patch would leave the previous image and
+  # extent in place.
+  # A burn just landed. The canvas built at mount points at the copy that
+  # existed THEN — a signed URL carrying the old checksum — so switching to
+  # the burned view would show yesterday's rendering until someone reloaded
+  # the page. Rebuild it around what was just stored.
+  #
+  # The id carries the fingerprint for the same reason it carries the mode:
+  # Fresco's canvas is `phx-update="ignore"`, so an unchanged id means the
+  # old image and extent stay exactly where they are.
+  def handle_event("burn_stored", params, socket) do
+    with url when is_binary(url) <- params["url"],
+         w when is_integer(w) and w > 0 <- params["width"],
+         h when is_integer(h) and h > 0 <- params["height"] do
+      canvas =
+        Fresco.Canvas.new(width: w, height: h)
+        |> Fresco.Canvas.add_image(%{
+          src: url,
+          x: 0,
+          y: 0,
+          width: w,
+          natural_width: w,
+          natural_height: h
+        })
+
+      {:noreply,
+       socket
+       |> assign(:burn_canvas, canvas)
+       |> assign(:burn_version, params["fingerprint"] || Integer.to_string(w * h))}
+    else
+      _ -> {:noreply, socket}
+    end
+  end
+
+  def handle_event("toggle_burn_mode", params, socket) do
+    to_live? = socket.assigns[:burn_mode]
+
+    {:noreply,
+     socket
+     |> assign(:burn_mode, not to_live?)
+     # Pressed the pencil rather than the eye: the live layer is what it
+     # needs, but what was asked for was to draw.
+     |> assign(:auto_annotate, to_live? and params["annotate"] == true)}
   end
 
   def handle_event("toggle_viewer_sidebar", _params, socket) do
@@ -1255,6 +1314,44 @@ defmodule PhoenixKitWeb.Components.MediaCanvasViewer do
       "annotations" => Enum.map(annotations, &etcher_annotation_for_wire(&1, locked?))
     })
   end
+
+  @doc false
+  # Does this file have a burned copy to open with?
+  def burned?(file) when is_map(file) do
+    is_binary(file.urls["annotated"]) and is_map(Map.get(file, :burn_size))
+  end
+
+  def burned?(_), do: false
+
+  # The canvas the viewer opens with: the picture with its markup already
+  # in it, as one flat image and nothing else.
+  #
+  # Its own extent, not the picture's. A burn takes in ink drawn past the
+  # picture's edges, so it is a different shape — laid out at the picture's
+  # dimensions it would be squeezed, and the markup would sit somewhere it
+  # was never drawn.
+  #
+  # No `etcher` extension on it: there is nothing to draw over a picture
+  # that already has the drawing in it, and a second copy of every shape is
+  # exactly what that would be.
+  defp build_burn_canvas(file) when is_map(file) do
+    src = file.urls["annotated"]
+    %{w: w, h: h} = Map.get(file, :burn_size) || %{w: 0, h: 0}
+
+    if is_binary(src) and src != "" and w > 0 and h > 0 do
+      Fresco.Canvas.new(width: w, height: h)
+      |> Fresco.Canvas.add_image(%{
+        src: src,
+        x: 0,
+        y: 0,
+        width: w,
+        natural_width: w,
+        natural_height: h
+      })
+    end
+  end
+
+  defp build_burn_canvas(_file), do: nil
 
   defp build_viewer_canvas(nil, _annotations, _locked?), do: nil
 

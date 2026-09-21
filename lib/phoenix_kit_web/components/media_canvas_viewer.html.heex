@@ -58,7 +58,19 @@
             :if={not @viewer_only}
             id={"pk-burn-" <> f.file_uuid}
             phx-hook="AnnotationBurn"
+            phx-target={@myself}
             data-file-uuid={f.file_uuid}
+            data-burn-mode={to_string(@burn_mode and not is_nil(@burn_canvas))}
+            data-can-annotate={to_string(@can_annotate)}
+            data-auto-annotate={to_string(@auto_annotate)}
+            data-has-burn={to_string(not is_nil(@burn_canvas))}
+            data-fresco-id={
+              if(@burn_mode and @burn_canvas,
+                do: "media-burn-" <> f.file_uuid <> "-" <> to_string(@burn_version || "0"),
+                else: "media-zoom-" <> f.file_uuid
+              )
+            }
+            data-burn-fingerprint={Map.get(f, :burn_fingerprint)}
             class="hidden"
           />
           <%!-- Chevron positioning sits on a wrapper div, not the button.       --%>
@@ -110,80 +122,111 @@
               <%!--   past the top raster for deep zoom on gigapixel images. Only   --%>
               <%!--   variants that exist on the file are included; tile + manifest --%>
               <%!--   fetches are lazy so unviewed regions never hit storage.       --%>
-              <%= if @viewer_canvas do %>
+              <%!-- Opens on the burned copy: the picture with its markup     --%>
+              <%!-- already in it, one flat image, nothing drawn over it. That --%>
+              <%!-- is what someone came to look at and what they can          --%>
+              <%!-- right-click and send on. The eye switches to the live      --%>
+              <%!-- layer — the picture plus shapes you can select and edit —  --%>
+              <%!-- and that is the only mode Etcher appears in.               --%>
+              <%= if @burn_mode and @burn_canvas do %>
                 <Fresco.canvas
-                  id={"media-zoom-" <> f.file_uuid}
-                  canvas={@viewer_canvas}
+                  id={"media-burn-" <> f.file_uuid <> "-" <> to_string(@burn_version || "0")}
+                  canvas={@burn_canvas}
                   class="w-full h-full lg:rounded"
                   theme={:inherit}
                   initial_rotation={@viewer_rotation}
                   persist_rotation={@persist_rotation}
                 />
-                <%!-- connectors={:off} is the HARD form (Etcher 0.13): the      --%>
-                <%!-- soft default loses to the user's saved toggle, which is    --%>
-                <%!-- shared across every Etcher surface in the browser — a      --%>
-                <%!-- toggle flipped on a board followed people here, where the  --%>
-                <%!-- anchors point at nothing (no arrow tool below). Hard off   --%>
-                <%!-- also hides the toggle from the toolbar.                    --%>
-                <%!-- panel_offset: the viewer's details-minimizer button      --%>
-                <%!-- (top-3 right-14 above) owns the top-right corner, and    --%>
-                <%!-- Etcher's style-panel chevron landed in the same row.     --%>
-                <%!-- Anchor the panel cluster below it (Etcher 0.13.2).         --%>
-                <Etcher.layer
-                  fresco_id={"media-zoom-" <> f.file_uuid}
-                  colors={@etcher_colors}
-                  line_params={@etcher_line_params}
-                  panel_offset={%{top: 56}}
-                  connectors={:off}
-                  toolbar={@can_annotate}
-                  nav_buttons={if @can_annotate, do: nil, else: [:visibility]}
-                  tools={
-                    if @can_annotate,
-                      do: [
-                        :grabber,
-                        :image,
-                        :rectangle,
-                        :circle,
-                        :polygon,
-                        :freehand,
-                        :marker,
-                        :highlighter,
-                        :callout,
-                        :text,
-                        :dimension,
-                        :arrow,
-                        :line,
-                        :eraser
-                      ],
-                      else: []
-                  }
-                />
-                <%!-- Zoom ladder: medium → large, then for images over 4K we stream
+              <% else %>
+                <%= if @viewer_canvas do %>
+                  <Fresco.canvas
+                    id={"media-zoom-" <> f.file_uuid}
+                    canvas={@viewer_canvas}
+                    class="w-full h-full lg:rounded"
+                    theme={:inherit}
+                    initial_rotation={@viewer_rotation}
+                    persist_rotation={@persist_rotation}
+                  />
+                  <%!-- connectors={:off} is the HARD form (Etcher 0.13): the      --%>
+                  <%!-- soft default loses to the user's saved toggle, which is    --%>
+                  <%!-- shared across every Etcher surface in the browser — a      --%>
+                  <%!-- toggle flipped on a board followed people here, where the  --%>
+                  <%!-- anchors point at nothing (no arrow tool below). Hard off   --%>
+                  <%!-- also hides the toggle from the toolbar.                    --%>
+                  <%!-- panel_offset: the viewer's details-minimizer button      --%>
+                  <%!-- (top-3 right-14 above) owns the top-right corner, and    --%>
+                  <%!-- Etcher's style-panel chevron landed in the same row.     --%>
+                  <%!-- Anchor the panel cluster below it (Etcher 0.13.2).         --%>
+                  <%!-- style panel, under the stroke and colour controls: click --%>
+                  <%!-- a shape and its label, comment and delete actions are    --%>
+                  <%!-- there with everything else you can do to it; click away  --%>
+                  <%!-- and the panel is just stroke and colour again. Nothing   --%>
+                  <%!-- pops up over the photograph people came here to look at, --%>
+                  <%!-- and with Etcher off the shapes are simply part of the    --%>
+                  <%!-- image — no hover, no outline. Etcher's own default       --%>
+                  <%!-- (beside the shape) is untouched for its other consumers. --%>
+                  <Etcher.layer
+                    fresco_id={"media-zoom-" <> f.file_uuid}
+                    colors={@etcher_colors}
+                    line_params={@etcher_line_params}
+                    panel_offset={%{top: 56}}
+                    connectors={:off}
+                    toolbar={@can_annotate}
+                    nav_buttons={if @can_annotate, do: [:pencil], else: []}
+                    tools={
+                      if @can_annotate,
+                        do: [
+                          :grabber,
+                          :image,
+                          :rectangle,
+                          :circle,
+                          :polygon,
+                          :freehand,
+                          :marker,
+                          :highlighter,
+                          :callout,
+                          :text,
+                          :dimension,
+                          :arrow,
+                          :line,
+                          :eraser
+                        ],
+                        else: []
+                    }
+                  />
+                  <%!-- Zoom ladder: medium → large, then for images over 4K we stream
                  DZI tiles of the original (only the visible area) instead of
                  ever loading the whole multi-MB original; for ≤4K images the
                  full original raster is the top of the ladder (no tiles). DZI
                  tiles also require the storage tile-generation setting (which
                  is what populates urls["dzi"]). --%>
-                <% over_4k = max(Map.get(f, :width) || 0, Map.get(f, :height) || 0) > 4096
-                has_dzi = is_binary(f.urls["dzi"]) and f.urls["dzi"] != ""
-                use_tiles = over_4k and has_dzi
+                  <% over_4k = max(Map.get(f, :width) || 0, Map.get(f, :height) || 0) > 4096
+                  has_dzi = is_binary(f.urls["dzi"]) and f.urls["dzi"] != ""
+                  use_tiles = over_4k and has_dzi
 
-                tessera_sources =
-                  ([{f.urls["medium"], 800}, {f.urls["large"], 1920}] ++
-                     if(use_tiles,
-                       do: [],
-                       else: [{f.urls["original"], Map.get(f, :width) || 4096}]
-                     ))
-                  |> Enum.filter(fn {url, _w} -> is_binary(url) and url != "" end)
-                  |> Enum.map(fn {url, width} -> %{url: url, width: width} end)
+                  # The editor tops out at `large`, not at the original.
+                  # Drawing on a picture needs a picture you can SEE, not every
+                  # pixel that was uploaded: a 5000px original is several MB to
+                  # fetch and decode before the first stroke is possible, and on
+                  # a slow line that is the whole experience of opening the
+                  # editor. Annotations are stored in image coordinates and the
+                  # canvas keeps the original's extent either way, so which
+                  # raster is showing changes nothing about where a shape lands.
+                  # Deep zoom past `large` still streams tiles where tile
+                  # generation is on; the full original stays a download.
+                  tessera_sources =
+                    [{f.urls["medium"], 800}, {f.urls["large"], 1920}]
+                    |> Enum.filter(fn {url, _w} -> is_binary(url) and url != "" end)
+                    |> Enum.map(fn {url, width} -> %{url: url, width: width} end)
 
-                tessera_dzi = if use_tiles, do: f.urls["dzi"], else: nil %>
-                <%= if tessera_sources != [] do %>
-                  <Tessera.layer
-                    fresco_id={"media-zoom-" <> f.file_uuid}
-                    sources={tessera_sources}
-                    dzi_url={tessera_dzi}
-                  />
+                  tessera_dzi = if use_tiles, do: f.urls["dzi"], else: nil %>
+                  <%= if tessera_sources != [] do %>
+                    <Tessera.layer
+                      fresco_id={"media-zoom-" <> f.file_uuid}
+                      sources={tessera_sources}
+                      dzi_url={tessera_dzi}
+                    />
+                  <% end %>
                 <% end %>
               <% end %>
             <% is_binary(f.mime_type) and String.starts_with?(f.mime_type, "video/") -> %>

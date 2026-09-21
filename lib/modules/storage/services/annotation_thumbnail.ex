@@ -58,21 +58,20 @@ defmodule PhoenixKit.Modules.Storage.AnnotationThumbnail do
   def refresh(file_uuid) when is_binary(file_uuid) do
     case Storage.get_file(file_uuid) do
       %Storage.File{file_type: "image"} = file ->
-        if enabled?() do
-          annotations = Annotations.list_for_file(file_uuid)
-
-          case draw_args(annotations, base_dimension(file)) do
-            [] ->
-              remove_variant(file)
-              {:ok, :removed}
-
-            draw_args ->
-              generate(file, draw_args)
-          end
+        # A browser has already rendered this file's markup into a picture
+        # and posted it (AnnotationBurnController). That copy is the
+        # drawing itself — the same engine, the same fonts, the same label
+        # plates — and this one is a second rendering of the same shapes by
+        # a different hand. Drawing over it would swap an exact copy for an
+        # approximation, which is what it looked like: a card with no
+        # arrowheads and the wrong typeface.
+        #
+        # The bake stays for files no browser has opened, where an
+        # approximation beats nothing at all.
+        if burned?(file) do
+          {:ok, :burned}
         else
-          # Feature toggled off — drop any stale baked variant.
-          remove_variant(file)
-          {:ok, :removed}
+          refresh_baked(file, file_uuid)
         end
 
       _ ->
@@ -83,6 +82,30 @@ defmodule PhoenixKit.Modules.Storage.AnnotationThumbnail do
     e ->
       Logger.warning("AnnotationThumbnail.refresh failed for #{file_uuid}: #{inspect(e)}")
       {:error, :exception}
+  end
+
+  defp burned?(%Storage.File{metadata: %{"burn" => %{"fingerprint" => fp}}}) when is_binary(fp),
+    do: true
+
+  defp burned?(_file), do: false
+
+  defp refresh_baked(file, file_uuid) do
+    if enabled?() do
+      annotations = Annotations.list_for_file(file_uuid)
+
+      case draw_args(annotations, base_dimension(file)) do
+        [] ->
+          remove_variant(file)
+          {:ok, :removed}
+
+        draw_args ->
+          generate(file, draw_args)
+      end
+    else
+      # Feature toggled off — drop any stale baked variant.
+      remove_variant(file)
+      {:ok, :removed}
+    end
   end
 
   defp generate(file, draw_args) do

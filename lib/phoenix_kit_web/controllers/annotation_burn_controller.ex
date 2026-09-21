@@ -22,11 +22,20 @@ defmodule PhoenixKitWeb.AnnotationBurnController do
 
   ## Current scope
 
-  The burn arrives at full resolution and is resized into whichever slots
-  the caller names (`thumbnail` by default) in one request — making one is
-  expensive enough that nobody should have to send it twice. `original` is
-  not writable: the picture as uploaded stays the source of truth, and a
-  rendering that overwrote it would make the annotations unremovable.
+  ## Its own slots, never the picture's
+
+  A burn is not the picture at another size: it includes ink drawn outside
+  the picture's edges, so it is a different shape. Written over `medium` or
+  `large` it breaks the viewer — zoom out, the viewer swaps to that rung,
+  squeezes the whole composite into the box laid out for the picture and
+  draws the live shapes over the top, so the drawing appears twice. It goes
+  into `annotated` (the copy the viewer opens with and the one you copy or
+  share, capped at 1080p) and `thumbnail_annotated` (the square card the
+  media grid already prefers). The picture's own variants, `original`
+  included, are never touched.
+
+  One upload fills both: making a burn is expensive enough that nobody
+  should have to send it twice.
   """
   use PhoenixKitWeb, :controller
 
@@ -41,11 +50,33 @@ defmodule PhoenixKitWeb.AnnotationBurnController do
   # large board and small enough that nothing silly gets spooled to disk.
   @max_bytes 60 * 1024 * 1024
   @accepted ~w(image/jpeg image/png)
-  # The slots a burn may be written into. `original` is not among them: the
-  # source of truth stays the picture as it was uploaded, and a rendering
-  # that overwrote it would make the annotations unremovable.
-  @writable ~w(thumbnail small medium large)
-  @default_variants ~w(thumbnail)
+  # The slots a burn may be written into — its OWN, never the picture's.
+  #
+  # A burn is not the picture at another size. It includes ink drawn outside
+  # the picture's edges, so it is a different shape: 1.33 against 1.69 on a
+  # board with a note above the photo. Written over `medium` or `large`, the
+  # viewer swaps to one when you zoom out, squeezes that whole composite
+  # into the box laid out for the picture, and draws the live shapes over
+  # the top — the drawing appears twice, shrunk and doubled. Anything that
+  # lays a picture out assumes its variants are the same picture at
+  # different sizes, and a burn is not.
+  #
+  # `thumbnail_annotated` is the slot the media grid already prefers when
+  # baked annotated thumbnails are enabled; `annotated` is the full-size
+  # copy — the one to share, to copy, and (once the viewer can show it) to
+  # open with.
+  @writable ~w(annotated thumbnail_annotated)
+  @default_variants ~w(annotated thumbnail_annotated)
+
+  # The card is square and cropped, like every other card in the grid.
+  @square_thumb 400
+
+  # The burn is what the viewer OPENS with, so it is sized to be opened:
+  # 1080p-ish, which carries the markup legibly on any screen anyone is
+  # reading this on and costs a fraction of the full-resolution compose.
+  # Anyone who wants the picture at its real size still has `original` —
+  # this slot exists to be looked at and copied, not archived.
+  @display_box {1920, 1080}
 
   @doc """
   `POST /api/files/:file_uuid/burn` — multipart, field `image`.
@@ -63,6 +94,7 @@ defmodule PhoenixKitWeb.AnnotationBurnController do
          {:ok, source} <- readable_size(upload),
          {:ok, variants} <- requested_variants(params),
          {:ok, written} <- write_variants(file, source, variants) do
+      remember_fingerprint(file, params["fingerprint"])
       json(conn, %{written: written})
     else
       {:error, reason} -> fail(conn, reason)
@@ -165,18 +197,7 @@ defmodule PhoenixKitWeb.AnnotationBurnController do
   # server vouches for rather than a file it was handed.
   defp write_variant(file, %Plug.Upload{path: path}, variant) do
     out = Path.join(System.tmp_dir!(), "pk_burn_#{System.unique_integer([:positive])}.jpg")
-    {w, h} = variant_box(variant)
-
-    args = [
-      path,
-      "-auto-orient",
-      "-resize",
-      "#{w}x#{h}>",
-      "-strip",
-      "-quality",
-      "90",
-      "jpg:#{out}"
-    ]
+    args = [path, "-auto-orient"] ++ sizing(variant) ++ ["-strip", "-quality", "90", "jpg:#{out}"]
 
     try do
       case System.cmd("convert", args, stderr_to_stdout: true) do
@@ -199,6 +220,38 @@ defmodule PhoenixKitWeb.AnnotationBurnController do
     end
   end
 
+  # What the drawing WAS when this burn was made, as the client saw it.
+  #
+  # The viewer hands it back on the next open, and a client whose drawing
+  # already hashes to it knows there is nothing to render — which is the
+  # difference between burning once per change and burning once per visit.
+  # The client owns the hash: both sides of the comparison are then the same
+  # code reading the same in-memory shapes, rather than two descriptions of
+  # a drawing that have to agree.
+  defp remember_fingerprint(_file, fingerprint)
+       when not is_binary(fingerprint) or byte_size(fingerprint) > 128,
+       do: :ok
+
+  defp remember_fingerprint(file, fingerprint) do
+    metadata =
+      (file.metadata || %{})
+      |> Map.put("burn", %{
+        "fingerprint" => fingerprint,
+        "at" => DateTime.utc_now() |> DateTime.to_iso8601()
+      })
+
+    case Storage.update_file(file, %{metadata: metadata}) do
+      {:ok, _} ->
+        :ok
+
+      {:error, reason} ->
+        # The pictures are stored; only the note about what they were made
+        # from is missing, which costs one needless burn next time.
+        Logger.warning("burn fingerprint not recorded for #{file.uuid}: #{inspect(reason)}")
+        :ok
+    end
+  end
+
   defp original_key(file) do
     case Storage.get_file_instance_by_name(file.uuid, "original") do
       %Storage.FileInstance{file_name: key} -> key
@@ -206,16 +259,27 @@ defmodule PhoenixKitWeb.AnnotationBurnController do
     end
   end
 
-  # The size this slot is configured for, so a burn lands at the dimensions
-  # everything else expects rather than at one hard-coded here.
-  defp variant_box(variant) do
-    Storage.list_dimensions()
-    |> Enum.find(&(&1.name == variant))
-    |> case do
-      %{width: w, height: h} when is_integer(w) and is_integer(h) -> {w, h}
-      _ -> {150, 150}
-    end
+  # Square and centre-cropped for the card — the same crop the grid applies,
+  # so a burned card sits in the row like every other one. Full size for
+  # `annotated`, which exists to be the copy you send someone.
+  defp sizing("thumbnail_annotated") do
+    [
+      "-resize",
+      "#{@square_thumb}x#{@square_thumb}^",
+      "-gravity",
+      "center",
+      "-extent",
+      "#{@square_thumb}x#{@square_thumb}"
+    ]
   end
+
+  defp sizing("annotated") do
+    {w, h} = @display_box
+    # `>` only shrinks: a small picture is never blown up to fill the box.
+    ["-resize", "#{w}x#{h}>"]
+  end
+
+  defp sizing(_variant), do: []
 
   # ── answers ──────────────────────────────────────────────────────────────
 

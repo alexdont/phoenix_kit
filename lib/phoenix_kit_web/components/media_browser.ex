@@ -3760,6 +3760,15 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
         # unrotated on disk; nil/garbage reads as unrotated.
         rotation: Map.get(file.metadata || %{}, "rotation"),
         folder_path: Map.get(folder_paths, file.folder_uuid),
+        # What the file's burned copy was rendered from, so the viewer can
+        # tell whether the drawing in front of it has already been burned
+        # and skip re-rendering one that has (AnnotationBurn hook).
+        burn_fingerprint: Map.get(Map.get(file.metadata || %{}, "burn", %{}), "fingerprint"),
+        # The burned copy's own extent. It is a different shape from the
+        # picture — it takes in ink drawn past the edges — so the viewer
+        # that opens with it has to lay out ITS dimensions, not the
+        # picture's.
+        burn_size: burn_size(instances),
         urls: urls,
         variant_widths: variant_widths
       }
@@ -3972,6 +3981,16 @@ defmodule PhoenixKitWeb.Components.MediaBrowser do
   end
 
   defp original_instance(instances), do: Enum.find(instances, &(&1.variant_name == "original"))
+
+  defp burn_size(instances) do
+    case Enum.find(instances, &(&1.variant_name == "annotated")) do
+      %{width: w, height: h} when is_integer(w) and is_integer(h) and w > 0 and h > 0 ->
+        %{w: w, h: h}
+
+      _ ->
+        nil
+    end
+  end
 
   # Builds a parallel map of `%{variant_name => width}` from the same
   # FileInstance rows that produce the URLs. Used downstream by

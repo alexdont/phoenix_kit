@@ -3542,6 +3542,36 @@ if (typeof window.Chart === "undefined") {
   // set in the picture.
   var BURN_STATE = ["is-hovered", "is-selected", "is-editing", "is-dragging", "is-close-target"];
 
+  // A drawing written the same way every time, whatever order the keys
+  // arrive in.
+  //
+  // A shape just drawn carries `{x, y, w, h}`; the same shape read back
+  // after a round trip through the database carries `{h, w, x, y}` — same
+  // numbers, different order, and `JSON.stringify` writes what it is given.
+  // Comparing those two strings says "changed" about a drawing nobody
+  // touched, which is one needless full-resolution render per visit.
+  function burnCanonical(v) {
+    if (Array.isArray(v)) return "[" + v.map(burnCanonical).join(",") + "]";
+    if (v && typeof v === "object") {
+      return "{" + Object.keys(v).sort().map(function(k) {
+        return JSON.stringify(k) + ":" + burnCanonical(v[k]);
+      }).join(",") + "}";
+    }
+    return JSON.stringify(v === undefined ? null : v);
+  }
+
+  // A cheap, stable hash of the drawing (FNV-1a, 32-bit, hex). Not a
+  // security property — just a short thing to compare, computed the same
+  // way on the way out and on the way back in.
+  function burnHash(str) {
+    var h = 0x811c9dc5;
+    for (var i = 0; i < str.length; i++) {
+      h ^= str.charCodeAt(i);
+      h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
+    }
+    return h.toString(16);
+  }
+
   function burnNote(text, ms) {
     var el = document.getElementById("pk-burn-note");
     if (!el) {
@@ -3705,10 +3735,13 @@ if (typeof window.Chart === "undefined") {
     });
   }
 
-  function burnUpload(uuid, blob, variants) {
+  function burnUpload(uuid, blob, variants, fingerprint) {
     var body = new FormData();
     body.append("image", blob, "burn.jpg");
     body.append("variants", variants);
+    // Recorded against the stored copy, so the next visit can tell whether
+    // this drawing has already been burned.
+    if (fingerprint) body.append("fingerprint", fingerprint);
     var csrf = document.querySelector("meta[name='csrf-token']");
     // Same prefix derivation the consent widget uses: PHOENIX_KIT_PREFIX is
     // emitted by the js_sources compiler, and the literal is the fallback
@@ -3733,23 +3766,49 @@ if (typeof window.Chart === "undefined") {
     mounted() {
       var self = this;
       this._uuid = this.el.dataset.fileUuid;
-      this._variants = this.el.dataset.burnVariants || "thumbnail,small,medium,large";
+      // The burn's own slots — never the picture's rungs, which the viewer
+      // loads by zoom level and lays out at the picture's shape.
+      this._variants = this.el.dataset.burnVariants || "annotated,thumbnail_annotated";
       this._host = function() {
         return self.el.closest("[id^='pk-annotation-actions-']")?.querySelector('[phx-hook="FrescoCanvas"]') ||
                document.querySelector('[phx-hook="FrescoCanvas"]');
       };
-      this._baseline = this._signature();
+      // What the STORED burn was made from. The comparison is against this,
+      // not against a baseline taken at mount: Etcher hydrates its shapes
+      // after the hook mounts, so a mount-time baseline reads an empty
+      // drawing and makes the first close look like a change — burning a
+      // full-resolution copy of a picture nobody touched.
+      this._burned = this.el.dataset.burnFingerprint || null;
       this._running = false;
+
+      this._allowCopy();
+
+      // The eye lives in Fresco's own nav rail, beside fullscreen and zoom
+      // — where Etcher's used to be. An absolutely-positioned button of our
+      // own lands ON TOP of that rail instead of in it: technically
+      // clickable, invisible to a person, and covering fullscreen.
+      this._addModeButton();
 
       // Switching Etcher off ends an editing session.
       this._onMode = function(e) {
-        if (e.detail && e.detail.annotationMode) {
-          self._baseline = self._signature();
-          return;
-        }
+        if (e.detail && e.detail.annotationMode) return;
+
+        // Etcher off means done editing, so: render what was drawn (only
+        // if it changed), and go back to the burned picture. Capture
+        // happens here, before the canvas is replaced and the overlay
+        // being composed goes with it.
         self.burnIfChanged();
+
+        if (self.el.dataset.burnMode !== "true" && self.el.dataset.hasBurn === "true") {
+          self.pushEventTo(self.el, "toggle_burn_mode", {});
+        }
       };
       document.addEventListener("etcher:mode-changed", this._onMode);
+
+      // Came here from the pencil in the burned view: the live layer is up
+      // now, so turn Etcher on — that press meant "let me draw", not "show
+      // me the shapes".
+      if (this.el.dataset.autoAnnotate === "true") this._armEtcher();
 
       // So does closing the viewer. Caught on the way IN to the close, while
       // the overlay is still there to compose from.
@@ -3764,7 +3823,124 @@ if (typeof window.Chart === "undefined") {
       document.addEventListener("keydown", this._onClosing, true);
     },
 
+    // Burned ⇄ live. The burn is one flat picture with the markup already
+    // in it; the live layer is the picture with shapes you can select and
+    // edit over the top. Only one of them can be on screen, so this is the
+    // switch between them rather than a visibility toggle.
+    _addModeButton() {
+      var self = this;
+      if (this.el.dataset.hasBurn !== "true") return;
+
+      var burned = this.el.dataset.burnMode === "true";
+      var frescoId = this.el.dataset.frescoId;
+      var handle = window.Fresco && window.Fresco.viewerFor && window.Fresco.viewerFor(frescoId);
+
+      // Fresco mounts its canvas on its own schedule; if the handle is not
+      // there yet, wait for it to announce itself.
+      if (!handle) {
+        if (window.Fresco && window.Fresco.onViewerReady) {
+          window.Fresco.onViewerReady(frescoId, function() { self._addModeButton(); });
+        }
+        return;
+      }
+
+      // Already on THIS nav: nothing to do. On a different one — the mode
+      // flipped, so the canvas and its whole nav were replaced — drop the
+      // stale handle and append to the new rail.
+      if (this._modeButtonFor === frescoId && this._modeButton) return;
+      if (this._modeButton) {
+        try { this._modeButton(); } catch (_) {}
+        this._modeButton = null;
+      }
+      if (this._pencilButton) {
+        try { this._pencilButton(); } catch (_) {}
+        this._pencilButton = null;
+      }
+
+      var pencil =
+        '<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" ' +
+        'stroke-width="1.5" stroke="currentColor" aria-hidden="true">' +
+        '<path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652' +
+        'L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125"/></svg>';
+
+      this._modeButtonFor = frescoId;
+
+      // One control, not two: the pencil IS the mode.
+      //
+      // On, you are in the editor — the picture with a live layer over it.
+      // Off, you are looking at the burned copy. A separate eye asked the
+      // user to hold two ideas (which picture, and whether the tools are
+      // up) that only ever move together, and made "turn the editor off"
+      // and "see what it will look like" two presses instead of one.
+      //
+      // In the burned view there is no Etcher to own a pencil, so this is
+      // ours; in the editor Etcher's own is the one on screen, and
+      // switching it off brings the burned picture back (see `_onMode`).
+      if (burned && this.el.dataset.canAnnotate === "true") {
+        this._pencilButton = handle.appendNavButton(pencil, "Annotate", function() {
+          self.pushEventTo(self.el, "toggle_burn_mode", { annotate: true });
+        });
+      }
+    },
+
+    // The mode flip replaces the canvas (its id changes, so LiveView mounts
+    // a fresh one) but patches this element in place — so the rail the eye
+    // was on is gone and the new one has no eye until this runs.
+    updated() {
+      this._addModeButton();
+      this._allowCopy();
+      if (this.el.dataset.autoAnnotate === "true") this._armEtcher();
+    },
+
+    // Right-click → Copy image, on the burned picture.
+    //
+    // Fresco sets `pointer-events: none` on its stage images so a drag
+    // anywhere over the picture pans instead of dragging the bitmap. That
+    // also means a right-click never lands ON the image, so the browser
+    // offers no Copy image / Save image at all — the menu is for the div
+    // underneath. In the burned view there is nothing to drag and nothing
+    // drawn over it, so the image can take its own context menu; panning is
+    // unaffected, because Fresco listens on the container these bubble to.
+    _allowCopy(tries) {
+      var self = this;
+      var left = tries == null ? 20 : tries;
+      var burned = this.el.dataset.burnMode === "true";
+      var host = document.getElementById(this.el.dataset.frescoId);
+      var img = host && host.querySelector("img[data-fresco-canvas-img]");
+
+      if (!img) {
+        if (left > 0) setTimeout(function() { self._allowCopy(left - 1); }, 150);
+        return;
+      }
+      // Live view: leave Fresco's rule alone. The picture there is the
+      // plain one anyway — copying it would leave the markup behind.
+      img.style.pointerEvents = burned ? "auto" : "";
+    },
+
+    // Etcher mounts with the canvas it decorates, which may be a moment
+    // behind this patch; retry briefly rather than miss the arming.
+    _armEtcher(tries) {
+      var self = this;
+      var left = tries == null ? 20 : tries;
+      var layer = window.Etcher && window.Etcher.layerFor &&
+                  window.Etcher.layerFor(this.el.dataset.frescoId);
+
+      if (layer && typeof layer.setMode === "function") {
+        if (!layer.getMode()) layer.setMode(true);
+        return;
+      }
+      if (left > 0) setTimeout(function() { self._armEtcher(left - 1); }, 150);
+    },
+
     destroyed() {
+      [this._modeButton, this._pencilButton].forEach(function(off) {
+        if (typeof off === "function") {
+          try { off(); } catch (_) {}
+        }
+      });
+      this._modeButton = null;
+      this._pencilButton = null;
+      this._modeButtonFor = null;
       document.removeEventListener("etcher:mode-changed", this._onMode);
       document.removeEventListener("pointerdown", this._onClosing, true);
       document.removeEventListener("keydown", this._onClosing, true);
@@ -3779,9 +3955,14 @@ if (typeof window.Chart === "undefined") {
                   window.Etcher.layerFor(host.id);
       if (!layer || typeof layer.getShapes !== "function") return null;
       try {
-        return JSON.stringify((layer.getShapes() || []).map(function(s) {
-          return [s.uuid, s.kind, s.geometry, s.style, s.metadata, s.title];
-        }));
+        // Sorted by uuid as well: the order shapes come back in is the
+        // server's business, not a change to the drawing.
+        return (layer.getShapes() || [])
+          .map(function(s) {
+            return burnCanonical([s.uuid, s.kind, s.geometry, s.style, s.metadata, s.title]);
+          })
+          .sort()
+          .join("");
       } catch (_) {
         return null;
       }
@@ -3790,27 +3971,54 @@ if (typeof window.Chart === "undefined") {
     burnIfChanged() {
       var self = this;
       if (this._running || !this._uuid) return;
+
       var now = this._signature();
-      if (!now || now === this._baseline) return;
+      // Etcher has not hydrated yet: nothing to compare, and nothing worth
+      // rendering from a drawing that is not on screen.
+      if (!now) return;
+
+      // Nothing drawn and nothing burned — a picture opened and closed.
+      if (now === "" && !this._burned) return;
+
+      var fingerprint = burnHash(now);
+      // The stored copy was made from exactly this drawing. Re-rendering it
+      // would cost a full-resolution compose and an upload to produce the
+      // same bytes.
+      if (fingerprint === this._burned) return;
 
       var plan = burnCapturePlan(this._host());
       if (!plan) return;
 
       this._running = true;
-      this._baseline = now;
       burnNote("Updating the burned image…");
 
       burnRender(plan)
-        .then(function(blob) { return burnUpload(self._uuid, blob, self._variants); })
+        .then(function(blob) {
+          return burnUpload(self._uuid, blob, self._variants, fingerprint);
+        })
         .then(function(res) {
+          self._burned = fingerprint;
           self._refresh(res.written || []);
+
+          // Tell the viewer what was stored, so the burned view it shows
+          // next is this one. Without it the canvas keeps the URL it
+          // mounted with — the previous rendering, until a page reload.
+          var made = (res.written || []).find(function(v) { return v.variant === "annotated"; });
+          if (made) {
+            self.pushEventTo(self.el, "burn_stored", {
+              url: made.url,
+              width: made.width,
+              height: made.height,
+              fingerprint: fingerprint
+            });
+          }
+
           burnNote("Burned image updated", 3500);
         })
         .catch(function(err) {
-          // The session is over either way; say so and leave the old
-          // rendering in place rather than a half-written one.
+          // The session is over either way; say so, and leave the stored
+          // fingerprint alone so the next attempt still knows it is stale.
           burnNote("Could not update the burned image: " + (err && err.message || err), 6000);
-          self._baseline = null;
         })
         .then(function() { self._running = false; });
     },
