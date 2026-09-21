@@ -214,8 +214,18 @@
                   # raster is showing changes nothing about where a shape lands.
                   # Deep zoom past `large` still streams tiles where tile
                   # generation is on; the full original stays a download.
+                  #
+                  # `small` is the FIRST rung, not an outsider. The canvas
+                  # opens on it (the bitmap the grid already painted), and
+                  # Tessera assumes it is showing sources[0] — so leaving it
+                  # out meant Tessera believed a 300px picture was the 800px
+                  # one, and only swapped when the display demanded more than
+                  # 880: straight from `small` to `large`, with `medium` never
+                  # chosen on the way up. Listing it makes the ladder true, so
+                  # the climb is small → medium → large and each step is the
+                  # smallest file that covers the screen.
                   tessera_sources =
-                    [{f.urls["medium"], 800}, {f.urls["large"], 1920}]
+                    [{f.urls["small"], 300}, {f.urls["medium"], 800}, {f.urls["large"], 1920}]
                     |> Enum.filter(fn {url, _w} -> is_binary(url) and url != "" end)
                     |> Enum.map(fn {url, width} -> %{url: url, width: width} end)
 
