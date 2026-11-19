@@ -4348,6 +4348,46 @@
     } else {
       setTimeout(loadForOfflineCopy, 0);
     }
+
+    // Logging out takes the device's offline copies with it: the kept pages,
+    // the pictures on them (private files among them) and the shapes are the
+    // signed-in person's. Any link to `/users/log-out` (the menus, the
+    // confirmation and referral pages) is held while Etcher forgets them;
+    // changes made offline and not yet sent are asked about first, since a
+    // logout would delete them (`Etcher.offline.beforeLogout`). A device that
+    // never kept anything goes straight on: the check is one database listing.
+    function isLogoutLink(a) {
+      try {
+        return /\/users\/log-out\/?$/.test(new URL(a.href, window.location.href).pathname);
+      } catch (_) { return false; }
+    }
+    function keptOffline() {
+      if (!window.indexedDB) return Promise.resolve(false);
+      if (typeof indexedDB.databases !== "function") return Promise.resolve(true);
+      return indexedDB.databases().then(function(list) {
+        return list.some(function(d) { return d && d.name === "etcher-offline"; });
+      }, function() { return true; });
+    }
+    document.addEventListener("click", function(e) {
+      var a = e.target && e.target.closest && e.target.closest("a[href]");
+      if (!a || a.__pkOfflineCleared || !isLogoutLink(a)) return;
+      if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      keptOffline().then(function(kept) {
+        if (!kept) return true;
+        return loadEtcher().then(function() {
+          var off = window.Etcher && window.Etcher.offline;
+          return off && typeof off.beforeLogout === "function" ? off.beforeLogout() : true;
+        }, function() { return true; });
+      }).then(function(go) {
+        if (go === false) return;
+        // The same click again, now let through to whatever performs the
+        // logout (phoenix_html's `data-method`, or the browser for a GET).
+        a.__pkOfflineCleared = true;
+        try { a.click(); } finally { a.__pkOfflineCleared = false; }
+      });
+    }, true);
   })();
 
   // ============================================================================
